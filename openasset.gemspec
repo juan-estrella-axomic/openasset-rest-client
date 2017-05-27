@@ -25,6 +25,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "certified"
   spec.add_dependency "mime-types", "~> 3.1"
   spec.add_dependency "ruby-progressbar", "~> 1.8.1"
 
