@@ -1,6 +1,5 @@
 
-require 'pp'
-require 'openasset/version'
+require 'Version/version.rb'
 
 require_relative 'Authenticator.rb'
 require_relative 'RestOptions.rb'
