@@ -178,7 +178,9 @@ module Openasset
 		
 		public
 		#########################
+		#                       #
 		#   Session Management  #
+		#                       #
 		#########################
 		def kill_session
 			@authenticator.kill_session
@@ -194,13 +196,27 @@ module Openasset
 		end
 		
 		####################################################
+		#                                                  #
 		#  Retrieve, Create, Modify, and Delete Resources  #
-		###################################################
+		#                                                  #
+		####################################################
+
+
+		#################
+		#               #
+		# ACCESS LEVELS #
+		#               #
+		#################
 		def get_access_levels(query_obj=nil)
 			uri = URI.parse(@uri + "/AccessLevels")
 			results = get(uri,query_obj)
 		end
 
+		##########
+		#        #
+		# ALBUMS #
+		#        #
+		##########
 		def get_albums(query_obj=nil)	
 			uri = URI.parse(@uri + "/Albums")
 			result = get(uri,query_obj)
@@ -221,16 +237,31 @@ module Openasset
 			result = delete(uri,data)
 		end
 
+		####################
+		#                  #
+		# ALTERNATE STORES #
+		#                  #
+		####################
 		def get_alternate_stores(query_obj=nil)
 			uri = URI.parse(@uri + "/AlternateStores")
 			results = get(uri,query_obj)
 		end
 
+		#################
+		#               #
+		# ASPECT RATIOS #
+		#               #
+		#################
 		def get_aspect_ratios(query_obj=nil)
 			uri = URI.parse(@uri + "/AspectRatios")
 			results = get(uri,query_obj)
 		end
 
+		##############
+		#            #
+		# CATEGORIES #
+		#            #
+		##############
 		def get_categories(query_obj=nil)
 			uri = URI.parse(@uri + "/Categories")
 			results = get(uri,query_obj)
@@ -241,6 +272,11 @@ module Openasset
 			results = put(uri,data)
 		end
 
+		#####################
+		#                   #
+		# COPYRIGHT HOLDERS #
+		#                   #
+		#####################
 		def get_copyright_holders(query_obj=nil)
 			uri = URI.parse(@uri + "/CopyrightHolders")
 			results = get(uri,query_obj)
@@ -256,6 +292,11 @@ module Openasset
 			results = put(uri,data)
 		end
 
+		######################
+		#                    #
+		# COPYRIGHT POLICIES #
+		#                    #
+		######################
 		def get_copyright_policies(query_obj=nil)
 			uri = URI.parse(@uri + "/CopyrightPolicies")
 			results = get(uri,query_obj)
@@ -276,6 +317,11 @@ module Openasset
 			results = delete(uri,data)
 		end
 
+		##########
+		#        #
+		# FIELDS #
+		#        #
+		##########
 		def get_fields(query_obj=nil)
 			uri = URI.parse(@uri + "/Fields")
 			results = get(uri,query_obj)
@@ -296,6 +342,11 @@ module Openasset
 			results = delete(uri,data)
 		end
 
+		########################
+		#                      #
+		# FIELD LOOKUP STRINGS #
+		#                      #
+		########################
 		def get_field_lookup_strings(field=nil,query_obj=nil)
 			id = Validator::validate_field_lookup_string_arg(field)
 			
@@ -324,6 +375,11 @@ module Openasset
 			results = delete(uri,data)
 		end
 
+		#########
+		#       #
+		# FILES #
+		#       #
+		#########
 		def get_files(query_obj=nil)
 			uri = URI.parse(@uri + "/Files")
 			results = get(uri,query_obj)
@@ -457,12 +513,22 @@ module Openasset
 			uri = URI.parse(@uri + "/Files")
 			results = delete(uri,data)
 		end
-
+        
+        ##########
+		#        #
+		# GROUPS #
+		#        #
+		##########
 		def get_groups(query_obj=nil)
 			uri = URI.parse(@uri + "/Groups")
 			results = get(uri,query_obj)
 		end
 
+		############
+		#          #
+		# KEYWORDS #
+		#          #
+		############
 		def get_keywords(query_obj=nil)
 			uri = URI.parse(@uri + "/Keywords")
 			results = get(uri,query_obj)
@@ -483,6 +549,11 @@ module Openasset
 			results = delete(uri,data)
 		end
 
+		######################
+		#                    #
+		# KEYWORD CATEGORIES #
+		#                    #
+		######################
 		def get_keyword_categories(query_obj=nil)
 			uri = URI.parse(@uri + "/KeywordCategories")
 			results = get(uri,query_obj)
@@ -503,6 +574,11 @@ module Openasset
 			results = delete(uri,data)
 		end
 
+		#################
+		#               #
+		# PHOTOGRAPHERS #
+		#               #
+		#################
 		def get_photographers(query_obj=nil)
 			uri = URI.parse(@uri + "/Photographers")
 			results = get(uri,query_obj)
@@ -518,6 +594,11 @@ module Openasset
 			results = put(uri,data)
 		end
 
+		############
+		#          #
+		# PROJECTS #
+		#          #
+		############
 		def get_projects(query_obj=nil)
 			uri = URI.parse(@uri + "/Projects")
 			results = get(uri,query_obj)
@@ -538,6 +619,11 @@ module Openasset
 			results = delete(uri,data)
 		end
 
+		####################
+		#                  #
+		# PROJECT KEYWORDS #
+		#                  #
+		####################
 		def get_project_keywords(query_obj=nil)
 			uri = URI.parse(@uri + "/ProjectKeywords")
 			results = get(uri,query_obj)
@@ -558,6 +644,11 @@ module Openasset
 			results = delete(uri,data)
 		end
 
+		##############################
+		#                            #
+		# PROJECT KEYWORD CATEGORIES #
+		#                            #
+		##############################
 		def get_project_keyword_categories(query_obj=nil)
 			uri = URI.parse(@uri + "/ProjectKeywordCategories")
 			results = get(uri,query_obj)
@@ -578,6 +669,11 @@ module Openasset
 			results = delete(uri,data)
 		end
 
+		############
+		#          #
+		# SEARCHES #
+		#          #
+		############
 		def get_searches(query_obj=nil)
 			uri = URI.parse(@uri + "/Searches")
 			results = get(uri,query_obj)
@@ -593,7 +689,12 @@ module Openasset
 			results = put(uri,data)
 		end
 
-		def get_sizes(query_obj=nil)
+		#########
+		#       #
+		# SIZES #
+		#       #
+		#########
+		def get_image_sizes(query_obj=nil)
 			uri = URI.parse(@uri + "/Sizes")
 			results = get(uri,query_obj)
 		end
@@ -613,18 +714,30 @@ module Openasset
 			results = delete(uri,data)
 		end
 
+		#################
+		#               #
+		# TEXT REWRITES #
+		#               #
+		#################
 		def get_text_rewrites(query_obj=nil)
 			uri = URI.parse(@uri + "/TextRewrites")
 			results = get(uri,query_obj)
 		end
 
+		#########
+		#       #
+		# USERS #
+		#       #
+		#########
 		def get_users(query_obj=nil)
 			uri = URI.parse(@uri + "/Users")
 			results = get(uri,query_obj)
 		end
 
 		############################
+		#                          #
 		# Administrative Functions #
+		#                          #
 		############################
 		def file_add_keywords(files=nil,keywords=nil)
 		
