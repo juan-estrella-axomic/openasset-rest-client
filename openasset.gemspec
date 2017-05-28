@@ -12,9 +12,7 @@ Gem::Specification.new do |spec|
   spec.summary       = %q{This gem will enable easy interaction with OpenAsset using the REST API.}
 
   spec.description   = "This client allows users to programmatically create, update, retrieve and delete " +
-  						"objects in openasset through the REST API.\nIt uses secure signed token oauthentication " +
-  						"with encrypted builtin internal session management."
-
+  						          "objects in openasset through the REST API."
   spec.homepage      = "https://github.com/juan-estrella-axomic/openasset"
   spec.license       = "MIT"
 
@@ -25,9 +23,9 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "certified"
+  spec.add_dependency "certified", "~> 1.0"
   spec.add_dependency "mime-types", "~> 3.1"
-  spec.add_dependency "ruby-progressbar", "~> 1.8.1"
+  spec.add_dependency "ruby-progressbar", "~> 1.8"
 
   spec.add_development_dependency "bundler", "~> 1.14"
   spec.add_development_dependency "rake", "~> 10.0"

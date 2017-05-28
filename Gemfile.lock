@@ -1,0 +1,28 @@
+PATH
+  remote: .
+  specs:
+    openasset-rest-client (0.1.0)
+      certified
+      mime-types (~> 3.1)
+      ruby-progressbar (~> 1.8.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    certified (1.0.0)
+    mime-types (3.1)
+      mime-types-data (~> 3.2015)
+    mime-types-data (3.2016.0521)
+    rake (10.5.0)
+    ruby-progressbar (1.8.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bundler (~> 1.14)
+  openasset-rest-client!
+  rake (~> 10.0)
+
+BUNDLED WITH
+   1.14.6
