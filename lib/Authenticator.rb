@@ -165,9 +165,9 @@ class Authenticator
 	end
 
 	def setup_authentication
-		puts "In setup_authentication"
+		#puts "In setup_authentication"
 		 if @token[:id].nil?
-			puts "Token is NULL"
+			#puts "Token is NULL"
 		 	create_token()
 		 	validate_token()
 		 elsif !token_valid?     

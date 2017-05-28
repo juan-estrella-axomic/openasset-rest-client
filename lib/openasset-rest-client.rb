@@ -9,7 +9,7 @@ require_relative 'Validator.rb'
 #Includes all the nouns in one shot
 Dir[File.join(File.dirname(__FILE__),'Nouns','*.rb')].each { |file| require_relative file }
 
-module Openasset
+module OpenAsset
 	class RestClient
 		
 		RESTRICTED_LIST_FIELD_TYPES   = %w[ suggestion fixedSuggestion option ]
@@ -65,7 +65,16 @@ module Openasset
 			end
 			
 			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
-				request = Net::HTTP::Get.new(uri.request_uri + options.get_options)
+				
+				#Account for 2048 character limit with GET requests
+				options_str_len = options.get_options.length
+				if options_str_len > 1024
+					request = Net::HTTP::Post.new(uri.request_uri + options.get_options)
+					request.add_field('X-Http-Method-Override','GET')
+				else
+					request = Net::HTTP::Get.new(uri.request_uri + options.get_options)
+				end
+
 				if @session
 					request.add_field('X-SessionKey',@session)
 				else
