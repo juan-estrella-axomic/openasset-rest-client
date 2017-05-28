@@ -22,8 +22,8 @@ module Openasset
 			oa_uri_with_protocol    = Regexp::new('(^https:\/\/|http:\/\/)\w+.+\w+.openasset.(com)$', true)
 			oa_uri_without_protocol = Regexp::new('^\w+.+\w+.openasset.(com)$', true)
 
-			unless uri_with_protocol =~ client_url #check for valid url and that protocol is specified
-				if uri_without_protocol =~ client_url #verify correct url format
+			unless oa_uri_with_protocol =~ client_url #check for valid url and that protocol is specified
+				if oa_uri_without_protocol =~ client_url #verify correct url format
 					client_url = "https://" + client_url #add the https protocol if one isn't provided
 				else
 					warn "Error: Invalid url! Expected http(s)://<subdomain>.openasset.com" + 
