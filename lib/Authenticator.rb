@@ -215,14 +215,14 @@ class Authenticator
 		end
 
 		if conf[url].nil?
-			conf[url]                 = Hash.new
-			conf[url]['token'] 	      = enc_token
-			conf[url]['session_key']  = enc_session_key
-			conf[url]['id'] 		  = token_id.to_s
+			conf[url]      = Hash.new
+			conf[url]['t'] = enc_token
+			conf[url]['s'] = enc_session_key
+			conf[url]['i'] = token_id.to_s
 		else 
-			conf[url]['token'] 	      = enc_token
-			conf[url]['session_key']  = enc_session_key
-			conf[url]['id'] 		  = token_id.to_s
+			conf[url]['t'] = enc_token
+			conf[url]['s'] = enc_session_key
+			conf[url]['i'] = token_id.to_s
 		end	
 
 		File.open(yml_file,"w+") do |file|
@@ -246,9 +246,9 @@ class Authenticator
 		
 		if !conf[url].nil?
 			#retrieve base64 encoded values
-			token_id   	     = conf[url]['id']
-			enc_token        = conf[url]['token']
-			enc_session_key  = conf[url]['session_key']
+			token_id   	     = conf[url]['i']
+			enc_token        = conf[url]['t']
+			enc_session_key  = conf[url]['s']
 		
 			#decrypt and assign data to instance variable if cipher data successfully retrieved
 			#USE TRY CATCH BLOCK HERE
