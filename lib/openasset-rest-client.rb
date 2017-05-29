@@ -394,11 +394,11 @@ module OpenAsset
 			results = get(uri,query_obj)
 		end
 
-# Uploads file to OpenAsset instance
-# Params:
-# +file+:: Path to the file being uploaded
-# +category+:: Accepts Category object, String, or Integer specifying Category id file is being uploaded to (Required)
-# +project+:: Project object String or Integer specifying project id file is being uploaded to (Optional if category is reference based)
+		# Uploads file to OpenAsset instance
+		# Params:
+		# +file+:: Path to the file being uploaded
+		# +category+:: Accepts Category object, String, or Integer specifying Category id file is being uploaded to (Required)
+		# +project+:: Project object String or Integer specifying project id file is being uploaded to (Optional if category is reference based)
 		def upload_file(file=nil, category=nil, project=nil) 
 		
 			unless File.exists?(file.to_s)
