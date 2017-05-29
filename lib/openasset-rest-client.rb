@@ -789,11 +789,19 @@ module OpenAsset
 			results = get(uri,query_obj)
 		end
 
+		# Create Photographers.
+		#
+		# @param data [Single Photographers Object, Array of Photographers Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.
 		def create_photographers(data=nil)
 			uri = URI.parse(@uri + "/Photographers")
 			results = post(uri,data)
 		end
 
+		# Modify Photographers.
+		#
+		# @param data [Single Photographers Object, Array of Photographers Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.
 		def update_photographers(data=nil)
 			uri = URI.parse(@uri + "/Photographers")
 			results = put(uri,data)
@@ -809,11 +817,19 @@ module OpenAsset
 			results = get(uri,query_obj)
 		end
 
+		# Create Projects.
+		#
+		# @param data [Single Projects Object, Array of Projects Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.
 		def create_projects(data=nil)
 			uri = URI.parse(@uri + "/Projects")
 			results = post(uri,data)
 		end
 
+		# Modify Projects.
+		#
+		# @param data [Single Projects Object, Array of Projects Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.
 		def update_projects(data=nil)
 			uri = URI.parse(@uri + "/Projects")
 			results = put(uri,data)
