@@ -10,14 +10,17 @@ require_relative 'Downloader.rb'
 require_relative 'Nouns/Files.rb'
 
 module ArrayHelper
-    #generate csv reports from Noun collections
-   
+    
+    # #generate csv reports from Noun collections. Call on an array of Files Objects, Strings or Array of Strings
+    #
+    # @param client [String, Integer] Name of the csv being generated
+    # @return [Boolean] Returns false on error.  
     def export_to_csv(client=nil)
         name = client.to_s || 'Client_Name'
         #check if the collection is emplty
         if self.empty?
             warn "Oops. There are no items in the collection. No use in creating spreadsheet."
-            return
+            return false
         end
        
         #processs the objects to extract the headers and rows for csv report
@@ -61,10 +64,17 @@ module ArrayHelper
             else
                  warn "Oops. Items in the collection are #{self.first.class.to_s} " + 
                  "instead of NOUN objects, Strings, or arrays of Strings"
+                 return false
             end
         end
     end
 
+    # Downloads actual image from Files Object using nested Sizes resource. Call on an array of Files Objects
+    #
+    # @param size [String, Integer] Defaults to 1 to download original image.
+    #                               Accepts image size id or postfix string value like 'medium' for example
+    # @param download_location [String] Folder where files will be downloaded to.
+    # @return [Boolean] Returns false on error.  
     def download(size='1',download_location='./Rest_Downloads')
         #Make sure the download location is Valid directory
         if File.exist?(download_location)
@@ -125,7 +135,7 @@ module ArrayHelper
                     puts "Error: #{exception.message}"
                 end
             else
-                "Error: Invalid data detected in the array.\nValue => #{item.inspect}"
+                puts "Error: Invalid data detected in the array.\nValue => #{item.inspect}"
             end
         end
         FileUtils.remove_dir(download_location)  if Dir["#{download_location}/*"].empty?

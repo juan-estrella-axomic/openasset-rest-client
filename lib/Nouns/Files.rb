@@ -154,7 +154,7 @@ class Files
 		return json_data
 	end
 
-	def get_image_size_file_path(search_parameter='1') #Alrays returns the original by default
+	def get_image_size_file_path(search_parameter='1') #Always returns the original by default
 		if (search_parameter.is_a?(String) && search_parameter.to_i > 0) || search_parameter.is_a?(Integer)
 			#Look for the nested image size containing the id passed as the search_parameter
 			image = @sizes.find {|item| item.id.to_s == search_parameter.to_s}
