@@ -38,7 +38,7 @@ module OpenAsset
 		end
 
 		private
-		def get(uri,options_obj=nil)
+		def get(uri,options_obj)
 			resource = uri.to_s.split('/').last
 			options = options_obj || RestOptions.new
 
@@ -98,7 +98,7 @@ module OpenAsset
 			
 		end
 
-		def post(uri,data=nil)
+		def post(uri,data)
 			resource = ''
 			if uri.to_s.split('/').last.to_i == 0 #its a non numeric string meaning its a resource endpoint
 				resource = uri.to_s.split('/').last
@@ -159,9 +159,9 @@ module OpenAsset
 			
 		end
 
-		def delete(uri,body)
+		def delete(uri,data)
 			resource = uri.to_s.split('/').last
-			json_object = Validator::validate_and_process_delete_body(body)
+			json_object = Validator::validate_and_process_delete_body(data)
 			unless json_object
 				return
 			end
@@ -231,7 +231,7 @@ module OpenAsset
 			result = get(uri,query_obj)
 		end
 
-		def create_albums(data)
+		def create_albums(data=nil)
 			uri = URI.parse(@uri + '/Albums')
 			result = post(uri,data)
 		end
@@ -394,16 +394,47 @@ module OpenAsset
 			results = get(uri,query_obj)
 		end
 
-		def upload_file(file, category_id, project_id='') 
+		# Uploads file to OpenAsset instance
+		# Params:
+		# +file+:: Path to the file being uploaded
+		# +category+:: Accepts Category object, String, or Integer specifying Category id file is being uploaded to (Required)
+		# +project+:: Project object String or Integer specifying project id file is being uploaded to (Optional if category is reference based)
+		def upload_file(file=nil, category=nil, project=nil) 
 		
 			unless File.exists?(file.to_s)
 				puts "Error: The file provided does not exist -\"#{file}\"...Bailing out."
 				return false
 			end
 
-			unless category_id.to_i > 0
-				puts "Argument Error for upload_files method: Invalid category code passed to second argument."
+			unless category.is_a?(Categories) || category.to_i > 0
+				puts "Argument Error for upload_files method: Invalid category id passed to second argument.\n" +
+				     "Acceptable arguments: Category object, a non-zero numeric String or Integer, " +
+				     "or no argument.\nInstead got #{category.class}...Bailing out."
 				return false
+			end
+
+			unless project.is_a?(Projects) || project.to_i > 0 || project.nil?
+				puts "Argument Error for upload_files method: Invalid project id passed to third argument.\n" +
+				     "Acceptable arguments: Projects object, a non-zero numeric String or Integer, " +
+				     "or no argument.\nInstead got a(n) #{project.class} with value => #{project.inspect}...Bailing out."
+				return false
+			end
+
+			category_id = nil
+			project_id  = nil
+
+			if category.is_a?(Categories)
+				category_id = category.id
+			else
+				category_id = category
+			end
+
+			if project.is_a?(Projects)
+				project_id = project.id
+			elsif project.nil?
+				project_id = ''
+			else
+				project_id = project
 			end
 
 			uri = URI.parse(@uri + "/Files")
@@ -436,7 +467,7 @@ module OpenAsset
 			Validator::process_http_response(response,@verbose,'Files','POST')		
 		end
 
-		def replace_file(original_file_object, replacement_file_path='', retain_original_filename_in_oa=false) 
+		def replace_file(original_file_object=nil, replacement_file_path='', retain_original_filename_in_oa=false) 
 			file_object = (original_file_object.is_a?(Array)) ? original_file_object.first : original_file_object
 			uri = URI.parse(@uri + "/Files")
 			id = file_object.id.to_s
@@ -860,10 +891,6 @@ module OpenAsset
 		end
 
 		def file_add_field_data(file=nil,field=nil,value=nil)
-	
-			current_file  = nil
-			current_field = nil
-			current_value = value.to_s.strip
 
 			#validate class types
 			unless file.is_a?(Files) || (file.is_a?(String) && (file.to_i != 0)) || file.is_a?(Integer)
@@ -886,6 +913,10 @@ module OpenAsset
 					 "\tInstead got => #{value.inspect}"
 				return			
 			end
+
+			current_file  = nil
+			current_field = nil
+			current_value = value.to_s.strip
 
 			file_class  = file.class.to_s
 			field_class = field.class.to_s
@@ -1050,11 +1081,6 @@ module OpenAsset
 
 
 		def project_add_field_data(project=nil,field=nil,value=nil)
-			#NOTE: Date fields use the mm-dd-yyyy format
-			current_project = nil
-			current_field   = nil
-			current_value	= value.to_s.strip
-
 
 			#validate class types
 			unless project.is_a?(Projects) || (project.is_a?(String) && (project.to_i != 0)) || project.is_a?(Integer)
@@ -1077,6 +1103,11 @@ module OpenAsset
 					 "\tInstead got => #{value.inspect}"
 				return			
 			end
+
+			#NOTE: Date fields use the mm-dd-yyyy format
+			current_project = nil
+			current_field   = nil
+			current_value	= value.to_s.strip
 
 			project_class  = project.class.to_s
 			field_class    = field.class.to_s
