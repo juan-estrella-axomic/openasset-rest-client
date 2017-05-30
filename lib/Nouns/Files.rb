@@ -154,6 +154,11 @@ class Files
 		return json_data
 	end
 
+	# Retrieves the file path for specified image size.
+	#
+	# @param seach_parameter [String, Integer] Takes image size id or postfix string like 'medium'
+	#                              Defaults to id of 1 which provides path to original image size
+	# @return [String, false] Returns image download path or false when error is encountered.
 	def get_image_size_file_path(search_parameter='1') #Always returns the original by default
 		if (search_parameter.is_a?(String) && search_parameter.to_i > 0) || search_parameter.is_a?(Integer)
 			#Look for the nested image size containing the id passed as the search_parameter

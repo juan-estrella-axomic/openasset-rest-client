@@ -198,7 +198,6 @@ module OpenAsset
 
 		# Destroys current session
 		#
-		# @param
 		# @return [nil] Does not return anything.
 		def kill_session
 			@authenticator.kill_session
@@ -206,7 +205,6 @@ module OpenAsset
 
 		# Generates a new session
 		#
-		# @param
 		# @return [nil] Does not return anything.
 		def get_session
 			@authenticator.get_session
@@ -214,7 +212,6 @@ module OpenAsset
 
 		# Destroys current session and Generates new one
 		#
-		# @param
 		# @return [nil] Does not return anything.
 		def renew_session
 			@authenticator.kill_session
@@ -258,11 +255,19 @@ module OpenAsset
 			result = get(uri,query_obj)
 		end
 
+		# Create Albums.
+		#
+		# @param data [Single Albums Object, Array of Albums Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.
 		def create_albums(data=nil)
 			uri = URI.parse(@uri + '/Albums')
 			result = post(uri,data)
 		end
 
+		# Modify Albums.
+		#
+		# @param data [Single Albums Object, Array of Albums Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.
 		def update_albums(data=nil)
 			uri = URI.parse(@uri + '/Albums')
 			result = put(uri,data) 
@@ -322,6 +327,10 @@ module OpenAsset
 			results = get(uri,query_obj)
 		end
 
+		# Modify system Categories.
+		#
+		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.	
 		def update_categories(data=nil)
 			uri = URI.parse(@uri + "/Categories")
 			results = put(uri,data)
@@ -342,11 +351,19 @@ module OpenAsset
 			results = get(uri,query_obj)
 		end
 
+		# Create CopyrightHoloders.
+		#
+		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.	
 		def create_copyright_holders(data=nil)
 			uri = URI.parse(@uri + "/CopyrightHolders")
 			results = post(uri,data)
 		end
 
+		# Modify CopyrightHolders.
+		#
+		# @param data [Single CopyrightHolders Object, Array of CopyrightHoloders Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.	
 		def update_copyright_holders(data=nil)
 			uri = URI.parse(@uri + "/CopyrightHolders")
 			results = put(uri,data)
@@ -859,11 +876,19 @@ module OpenAsset
 			results = get(uri,query_obj)
 		end
 
+		# Create Project Keywords.
+		#
+		# @param data [Single ProjectKeywords Object, Array of ProjectKeywords Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.
 		def create_project_keywords(data=nil)
 			uri = URI.parse(@uri + "/ProjectKeywords")
 			results = post(uri,data)
 		end
 
+		# Modify Project Keywords.
+		#
+		# @param data [Single ProjectKeywords Object, Array of ProjectKeywords Objects] (Required)
+		# @return [JSON object] HTTP response JSON object.
 		def update_project_keywords(data=nil)
 			uri = URI.parse(@uri + "/ProjectKeywords")
 			results = put(uri,data)
