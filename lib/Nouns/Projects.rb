@@ -28,6 +28,7 @@ class Projects
 		@name_alias_2 = json_obj['name_alias_2']
 		@project_keywords = []
 		@fields = []
+		@albums = []
 
 		if json_obj['projectKeywords'].is_a?(Array) && !json_obj['projectKeywords'].empty?
 			#convert each of the nested project keywords into objects
@@ -46,6 +47,15 @@ class Projects
 				field.new(item['id'], item['values'])
 			end
 		end
+
+		if json_obj['albums'].is_a?(Array) && !json_obj['albums'].empty?
+			#You get the idea...
+			nested_album = Struct.new(:id)
+			@albums = json_obj['albums'].map do |item|
+				nested_album.new(item['id'])
+			end
+		end
+
 	end
 
 	def json
