@@ -81,6 +81,12 @@ class Projects
 			end
 		end
 
+		unless @albums.empty?
+			json_data[:albums] = @albums.map do |item|
+				item.to_h
+			end
+		end
+
 		return json_data			
 	end
 
