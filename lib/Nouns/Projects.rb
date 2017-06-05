@@ -49,7 +49,6 @@ class Projects
 		end
 
 		if json_obj['albums'].is_a?(Array) && !json_obj['albums'].empty?
-			#You get the idea...
 			nested_album = Struct.new(:id)
 			@albums = json_obj['albums'].map do |item|
 				nested_album.new(item['id'])
