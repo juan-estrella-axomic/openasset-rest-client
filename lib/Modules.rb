@@ -11,42 +11,76 @@ require_relative 'Nouns/Files.rb'
 
 module ArrayHelper
     
-    # #generate csv reports from Noun collections. Call on an array of Files Objects, Strings or Array of Strings
+    # Generate csv reports from Noun collections. Call on an array of Files Objects, Strings or Array of Strings
     #
     # @param client [String, Integer] Name of the csv being generated
     # @return [Boolean] Returns false on error.  
     def export_to_csv(client=nil)
         name = client.to_s || 'Client_Name'
+        object_variables = nil
+        noun = nil
         #check if the collection is emplty
         if self.empty?
-            warn "Oops. There are no items in the collection. No use in creating spreadsheet."
-            return false
+            warn "Oops. There are no items in the collection. " +
+            "No use in creating spreadsheet."
+            return
         end
        
         #processs the objects to extract the headers and rows for csv report
         #get the instance variables of the first object we will use it to
         #build the headers of the csv file and to retieve the values of the object
-        
-        object_variables = self.first.instance_variables.collect(&:itself)
+
+        #Notes -> instance variables must be initialized to at least nil
+        #in order for the instance_variables method to work
+        if Validator::NOUNS.include?(self.first.class.to_s) #its a NOUN
+
+            noun = true
+            
+            #TO DO: try using an exit clause in here
+            object_variables = self.first.instance_variables #returns an array
+            
+            puts "#{object_variables.inspect}"
+
+            #exit
+        end
 
         #Create csv file using the clients subdomain name and insert the headers
         filename = name + '_CSV_Export_' + Time.new.strftime("%Y%m%d%H%M%S") + '.csv'
-        puts filename.inspect
+        #puts filename.inspect
         #csv_file = File.new(filename, File::CREAT)
 
         CSV.open(filename, "w") do |csv|
-            if Validator::NOUNS.include?(self.first.class.to_s) #its a NOUN
-                csv_header = object_variables.map {|val| val.to_s.gsub('@','').upcase}
+            if noun
+                object = self.first || abort('Error: Collection is empty.')
+
+                #Create csv header and filter out nested resources
+                csv_header = object_variables.map do |obj_var|
+                    unless object.instance_variable_get(obj_var).is_a?(Array)                  
+                         obj_var.to_s.gsub('@','').upcase 
+                    end 
+                end 
+             
                 csv << csv_header
+              
                 #loop through each of the NOUN objects
                 self.each do |noun_obj|
+                    abort("noun_obj is nil") unless noun_obj
                     csv_values = Array.new
+                    
                     #loop through the object variables
-                    object_variables.each do |var|
-                        #build the array of values
-                        #use the noun_obj to access it values
-                        csv_values << (noun_obj.instance_variable_get(var)).to_s
+                    csv_header.each do |variable_name|
+                        
+                        #build the line to be inserted into csv file by
+                        if variable_name
+                            data = noun_obj.instance_variable_get('@' + variable_name.downcase)
+                            #we only want built in attributes
+                            unless data.is_a?(Array)
+                                csv_values << data
+                            end
+                        end
+                        
                     end
+
                     #write values to the spreadsheet
                     csv << csv_values
                 end
@@ -56,15 +90,16 @@ module ArrayHelper
                     #write values to the spreadsheet
                     csv << [str]
                 end
-            elsif self.first.is_a?(Array) && self.first.first.is_a?(String)
+            elsif self.first.is_a?(Array)
                 self.each do |arr|
                     #write values to the spreadsheet
                     csv << arr
                 end
             else
                  warn "Oops. Items in the collection are #{self.first.class.to_s} " + 
-                 "instead of NOUN objects, Strings, or arrays of Strings"
-                 return false
+                 "instead of NOUN objects, Strings, or a collection of Integers or Strings." +
+                 " Exiting."
+                 return
             end
         end
     end

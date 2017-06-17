@@ -12,7 +12,7 @@ class Projects
 					 " e.g. Projects.new(name,code) in that order." + 
 					 "\n\tInstead got #{args.inspect} => Creating empty ProjectKeywords object."
 			else
-				#set grab the agruments and set up the json object
+				#grab the agruments and set up the json object
 				json_obj = {"name" => args[0].to_s, "code" => args[1].to_s}
 			end
 		else

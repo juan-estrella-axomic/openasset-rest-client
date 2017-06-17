@@ -2,20 +2,19 @@ class ProjectKeywordCategories
 
 	attr_accessor :code, :display_order, :id, :name
 
-	def initialize(*args)
+	def initialize(arg=nil)
 		json_obj = nil	
-		len = args.length
 		
-		if (args[0].is_a?(String) || args[0].is_a?(Integer)) && len == 1
+		if arg.is_a?(String) || arg.is_a?(Integer)
 			json_obj = {"name" => args[0].to_s}
-		elsif (!args[0].is_a?(String) || !args[0].is_a?(Integer)) && len == 1
-			json_obj = Validator::validate_argument(args.first,'ProjectKeywordCategories')
-		else #This executes if you pass more than one argument
+		elsif arg.is_a?(Hash) || arg == nil
+			json_obj = (arg) ? arg : Hash.new
+		else 
 			warn "Argument Error:\n\tExpected either\n\t1. No Arguments\n\t2. A Hash\n\t" + 
 						"3. One string argument." +
 						" e.g. ProjectKeywordCategories.new(name)." + 
-						"\n\tInstead got #{args.inspect} => Creating empty ProjectKeywordCategories object."
-			json_obj = {}
+						"\n\tInstead got #{args.inspect}"
+			exit
 		end
 		
 		@code = json_obj['code']

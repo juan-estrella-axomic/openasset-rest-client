@@ -1,5 +1,5 @@
 
-require 'Version/version.rb'
+require_relative 'Version/version.rb'
 
 require_relative 'Authenticator.rb'
 require_relative 'RestOptions.rb'

@@ -1,5 +1,7 @@
 class RestOptions
 
+	attr_reader :options
+
 	def initialize
 		@options = ''
 	end
@@ -9,7 +11,7 @@ class RestOptions
 	def clean(value)
 		str = nil
 		if value.is_a?(String) || value.is_a?(Integer)
-			str_array = value.split(',') #spilt it
+			str_array = value.to_s.split(',') #spilt it
 			str_array = str_array.uniq	 #remove duplicates	
 			str_array = str_array.reject {|value| value.strip.length == 0} #remove empty values
 			str       = str_array.map {|value| value.strip }.uniq.join(',') #remove duplicates 																		#rebuild the string
