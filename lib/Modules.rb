@@ -9,7 +9,7 @@ require_relative 'Authenticator.rb'
 require_relative 'Downloader.rb'
 require_relative 'Nouns/Files.rb'
 
-module ArrayHelper
+module CSVHelper
     
     # Generate csv reports from Noun collections. Call on an array of Files Objects, Strings or Array of Strings
     #
@@ -103,8 +103,10 @@ module ArrayHelper
             end
         end
     end
+end
 
-    # Downloads actual image from Files Object using nested Sizes resource. Call on an array of Files Objects
+module DownloadHelper
+    # Downloads actual image from Files Object, Array of Files Objects, or a list of urls.
     #
     # @param size [String, Integer] Defaults to 1 to download original image.
     #                               Accepts image size id or postfix string value like 'medium' for example
@@ -136,8 +138,6 @@ module ArrayHelper
         
         #loop through objects in the Array
         self.each do |item|
-            #remove white space and new line characters
-            item.chomp!.strip!
             if item.is_a?(Files)
                 url = "https://" + item.get_image_size_file_path(size)          
                 uri = URI.parse(url)
@@ -145,7 +145,8 @@ module ArrayHelper
                 location = download_location + '/' + filename 
                 Downloader::download(uri,location)
             elsif item.is_a?(String) && item.include?('openasset.com')
-                url = item
+                #remove white space and new line characters
+                url = item.chomp.strip
                 uri_with_protocol = Regexp::new('(^https:\/\/|http:\/\/)\w+.+\w+.openasset.com', true)
                 #check if uri scheme is specified and
                 unless (uri_with_protocol =~ url) == 0 #starting position of regex string
@@ -156,7 +157,8 @@ module ArrayHelper
                 location = download_location + '/' + filename
                 Downloader::download(uri,location)
             elsif item.is_a?(String) #for non OpenAsset downloads
-                url = item
+                #remove white space and new line characters
+                url = item.chomp.strip
                 url_with_http = Regexp::new('(^https:\/\/|http:\/\/)', true)
                 #check if uri scheme is specified and
                 unless (url_with_http =~ url) == 0 #starting position of regex string

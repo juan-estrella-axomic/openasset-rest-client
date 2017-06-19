@@ -183,8 +183,8 @@ class Files
 			end
 		else
 			puts "Argument Error for 'get_url' method:\n\t" +
-				 "Expected a string id value, integer id value, or the image postfix string value.\n\t" +
-				 "Instead got => #{size.inspect}"
+				 "Expected an Integer or Numeric String id value, or the image size postfix name.\n\t" +
+				 "Instead got => #{search_parameter.inspect}"
 			return false
 		end
 	end

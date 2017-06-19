@@ -306,9 +306,9 @@ class Authenticator
 		if conf[url].nil?
 			puts "No Entry for #{url} found. No session to destroy."
 			return
-		elsif conf.has_key?(url) && conf[url].has_key?('session_key')
+		elsif conf.has_key?(url) && conf[url].has_key?('s')
 			#conf[url]['token'] = enc_token
-			conf[url]['session_key']  = enc_session_key
+			conf[url]['s']  = enc_session_key
 
 		else
 			warn "An unknown error happened while trying to kill the session."

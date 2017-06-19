@@ -62,8 +62,14 @@ class Validator
 			warn "Error: #{response.message}: try again later."
 			return response
 		else
-			warn "Error #{err_header} resource.\n\tMETHOD: #{http_method}\n\tCODE: #{response.code}" + 
-			     "\n\tMESSAGE: #{response.message} #{response.body}\n\tRESOURCE: #{resource}" 
+			error = "Error #{err_header} resource.\n\tMETHOD: #{http_method}\n\tCODE: #{response.code}" + 
+			        "\n\tMESSAGE: #{response.message} #{response.body}\n\tRESOURCE: #{resource}"
+
+			if response.code == '403' 
+				error += "\n\tThe image size specified is no longer be available. Go see the Wizard (aka Justin)."
+			end
+
+			warn error 
 				 
 			return response
 		end

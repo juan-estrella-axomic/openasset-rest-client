@@ -9,7 +9,8 @@ require_relative 'Modules.rb'
 #and add it to builtin ruby Array class
 
 class Array
-    include ArrayHelper
+    include CSVHelper
+    include DownloadHelper
 end
 
 
