@@ -680,7 +680,7 @@ module OpenAsset
 		# @param files [Single Files Object, Array of Files Objects] (Required)
 		# @param image_size [Integer, String] (Accepts image size id or postfix string: 
 		# 					Defaults to '1' => original image size id)
-		# @param download_location [String] (Default: Creates folder called Rest_Downloads in the same directory the script is launched from)
+		# @param download_location [String] (Default: Creates folder called Rest_Downloads in the current directory.)
 		# @return [nil].
 		def download_files(files=nil,image_size='1',download_location='./Rest_Downloads')
 			#Put single files objects in an array for easy downloading with 

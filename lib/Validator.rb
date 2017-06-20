@@ -66,7 +66,7 @@ class Validator
 			        "\n\tMESSAGE: #{response.message} #{response.body}\n\tRESOURCE: #{resource}"
 
 			if response.code == '403' 
-				error += "\n\tThe image size specified is no longer be available. Go see the Wizard (aka Justin)."
+				error += "\n\tDon't let the error fool you. The image size specified is no longer available. Go see the Wizard (aka Justin)."
 			end
 
 			warn error 

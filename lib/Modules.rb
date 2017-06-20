@@ -131,7 +131,7 @@ module DownloadHelper
         end 
 
         unless self.first.is_a?(Files) || self.first.is_a?(String)
-            puts "Error: 'download' method requires the the array only contains " +
+            puts "Error: 'download' method requires that the array only contains " +
                  "Files NOUN objects or url strings."
             return false
         end
