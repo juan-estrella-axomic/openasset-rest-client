@@ -11,8 +11,9 @@
     Mac:
     Comes preinstalled
     
+## Install the gem
 
-Install the gem by downloading it using the link below and running the gem install command from the folder containing the downloaded gem:
+Download it using the link below and run the gem install command from the folder containing the downloaded gem:
 
     https://www.dropbox.com/s/76je1ll4bzfjrpd/openasset-rest-client-1.0.1.gem?dl=0
     
