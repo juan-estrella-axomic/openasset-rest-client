@@ -1,6 +1,6 @@
 # Openasset
 
-# Install the Ruby interpreter if you don't already have it
+## Install the Ruby interpreter if you don't already have it
 
     Windows: Download and run the installer
     https://rubyinstaller.org/downloads/
