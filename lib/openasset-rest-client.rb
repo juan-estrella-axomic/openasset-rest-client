@@ -15,9 +15,19 @@ module OpenAsset
 		RESTRICTED_LIST_FIELD_TYPES   = %w[ suggestion fixedSuggestion option ]
 		NORMAL_FIELD_TYPES 		      = %w[ singleLine multiLine ]
 		ALLOWED_BOOLEAN_FIELD_OPTIONS = %w[ enable disable yes no set unset check uncheck tick untick on off true false 1 0]
+
+		# @!parse attr_reader :session, :uri
 		attr_reader :session, :uri
+		
+		# @!parse attr_accessor :verbose
 		attr_accessor :verbose
 
+		# Create new instance of the OpenAsset rest client
+		#
+		# @param [string] Cloud client url
+		# @return [RestClient object]
+		#
+		# @example rest_client = OpenAsset::RestClient.new('se1.openasset.com')
 		def initialize(client_url)
 			oa_uri_with_protocol    = Regexp::new('(^https:\/\/|http:\/\/)\w+.+\w+.openasset.(com)$', true)
 			oa_uri_without_protocol = Regexp::new('^\w+.+\w+.openasset.(com)$', true)
@@ -101,7 +111,7 @@ module OpenAsset
 		end
 
 		# @!visibility private
-		def post(uri,data)
+		def post(uri,data,generate_objects)
 			resource = ''
 			if uri.to_s.split('/').last.to_i == 0 #its a non numeric string meaning its a resource endpoint
 				resource = uri.to_s.split('/').last
@@ -133,10 +143,22 @@ module OpenAsset
 
 			Validator::process_http_response(response,@verbose,resource,'POST')
 
+			if generate_objects
+
+				inferred_class = Object.const_get(resource)
+			    
+				objects_array = JSON.parse(response.body).map { |item| inferred_class.new(item) }
+
+			else
+				# This is raw JSON
+				response
+
+			end
+
 		end
 
 		# @!visibility private
-		def put(uri,data)
+		def put(uri,data,generate_objects)
 			resource = uri.to_s.split('/').last
 			json_body = Validator::validate_and_process_request_data(data)
 			unless json_body
@@ -159,7 +181,19 @@ module OpenAsset
 				@session = response['X-SessionKey']
 			end
 
-			Validator::process_http_response(response,@verbose,resource,'PUT') #JSON object retured
+			Validator::process_http_response(response,@verbose,resource,'PUT')
+
+			if generate_objects
+
+				inferred_class = Object.const_get(resource)
+			    
+				objects_array = JSON.parse(response.body).map { |item| inferred_class.new(item) }
+
+			else
+				# This is raw JSON
+				response
+
+			end
 			
 		end
 
@@ -187,7 +221,9 @@ module OpenAsset
 				@session = response['X-SessionKey']
 			end
 
-			Validator::process_http_response(response,@verbose,resource,'DELETE') #JSON object retured
+			Validator::process_http_response(response,@verbose,resource,'DELETE')
+
+			response
 		end
 		
 		public
@@ -200,6 +236,8 @@ module OpenAsset
 		# Destroys current session
 		#
 		# @return [nil] Does not return anything.
+		# 
+		# @example rest_client.kill_session()
 		def kill_session
 			@authenticator.kill_session
 		end
@@ -207,6 +245,8 @@ module OpenAsset
 		# Generates a new session
 		#
 		# @return [nil] Does not return anything.
+		# 
+		# @example rest_client.get_session()
 		def get_session
 			@authenticator.get_session
 		end
@@ -214,6 +254,8 @@ module OpenAsset
 		# Destroys current session and Generates new one
 		#
 		# @return [nil] Does not return anything.
+		# 
+		# @example rest_client.renew_session()
 		def renew_session
 			@authenticator.kill_session
 			@authenticator.get_session
@@ -236,6 +278,10 @@ module OpenAsset
 		#
 		# @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
 		# @return [Array] Returns an array of AccessLevels objects.
+		#
+		# @example 
+		#          rest_client.get_access_levels
+		#          rest_client.get_access_levels(rest_options_object)
 		def get_access_levels(query_obj=nil)
 			uri = URI.parse(@uri + "/AccessLevels")
 			results = get(uri,query_obj)
@@ -251,6 +297,10 @@ module OpenAsset
 		#
 		# @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
 		# @return [Array] Returns an array of Albums objects.
+		#
+		# @example 
+		#          rest_client.get_albums()
+		#          rest_client.get_albums(rest_options_object)
 		def get_albums(query_obj=nil)	
 			uri = URI.parse(@uri + "/Albums")
 			result = get(uri,query_obj)
@@ -260,24 +310,40 @@ module OpenAsset
 		#
 		# @param data [Single Albums Object, Array of Albums Objects] (Required)
 		# @return [JSON object] HTTP response JSON object.
-		def create_albums(data=nil)
+		#
+		# @example 
+		#          rest_client.create_albums(albums_obj)
+		#          rest_client.create_albums(albums_obj,true)
+		def create_albums(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + '/Albums')
-			result = post(uri,data)
+			result = post(uri,data,generate_objects)
 		end
 
 		# Modify Albums.
 		#
 		# @param data [Single Albums Object, Array of Albums Objects] (Required)
 		# @return [JSON object] HTTP response JSON object.
-		def update_albums(data=nil)
+		#
+		# @example 
+		#          rest_client.update_albums(albums_obj)
+		#          rest_client.update_albums(albums_obj,true)
+		def update_albums(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + '/Albums')
-			result = put(uri,data) 
+			result = put(uri,data,generate_objects) 
 		end
 		
 		# Delete Albums.
 		#
-		# @param data [Single Albums Object, Array of Albums Objects] (Required)
+		# @param data [Single Albums Object, Array of Albums Objects, Integer, String, Integer Array, Numeric String Array (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_albums(albums_obj)
+		#          rest_client.delete_albums(albums_objects_array)
+		#          rest_client.delete_albums([1,2,3])
+		#          rest_client.delete_albums(['1','2','3'])
+		#          rest_client.delete_albums(1)
+		#          rest_client.delete_albums('1')
 		def delete_albums(data=nil)
 			uri = URI.parse(@uri + '/Albums')
 			result = delete(uri,data)
@@ -293,6 +359,10 @@ module OpenAsset
 		#
 		# @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
 		# @return [Array] Returns an array of AlternateStores objects.
+		#
+		# @example 
+		#          rest_client.get_alternate_stores()
+		#          rest_client.get_alternate_stores(rest_options_object)
 		def get_alternate_stores(query_obj=nil)
 			uri = URI.parse(@uri + "/AlternateStores")
 			results = get(uri,query_obj)
@@ -308,6 +378,10 @@ module OpenAsset
 		#
 		# @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
 		# @return [Array] Returns an array of AspectRatios objects.
+		#
+		# @example 
+		#          rest_client.get_aspect_ratios()
+		#          rest_client.get_aspect_ratios(rest_options_object)
 		def get_aspect_ratios(query_obj=nil)
 			uri = URI.parse(@uri + "/AspectRatios")
 			results = get(uri,query_obj)
@@ -323,6 +397,10 @@ module OpenAsset
 		#
 		# @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
 		# @return [Array] Returns an array of Categories objects.
+		#
+		# @example 
+		#          rest_client.get_categories()
+		#          rest_client.get_categories(rest_options_object)
 		def get_categories(query_obj=nil)
 			uri = URI.parse(@uri + "/Categories")
 			results = get(uri,query_obj)
@@ -331,10 +409,14 @@ module OpenAsset
 		# Modify system Categories.
 		#
 		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
-		# @return [JSON object] HTTP response JSON object.	
-		def update_categories(data=nil)
+		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.update_categories(categories_obj)
+		#          rest_client.update_categories(categories_obj,true)	
+		def update_categories(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Categories")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		#####################
@@ -347,6 +429,10 @@ module OpenAsset
 		#
 		# @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
 		# @return [Array] Returns an array of CopyrightHolders objects.
+		#
+		# @example 
+		#          rest_client.get_copyright_holders()
+		#          rest_client.get_copyright_holders(rest_options_object)
 		def get_copyright_holders(query_obj=nil)
 			uri = URI.parse(@uri + "/CopyrightHolders")
 			results = get(uri,query_obj)
@@ -355,19 +441,27 @@ module OpenAsset
 		# Create CopyrightHoloders.
 		#
 		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
-		# @return [JSON object] HTTP response JSON object.	
-		def create_copyright_holders(data=nil)
+		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.create_copyright_holders(copyright_holders_obj)
+		#          rest_client.create_copyright_holders(copyright_holders_obj,true)	
+		def create_copyright_holders(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/CopyrightHolders")
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modify CopyrightHolders.
 		#
 		# @param data [Single CopyrightHolders Object, Array of CopyrightHoloders Objects] (Required)
-		# @return [JSON object] HTTP response JSON object.	
-		def update_copyright_holders(data=nil)
+		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.update_copyright_holders(copyright_holders_obj)
+		#          rest_client.update_copyright_holders(copyright_holders_obj,true)	
+		def update_copyright_holders(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/CopyrightHolders")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		######################
@@ -380,6 +474,10 @@ module OpenAsset
 		#
 		# @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
 		# @return [Array] Returns an array of CopyrightPolicies objects.
+		#
+		# @example 
+		#          rest_client.get_copyright_policies()
+		#          rest_client.get_copyright_policies(rest_options_object)
 		def get_copyright_policies(query_obj=nil)
 			uri = URI.parse(@uri + "/CopyrightPolicies")
 			results = get(uri,query_obj)
@@ -388,7 +486,11 @@ module OpenAsset
 		# Create CopyrightPolicies.
 		#
 		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
-		# @return [JSON object] HTTP response JSON object.	
+		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.create_copyright_policies(copyright_policies_obj)
+		#          rest_client.create_copyright_policies(copyright_policies_obj,true)		
 		def create_copyright_policies(data=nil)
 			uri = URI.parse(@uri + "/CopyrightPolicies")
 			results = post(uri,data)
@@ -397,7 +499,11 @@ module OpenAsset
 		# Modify CopyrightPolicies.
 		#
 		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
-		# @return [JSON object] HTTP response JSON object.	
+		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.update_copyright_policies(copyright_policies_obj)
+		#          rest_client.update_copyright_policies(copyright_policies_obj,true)	
 		def update_copyright_policies(data=nil)
 			uri = URI.parse(@uri + "/CopyrightPolicies")
 			results = put(uri,data)
@@ -422,6 +528,10 @@ module OpenAsset
 		#
 		# @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
 		# @return [Array] Returns an array of Fields objects.
+		#
+		# @example 
+		#          rest_client.get_fields()
+		#          rest_client.get_fields(rest_options_object)
 		def get_fields(query_obj=nil)
 			uri = URI.parse(@uri + "/Fields")
 			results = get(uri,query_obj)
@@ -431,18 +541,26 @@ module OpenAsset
 		#
 		# @param data [Single Fields Object, Array of Fields Objects]
 		# @return [JSON object] HTTP response JSON object.
-		def create_fields(data=nil)
+		#
+		# @example 
+		#          rest_client.create_fields(fields_obj)
+		#          rest_client.create_fields(fields_obj,true)	
+		def create_fields(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Fields")
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modify fields.
 		#
 		# @param data [Single Fields Object, Array of Fields Objects]
 		# @return [JSON object] HTTP response JSON object.
-		def update_fields(data=nil)
+		#
+		# @example 
+		#          rest_client.update_fields(fields_obj)
+		#          rest_client.update_fields(fields_obj,true)	
+		def update_fields(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Fields")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		# Disable fields.
@@ -465,6 +583,10 @@ module OpenAsset
 		# @param field [Fields Object, Hash, String, Integer] Argument must specify the field id (Required)
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of FieldLookupStrings.
+		#
+		# @example 
+		#          rest_client.get_field_lookup_strings()
+		#          rest_client.get_field_lookup_strings(rest_options_object)
 		def get_field_lookup_strings(field=nil,query_obj=nil)
 			id = Validator::validate_field_lookup_string_arg(field)
 			
@@ -477,11 +599,15 @@ module OpenAsset
 		# @param field [Fields Object, Hash, String, Integer] Argument must specify the field id (Required)
 		# @param data [Single FieldLookupString Object, Array of FieldLookupString Objects]
 		# @return [JSON object] HTTP response JSON object.
-		def create_field_lookup_strings(field=nil,data=nil)
+		#
+		# @example 
+		#          rest_client.create_field_lookup_strings(albums_obj)
+		#          rest_client.create_field_lookup_strings(albums_obj,true)	
+		def create_field_lookup_strings(field=nil,data=nil,generate_objects=false)
 			id = Validator::validate_field_lookup_string_arg(field)
 			
 			uri = URI.parse(@uri + '/Fields' + "/#{id}" +'/FieldLookupStrings')
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modifies options for Fixed Suggestion, Suggestion, and Option field types.
@@ -489,11 +615,15 @@ module OpenAsset
 		# @param field [Fields Object, Hash, String, Integer] Argument must specify the field id (Required)
 		# @param data [Single FieldLookupString Object, Array of FieldLookupString Objects]
 		# @return [JSON object] HTTP response JSON object.
-		def update_field_lookup_strings(field=nil,data=nil)
+		#
+		# @example 
+		#          rest_client.update_field_lookup_strings(field_lookup_strings_obj)
+		#          rest_client.update_field_lookup_strings(field_lookup_strings_obj,true)	
+		def update_field_lookup_strings(field=nil,data=nil,generate_objects=false)
 			id = Validator::validate_field_lookup_string_arg(field)
 			
 			uri = URI.parse(@uri + '/Fields' + "/#{id}" +'/FieldLookupStrings')
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		# Delete an item and/or option for Fixed Suggestion, Suggestion, and Option field types.
@@ -508,15 +638,24 @@ module OpenAsset
 			results = delete(uri,data)
 		end
 
+		#########
+		#       #
+		# Files #
+		#       #
+		#########
+
 		# Retrieves Files objects with ALL nested resources - including their nested image sizes - from OpenAsset.
 		#
 		# @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
 		# @return [Array] Returns an array of Files objects.
+		#
+		# @example 
+		#          rest_client.get_files()
+		#          rest_client.get_files(rest_options_object)
 		def get_files(query_obj=nil)
 			uri = URI.parse(@uri + "/Files")
 			results = get(uri,query_obj)
 		end
-
 
 		# Uploads a file to OpenAsset.
 		#
@@ -524,7 +663,24 @@ module OpenAsset
 		# @param category [Categories Object,String,Integer] containing Target Category ID in OpenAsset (Required)
 		# @param project [Projects Object, String, Integer] Project ID in OpenAsset (Specified only when Category is project based)
 		# @return [JSON Object] HTTP response JSON object.
-		def upload_file(file=nil, category=nil, project=nil) 
+		#
+		# FOR PROJECT UPLOADS
+		# @example rest_client.upload_file('/path/to/file', category_obj, project_obj)
+		#  		   rest_client.upload_file('/path/to/file','2','10')
+		# 		   rest_client.upload_file('/path/to/file', 2, 10)
+		#          rest_client.upload_file('/path/to/file', category_obj, project_obj, true)
+		#          rest_client.upload_file('/path/to/file','2','10', true)
+		#          rest_client.upload_file('/path/to/file', 2, 10, true)
+		#
+		#
+		# FOR REFERENCE UPLOADS
+		# @example rest_client.upload_file('/path/to/file', category_obj)
+		#          rest_client.upload_file('/path/to/file','2')
+		#          rest_client.upload_file('/path/to/file', 2,)
+		#          rest_client.upload_file('/path/to/file', category_obj, nil, true)
+		#          rest_client.upload_file('/path/to/file','2', nil, true)
+		#          rest_client.upload_file('/path/to/file', 2, nil, true)
+		def upload_file(file=nil, category=nil, project=nil, generate_objects=false) 
 		
 			unless File.exists?(file.to_s)
 				puts "Error: The file provided does not exist -\"#{file}\"...Bailing out."
@@ -589,7 +745,20 @@ module OpenAsset
 				request.body = body.join
 				http.request(request)
 			end
-			Validator::process_http_response(response,@verbose,'Files','POST')		
+
+			Validator::process_http_response(response,@verbose,'Files','POST')
+
+			if generate_objects
+
+				inferred_class = Object.const_get('Files')
+			    
+				objects_array = JSON.parse(response.body).map { |item| inferred_class.new(item) }
+
+			else
+				# This is raw JSON
+				response
+
+			end		
 		end
 
 		# Replace a file in OpenAsset.
@@ -597,8 +766,9 @@ module OpenAsset
 		# @param original_file_object [Single Files Object] (Required)
 		# @param replacement_file_path [String] (Required)
 		# @param retain_original_filename_in_oa [Boolean] (Optional)
-		# @return [JSON object] HTTP response JSON object.
-		def replace_file(original_file_object=nil, replacement_file_path='', retain_original_filename_in_oa=false) 
+		# @param generate_objects [Boolean] Return an array of Files or JSON objects in response body (Default => false)
+		# @return [JSON object or Files Object Array ].
+		def replace_file(original_file_object=nil, replacement_file_path='', retain_original_filename_in_oa=false, generate_objects=false) 
 			file_object = (original_file_object.is_a?(Array)) ? original_file_object.first : original_file_object
 			uri = URI.parse(@uri + "/Files")
 			id = file_object.id.to_s
@@ -672,7 +842,19 @@ module OpenAsset
 				request.body = body.join
 				http.request(request)
 			end
-			Validator::process_http_response(response,@verbose,'Files', 'PUT')	
+			Validator::process_http_response(response,@verbose,'Files', 'PUT')
+
+			if generate_objects
+
+				inferred_class = Object.const_get('Files')
+			    
+				objects_array = JSON.parse(response.body).map { |item| inferred_class.new(item) }
+
+			else
+				# This is raw JSON
+				response
+
+			end	
 		end
 
 		# Download Files.
@@ -694,9 +876,9 @@ module OpenAsset
 		#
 		# @param data [Single Files Object, Array of Files Objects] (Required)
 		# @return [JSON object] HTTP response JSON object.
-		def update_files(data=nil)
+		def update_files(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Files")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		# Delete Files.
@@ -718,6 +900,9 @@ module OpenAsset
 		#
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example rest_client.get_groups()
+		# @example rest_client.get_groups(rest_options_object)
 		def get_groups(query_obj=nil)
 			uri = URI.parse(@uri + "/Groups")
 			results = get(uri,query_obj)
@@ -733,6 +918,9 @@ module OpenAsset
 		#
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Keywords objects.
+		#
+		# @example rest_client.get_keywords()
+		# @example rest_client.get_keywords(rest_options_object)
 		def get_keywords(query_obj=nil)
 			uri = URI.parse(@uri + "/Keywords")
 			results = get(uri,query_obj)
@@ -775,6 +963,9 @@ module OpenAsset
 		#
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of KeywordCategories objects.
+		#
+		# @example rest_client.get_keyword_categories()
+		# @example rest_client.get_keyword_categories(rest_options_object)
 		def get_keyword_categories(query_obj=nil)
 			uri = URI.parse(@uri + "/KeywordCategories")
 			results = get(uri,query_obj)
@@ -817,6 +1008,9 @@ module OpenAsset
 		#
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Photographers objects.
+		#
+		# @example rest_client.get_photographers()
+		# @example rest_client.get_photographers(rest_options_object)
 		def get_photographers(query_obj=nil)
 			uri = URI.parse(@uri + "/Photographers")
 			results = get(uri,query_obj)
@@ -845,6 +1039,14 @@ module OpenAsset
 		# PROJECTS #
 		#          #
 		############
+
+		# Retrieve projects
+		#
+		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+		# @return [Array] Array of Projects objects.
+		#
+		# @example rest_client.get_projects()
+		# @example rest_client.get_projects(rest_options_object)
 		def get_projects(query_obj=nil)
 			uri = URI.parse(@uri + "/Projects")
 			results = get(uri,query_obj)
@@ -887,6 +1089,9 @@ module OpenAsset
 		#
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of ProjectKeywords objects.
+		#
+		# @example rest_client.get_project_keywords()
+		# @example rest_client.get_project_keywords(rest_options_object)
 		def get_project_keywords(query_obj=nil)
 			uri = URI.parse(@uri + "/ProjectKeywords")
 			results = get(uri,query_obj)
@@ -929,6 +1134,9 @@ module OpenAsset
 		#
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of ProjectKeywordCategories objects.
+		#
+		# @example rest_client.get_project_keyword_categories()
+		# @example rest_client.get_project_keyword_categories(rest_options_object)
 		def get_project_keyword_categories(query_obj=nil)
 			uri = URI.parse(@uri + "/ProjectKeywordCategories")
 			results = get(uri,query_obj)
@@ -971,6 +1179,9 @@ module OpenAsset
 		#
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Searches objects.
+		#
+		# @example rest_client.get_searches()
+		# @example rest_client.get_searches(rest_options_object)
 		def get_searches(query_obj=nil)
 			uri = URI.parse(@uri + "/Searches")
 			results = get(uri,query_obj)
@@ -1004,6 +1215,9 @@ module OpenAsset
 		#
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Sizes objects.
+		#
+		# @example rest_client.get_image_sizes()
+		# @example rest_client.get_image_sizes(rest_options_object)
 		def get_image_sizes(query_obj=nil)
 			uri = URI.parse(@uri + "/Sizes")
 			results = get(uri,query_obj)
@@ -1046,6 +1260,9 @@ module OpenAsset
 		#
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of TextRewrites objects.
+		#
+		# @example rest_client.get_text_rewrites()
+		# @example rest_client.get_text_rewrites(rest_options_object)
 		def get_text_rewrites(query_obj=nil)
 			uri = URI.parse(@uri + "/TextRewrites")
 			results = get(uri,query_obj)
@@ -1061,6 +1278,9 @@ module OpenAsset
 		#
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Users objects.
+		#
+		# @example rest_client.get_users()
+		# @example rest_client.get_users(rest_options_object)
 		def get_users(query_obj=nil)
 			uri = URI.parse(@uri + "/Users")
 			results = get(uri,query_obj)
@@ -1077,6 +1297,11 @@ module OpenAsset
 		# @param files [Single Files Object, Array of Files Objects] (Required)
 		# @param keywords [Single Keywords Object, Array of Keywords Objects] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example rest_client.file_add_keywords(files_object,keywords_object)
+		# @example rest_client.file_add_keywords(files_objects_array,keywords_objects_array)
+		# @example rest_client.file_add_keywords(files_object,keywords_objects_array)
+		# @example rest_client.file_add_keywords(files_objects_array,project_keywords_object)
 		def file_add_keywords(files=nil,keywords=nil)
 		
 			#1.validate class types
@@ -1135,6 +1360,11 @@ module OpenAsset
 		# @param projects [Single Projects Object, Array of Projects Objects] (Required)
 		# @param proj_keywords [Single ProjectKeywords Object, Array of ProjectKeywords Objects] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example rest_client.project_add_keywords(projects_object,project_keywords_object)
+		# @example rest_client.project_add_keywords(projects_objects_array,project_keywords_objects_array)
+		# @example rest_client.project_add_keywords(projects_object,project_keywords_objects_array)
+		# @example rest_client.project_add_keywords(projects_objects_array,project_keywords_object)
 		def project_add_keywords(projects=nil,proj_keywords=nil)
 			
 			#1.validate class types
@@ -1193,12 +1423,14 @@ module OpenAsset
 			end
 		end
 
-		# Add data to any File field (built-in or custom).
+		# Add data to ANY File field (built-in or custom).
 		#
 		# @param file [Files Object] (Required)
 		# @param field [Fields Object] (Required)
 		# @param value [String, Integer, Float] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example rest_client.file_add_field_data(files_object,fields_object,'data to be inserted')
 		def file_add_field_data(file=nil,field=nil,value=nil)
 
 			#validate class types
@@ -1390,12 +1622,14 @@ module OpenAsset
 			end
 		end
 
-		# Add data to any Project field (built-in or custom).
+		# Add data to ANY Project field (built-in or custom).
 		#
 		# @param project [Projects Object] (Required)
 		# @param field [Fields Object] (Required)
 		# @param value [String, Integer, Float] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example rest_client.project_add_field_data(projects_object,fields_object,'data to be inserted')
 		def project_add_field_data(project=nil,field=nil,value=nil)
 
 			#validate class types
