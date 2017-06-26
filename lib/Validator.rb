@@ -71,7 +71,6 @@ class Validator
 
 			warn error 
 				 
-			return response
 		end
 	end
 
