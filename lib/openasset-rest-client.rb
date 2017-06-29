@@ -27,7 +27,8 @@ module OpenAsset
 		# @param [string] Cloud client url
 		# @return [RestClient object]
 		#
-		# @example rest_client = OpenAsset::RestClient.new('se1.openasset.com')
+		# @example 
+		#         rest_client = OpenAsset::RestClient.new('se1.openasset.com')
 		def initialize(client_url)
 			oa_uri_with_protocol    = Regexp::new('(^https:\/\/|http:\/\/)\w+.+\w+.openasset.(com)$', true)
 			oa_uri_without_protocol = Regexp::new('^\w+.+\w+.openasset.(com)$', true)
@@ -309,11 +310,15 @@ module OpenAsset
 		# Create Albums.
 		#
 		# @param data [Single Albums Object, Array of Albums Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
 		#          rest_client.create_albums(albums_obj)
-		#          rest_client.create_albums(albums_obj,true)
+		#          rest_client.create_albums(albums_obj_array)
+		#     	   rest_client.create_albums(albums_obj,true)
+		#          rest_client.create_albums(albums_obj_array,true)
 		def create_albums(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + '/Albums')
 			result = post(uri,data,generate_objects)
@@ -322,11 +327,15 @@ module OpenAsset
 		# Modify Albums.
 		#
 		# @param data [Single Albums Object, Array of Albums Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
 		#          rest_client.update_albums(albums_obj)
 		#          rest_client.update_albums(albums_obj,true)
+		#          rest_client.update_albums(albums_obj_array)
+		#          rest_client.update_albums(albums_obj_array,true)
 		def update_albums(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + '/Albums')
 			result = put(uri,data,generate_objects) 
@@ -409,11 +418,15 @@ module OpenAsset
 		# Modify system Categories.
 		#
 		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
 		#          rest_client.update_categories(categories_obj)
-		#          rest_client.update_categories(categories_obj,true)	
+		#          rest_client.update_categories(categories_obj,true)
+		#          rest_client.update_categories(categories_obj_array)
+		#          rest_client.update_categories(categories_obj_array,true)	
 		def update_categories(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Categories")
 			results = put(uri,data,generate_objects)
@@ -441,11 +454,15 @@ module OpenAsset
 		# Create CopyrightHoloders.
 		#
 		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
 		#          rest_client.create_copyright_holders(copyright_holders_obj)
-		#          rest_client.create_copyright_holders(copyright_holders_obj,true)	
+		#          rest_client.create_copyright_holders(copyright_holders_obj_array)
+		#          rest_client.create_copyright_holders(copyright_holders_obj,true)
+		#          rest_client.create_copyright_holders(copyright_holders_obj_array,true)	
 		def create_copyright_holders(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/CopyrightHolders")
 			results = post(uri,data,generate_objects)
@@ -454,11 +471,15 @@ module OpenAsset
 		# Modify CopyrightHolders.
 		#
 		# @param data [Single CopyrightHolders Object, Array of CopyrightHoloders Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
 		#          rest_client.update_copyright_holders(copyright_holders_obj)
-		#          rest_client.update_copyright_holders(copyright_holders_obj,true)	
+		#          rest_client.update_copyright_holders(copyright_holders_obj,true)
+		#          rest_client.update_copyright_holders(copyright_holders_obj_array)
+		#          rest_client.update_copyright_holders(copyright_holders_obj_array,true)	
 		def update_copyright_holders(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/CopyrightHolders")
 			results = put(uri,data,generate_objects)
@@ -486,33 +507,49 @@ module OpenAsset
 		# Create CopyrightPolicies.
 		#
 		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
 		#          rest_client.create_copyright_policies(copyright_policies_obj)
-		#          rest_client.create_copyright_policies(copyright_policies_obj,true)		
-		def create_copyright_policies(data=nil)
+		#          rest_client.create_copyright_policies(copyright_policies_obj_array)
+		#          rest_client.create_copyright_policies(copyright_policies_obj,true)
+		#          rest_client.create_copyright_policies(copyright_policies_obj_array,true)		
+		def create_copyright_policies(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/CopyrightPolicies")
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modify CopyrightPolicies.
 		#
 		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
 		#          rest_client.update_copyright_policies(copyright_policies_obj)
-		#          rest_client.update_copyright_policies(copyright_policies_obj,true)	
-		def update_copyright_policies(data=nil)
+		#          rest_client.update_copyright_policies(copyright_policies_obj,true)
+		#          rest_client.update_copyright_policies(copyright_policies_obj_array)
+		#          rest_client.update_copyright_policies(copyright_policies_obj_array,true)	
+		def update_copyright_policies(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/CopyrightPolicies")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		# Disables CopyrightPolicies.
 		#
-		# @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
-		# @return [JSON object] HTTP response JSON object.		
+		# @param data [Single CopyrightPolicies Object, CopyrightPolicies Objects Array, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
+		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_copyright_policies(copyright_policies_obj)
+		#          rest_client.delete_copyright_policies(copyright_policies_obj_array)
+		#          rest_client.delete_copyright_policies([1,2,3])
+		#          rest_client.delete_copyright_policies(['1','2','3'])
+		#          rest_client.delete_copyright_policies(1)
+		#          rest_client.delete_copyright_policies('1')		
 		def delete_copyright_policies(data=nil)
 			uri = URI.parse(@uri + "/CopyrightPolicies")
 			results = delete(uri,data)
@@ -539,12 +576,16 @@ module OpenAsset
 
 		# Create fields.
 		#
-		# @param data [Single Fields Object, Array of Fields Objects]
+		# @param data [Single Fields Object, Array of Fields Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
 		#          rest_client.create_fields(fields_obj)
-		#          rest_client.create_fields(fields_obj,true)	
+		#          rest_client.create_fields(fields_obj_array)
+		#          rest_client.create_fields(fields_obj,true)
+		#          rest_client.create_fields(fields_obj_array,true)	
 		def create_fields(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Fields")
 			results = post(uri,data,generate_objects)
@@ -552,12 +593,16 @@ module OpenAsset
 
 		# Modify fields.
 		#
-		# @param data [Single Fields Object, Array of Fields Objects]
+		# @param data [Single Fields Object, Array of Fields Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
 		#          rest_client.update_fields(fields_obj)
-		#          rest_client.update_fields(fields_obj,true)	
+		#          rest_client.update_fields(fields_obj,true)
+		#          rest_client.update_fields(fields_obj_array)
+		#          rest_client.update_fields(fields_obj_array,true)	
 		def update_fields(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Fields")
 			results = put(uri,data,generate_objects)
@@ -565,8 +610,16 @@ module OpenAsset
 
 		# Disable fields.
 		#
-		# @param data [Single Fields Object, Array of Fields Objects]
+		# @param data [Single Fields Object, Array of Fields Objects, Integer, Integer Array, Numeric String, Numeric String Array]
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_fields(fields_obj)
+		#          rest_client.delete_fields(fields_obj_array)
+		#          rest_client.delete_fields([1,2,3])
+		#          rest_client.delete_fields(['1','2','3'])
+		#          rest_client.delete_fields(1)
+		#          rest_client.delete_fields('1')	
 		def delete_fields(data=nil)
 			uri = URI.parse(@uri + "/Fields")
 			results = delete(uri,data)
@@ -598,11 +651,15 @@ module OpenAsset
 		#
 		# @param field [Fields Object, Hash, String, Integer] Argument must specify the field id (Required)
 		# @param data [Single FieldLookupString Object, Array of FieldLookupString Objects]
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
-		#          rest_client.create_field_lookup_strings(albums_obj)
-		#          rest_client.create_field_lookup_strings(albums_obj,true)	
+		#          rest_client.create_field_lookup_strings(field_lookup_strings_obj)
+		#          rest_client.create_field_lookup_strings(field_lookup_strings_array)
+		#          rest_client.create_field_lookup_strings(field_lookup_strings_obj,true)
+		#          rest_client.create_field_lookup_strings(field_lookup_strings_obj_array,true)	
 		def create_field_lookup_strings(field=nil,data=nil,generate_objects=false)
 			id = Validator::validate_field_lookup_string_arg(field)
 			
@@ -613,12 +670,16 @@ module OpenAsset
 		# Modifies options for Fixed Suggestion, Suggestion, and Option field types.
 		#
 		# @param field [Fields Object, Hash, String, Integer] Argument must specify the field id (Required)
-		# @param data [Single FieldLookupString Object, Array of FieldLookupString Objects]
+		# @param data [Single FieldLookupString Object, Array of FieldLookupString Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
 		#
 		# @example 
-		#          rest_client.update_field_lookup_strings(field_lookup_strings_obj)
-		#          rest_client.update_field_lookup_strings(field_lookup_strings_obj,true)	
+		#          rest_client.update_field_lookup_strings(field_obj,field_lookup_strings_obj)
+		#          rest_client.update_field_lookup_strings(field_obj,field_lookup_strings_obj,true)
+		#          rest_client.update_field_lookup_strings(field_obj,field_lookup_strings_obj_array)
+		#          rest_client.update_field_lookup_strings(field_obj,field_lookup_strings_obj_array,true)	
 		def update_field_lookup_strings(field=nil,data=nil,generate_objects=false)
 			id = Validator::validate_field_lookup_string_arg(field)
 			
@@ -628,14 +689,23 @@ module OpenAsset
 
 		# Delete an item and/or option for Fixed Suggestion, Suggestion, and Option field types.
 		#
-		# @param field [Fields Object, Hash, String, Integer] Argument must specify the field id
-		# @param data [Single FieldLookupString Object, Array of FieldLookupString Objects]
+		# @param field [Fields Object, String, Integer] Argument must specify the field id
+		# @param data [Single FieldLookupString Object, Array of FieldLookupString Objects, Integer, Integer Array, Numeric String, Numeric String Array]
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_fields_lookup_strings(field_obj, field_lookup_strings_obj)
+		#          rest_client.delete_fields_lookup_strings(field_obj, field_lookup_strings_obj_array)
+		#          rest_client.delete_fields_lookup_strings(field_obj, [1,2,3])
+		#          rest_client.delete_fields_lookup_strings(filed_obj, ['1','2','3'])
+		#          rest_client.delete_fields_lookup_strings(field_obj, 1)
+		#          rest_client.delete_fields_lookup_strings(field_obj, '1')
 		def delete_field_lookup_strings(field=nil,data=nil)
+
 			id = Validator::validate_field_lookup_string_arg(field)
 			
 			uri = URI.parse(@uri + '/Fields' + "/#{id}" +'/FieldLookupStrings')
-			results = delete(uri,data)
+			results = delete(uri,data) #data parameter validated in private delete method
 		end
 
 		#########
@@ -875,7 +945,15 @@ module OpenAsset
 		# Update Files.
 		#
 		# @param data [Single Files Object, Array of Files Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.update_files(files_obj)
+		#          rest_client.update_files(files_obj,true)
+		#          rest_client.update_files(files_obj_array)
+		#          rest_client.update_files(files_obj_array,true)
 		def update_files(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Files")
 			results = put(uri,data,generate_objects)
@@ -883,8 +961,16 @@ module OpenAsset
 
 		# Delete Files.
 		#
-		# @param data [Single Files Object, Array of Files Objects] (Required)
+		# @param data [Single Files Object, Array of Files Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_files(files_obj)
+		#          rest_client.delete_files(files_obj_array)
+		#          rest_client.delete_files([1,2,3])
+		#          rest_client.delete_files(['1','2','3'])
+		#          rest_client.delete_files(1)
+		#          rest_client.delete_files('1')
 		def delete_files(data=nil)
 			uri = URI.parse(@uri + "/Files")
 			results = delete(uri,data)
@@ -929,25 +1015,49 @@ module OpenAsset
 		# Create new file Keywords in OpenAsset.
 		#
 		# @param data [Single Keywords Object, Array of Keywords Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
-		def create_keywords(data=nil)
+		#
+		# @example 
+		#          rest_client.create_keywords(keywords_obj)
+		#          rest_client.create_keywords(keywords_obj_array)	
+		#          rest_client.create_keywords(keywords_obj,true)
+		#          rest_client.create_keywords(keywords_obj_array,true)	
+		def create_keywords(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Keywords")
-			results = post(uri,data)
+			results = post(uri,data,,generate_objects)
 		end
 
 		# Modify file Keywords.
 		#
 		# @param data [Single Keywords Object, Array of Keywords Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
-		def update_keywords(data=nil)
+		#
+		# @example 
+		#          rest_client.update_keywords(keywords_obj)
+		#          rest_client.update_keywords(keywords_obj,true)
+		#          rest_client.update_keywords(keywords_obj_array)
+		#          rest_client.update_keywords(keywords_obj_array,true)
+		def update_keywords(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Keywords")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		# Delete Keywords.
 		#
-		# @param data [Single Keywords Object, Array of Keywords Objects] (Required)
+		# @param data [Single Keywords Object, Array of Keywords Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_keywords(keywords_obj)
+		#          rest_client.delete_keywords(keywords_obj_array)
+		#          rest_client.delete_keywords([1,2,3])
+		#          rest_client.delete_keywords(['1','2','3'])
+		#          rest_client.delete_keywords(1)
+		#          rest_client.delete_keywords('1')
 		def delete_keywords(data=nil)
 			uri = URI.parse(@uri + "/Keywords")
 			results = delete(uri,data)
@@ -974,25 +1084,49 @@ module OpenAsset
 		# Create file keyword categories.
 		#
 		# @param data [Single KeywordCategories Object, Array of KeywordCategories Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
-		def create_keyword_categories(data=nil)
+		#
+		# @example 
+		#          rest_client.create_keyword_categories(keyword_categories_obj)
+		#          rest_client.create_keyword_categories(keyword_categories_obj_array)	
+		#          rest_client.create_keyword_categories(keyword_categories_obj,true)
+		#          rest_client.create_keyword_categories(keyword_categories_obj_array,true)
+		def create_keyword_categories(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/KeywordCategories")
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modify file keyword categories.
 		#
 		# @param data [Single KeywordCategories Object, Array of KeywordCategories Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
-		def update_keyword_categories(data=nil)
+		#
+		# @example 
+		#          rest_client.update_keyword_categories(keyword_categories_obj)
+		#          rest_client.update_keyword_categories(keyword_categories_obj,true)
+		#          rest_client.update_keyword_categories(keyword_categories_obj_array)
+		#          rest_client.update_keyword_categories(keyword_categories_obj_array,true)
+		def update_keyword_categories(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/KeywordCategories")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		# Delete Keyword Categories.
 		#
-		# @param data [Single KeywordCategories Object, Array of KeywordCategories Objects] (Required)
+		# @param data [Single KeywordCategories Object, KeywordCategories Objects Array, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_keyword_categories(keyword_categories_obj)
+		#          rest_client.delete_keyword_categories(keyword_categories_obj_array)
+		#          rest_client.delete_keyword_categories([1,2,3])
+		#          rest_client.delete_keyword_categories(['1','2','3'])
+		#          rest_client.delete_keyword_categories(1)
+		#          rest_client.delete_keyword_categories('1')
 		def delete_keyword_categories(data=nil)
 			uri = URI.parse(@uri + "/KeywordCategories")
 			results = delete(uri,data)
@@ -1019,19 +1153,35 @@ module OpenAsset
 		# Create Photographers.
 		#
 		# @param data [Single Photographers Object, Array of Photographers Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
-		def create_photographers(data=nil)
+		#
+		# @example 
+		#          rest_client.create_photographers(photographers_obj)
+		#          rest_client.create_photographers(photographers_obj,true)
+		#          rest_client.create_photographers(photographers_obj_array)
+		#          rest_client.create_photographers(photographers_obj_array,true)
+		def create_photographers(data=nil,,generate_objects=false)
 			uri = URI.parse(@uri + "/Photographers")
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modify Photographers.
 		#
 		# @param data [Single Photographers Object, Array of Photographers Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
-		def update_photographers(data=nil)
+		#
+		# @example 
+		#          rest_client.update_photographers(photographers_obj)
+		#          rest_client.update_photographers(photographers_obj,true)
+		#          rest_client.update_photographers(photographers_obj_array)
+		#          rest_client.update_photographers(photographers_obj_array,true)
+		def update_photographers(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Photographers")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		############
@@ -1055,25 +1205,49 @@ module OpenAsset
 		# Create Projects.
 		#
 		# @param data [Single Projects Object, Array of Projects Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
-		def create_projects(data=nil)
+		#
+		# @example 
+		#          rest_client.create_projects(projects_obj)
+		#          rest_client.create_projects(projects_obj,true)
+		#          rest_client.create_projects(projects_obj_array)
+		#          rest_client.create_projects(projects_obj_array,true)	
+		def create_projects(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Projects")
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modify Projects.
 		#
 		# @param data [Single Projects Object, Array of Projects Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
-		def update_projects(data=nil)
+		#
+		# @example 
+		#          rest_client.update_projects(projects_obj)
+		#          rest_client.update_projects(projects_obj,true)
+		#          rest_client.update_projects(projects_obj_array)
+		#          rest_client.update_projects(projects_obj_array,true)
+		def update_projects(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Projects")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		# Delete Projects.
 		#
-		# @param data [Single KProjects Object, Array of Projects Objects] (Required)
+		# @param data [Single KProjects Object, Array of Projects Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_projects(projects_obj)
+		#          rest_client.delete_projects(projects_obj_array)
+		#          rest_client.delete_projects([1,2,3])
+		#          rest_client.delete_projects(['1','2','3'])
+		#          rest_client.delete_projects(1)
+		#          rest_client.delete_projects('1')
 		def delete_projects(data=nil)
 			uri = URI.parse(@uri + "/Projects")
 			results = delete(uri,data)
@@ -1100,25 +1274,49 @@ module OpenAsset
 		# Create Project Keywords.
 		#
 		# @param data [Single ProjectKeywords Object, Array of ProjectKeywords Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
-		def create_project_keywords(data=nil)
+		#
+		# @example 
+		#          rest_client.create_project_keywords(project_keywords_obj)
+		#          rest_client.create_project_keywords(project_keywords_obj,true)	
+		#          rest_client.create_project_keywords(project_keywords_obj_array)
+		#          rest_client.create_project_keywords(project_keywords_obj_array,true)
+		def create_project_keywords(data=nil,,generate_objects=false)
 			uri = URI.parse(@uri + "/ProjectKeywords")
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modify Project Keywords.
 		#
 		# @param data [Single ProjectKeywords Object, Array of ProjectKeywords Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
-		def update_project_keywords(data=nil)
+		#
+		# @example 
+		#          rest_client.update_project_keywords(project_keywords_obj)
+		#          rest_client.update_project_keywords(project_keywords_obj,true)
+		#          rest_client.update_project_keywords(project_keywords_obj_array)
+		#          rest_client.update_project_keywords(project_keywords_obj_array,true)
+		def update_project_keywords(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/ProjectKeywords")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		# Delete Project Keywords.
 		#
-		# @param data [Single ProjectKeywords Object, Array of ProjectKeywords Objects] (Required)
+		# @param data [Single ProjectKeywords Object, Array of ProjectKeywords Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_project_keywords(project_keywords_obj)
+		#          rest_client.delete_project_keywords(project_keywords_obj_array)
+		#          rest_client.delete_project_keywords([1,2,3])
+		#          rest_client.delete_project_keywords(['1','2','3'])
+		#          rest_client.delete_project_keywords(1)
+		#          rest_client.delete_project_keywords('1')
 		def delete_project_keywords(data=nil)
 			uri = URI.parse(@uri + "/ProjectKeywords")
 			results = delete(uri,data)
@@ -1145,25 +1343,49 @@ module OpenAsset
 		# Create project keyword categories.
 		#
 		# @param data [Single ProjectKeywordCategories Object, Array of ProjectKeywordCategories Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
-		def create_project_keyword_categories(data=nil)
+		#
+		# @example 
+		#          rest_client.create_project_keyword_categories(project_keyword_categories_obj)
+		#          rest_client.create_project_keyword_categories(project_keyword_categories_obj,true)	
+		#          rest_client.create_project_keyword_categories(project_keyword_categories_obj_array)	
+		#          rest_client.create_project_keyword_categories(project_keyword_categories_obj_array,true)	
+		def create_project_keyword_categories(data=nil,,generate_objects=false)
 			uri = URI.parse(@uri + "/ProjectKeywordCategories")
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modify project keyword categories.
 		#
 		# @param data [Single ProjectKeywordCategories Object, Array of ProjectKeywordCategories Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
-		def update_project_keyword_categories(data=nil)
+		#
+		# @example 
+		#          rest_client.update_project_keyword_categories(project_keyword_categories_obj)
+		#          rest_client.update_project_keyword_categories(project_keyword_categories_obj,true)
+		#          rest_client.update_project_keyword_categories(project_keyword_categories_obj_array)
+		#          rest_client.update_project_keyword_categories(project_keyword_categories_obj_array,true)
+		def update_project_keyword_categories(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/ProjectKeywordCategories")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		# Delete Project Keyword Categories.
 		#
-		# @param data [Single ProjectKeywordCategories Object, Array of ProjectKeywordCategories Objects] (Required)
+		# @param data [Single ProjectKeywordCategories Object, Array of ProjectKeywordCategories Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_project_keyword_categories(project_keyword_categories_obj)
+		#          rest_client.delete_project_keyword_categories(project_keyword_categories_obj_array)
+		#          rest_client.delete_project_keyword_categories([1,2,3])
+		#          rest_client.delete_project_keyword_categories(['1','2','3'])
+		#          rest_client.delete_project_keyword_categories(1)
+		#          rest_client.delete_project_keyword_categories('1')
 		def delete_project_keyword_categories(data=nil)
 			uri = URI.parse(@uri + "/ProjectKeywordCategories")
 			results = delete(uri,data)
@@ -1190,19 +1412,35 @@ module OpenAsset
 		# Create Searches.
 		#
 		# @param data [Single Searches Object, Array of Searches Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
-		def create_searches(data=nil)
+		#
+		# @example 
+		#          rest_client.create_searches(searches_obj)
+		#          rest_client.create_searches(searches_obj,true)	
+		#          rest_client.create_searches(searches_obj_array)	
+		#          rest_client.create_searches(searches_obj_array,true)	
+		def create_searches(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Searches")
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modify Searches.
 		#
 		# @param data [Single Searches Object, Array of Searches Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
-		def update_searches(data=nil)
+		#
+		# @example 
+		#          rest_client.update_searches(searches_obj)
+		#          rest_client.update_searches(searches_obj,true)
+		#          rest_client.update_searches(searches_obj_array)
+		#          rest_client.update_searches(searches_obj_array,true)
+		def update_searches(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Searches")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		#########
@@ -1226,25 +1464,49 @@ module OpenAsset
 		# Create image Sizes.
 		#
 		# @param data [Single Sizes Object, Array of Sizes Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after object creation
 		# @return [JSON object] HTTP response JSON object.
-		def create_image_sizes(data=nil)
+		#
+		# @example 
+		#          rest_client.create_image_sizes(image_sizes_obj)
+		#          rest_client.create_image_sizes(image_sizes_obj,true)	
+		#          rest_client.create_image_sizes(image_sizes_obj_array)	
+		#          rest_client.create_image_sizes(image_sizes_obj_array,true)	
+		def create_image_sizes(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Sizes")
-			results = post(uri,data)
+			results = post(uri,data,generate_objects)
 		end
 
 		# Modify image Sizes.
 		#
 		# @param data [Single Sizes Object, Array of Sizes Objects] (Required)
+		# @param generate_objects [Boolean] (Optional) 
+		#        Caution: Hurts performance -> Only use if performing further edits after updating object
 		# @return [JSON object] HTTP response JSON object.
-		def update_image_sizes(data=nil)
+		#
+		# @example 
+		#          rest_client.update_image_sizes(image_sizes_obj)
+		#          rest_client.update_image_sizes(image_sizes_obj,true)	
+		#          rest_client.update_image_sizes(image_sizes_obj_array)	
+		#          rest_client.update_image_sizes(image_sizes_obj_array,true)	
+		def update_image_sizes(data=nil,generate_objects=false)
 			uri = URI.parse(@uri + "/Sizes")
-			results = put(uri,data)
+			results = put(uri,data,generate_objects)
 		end
 
 		# Delete Image Sizes.
 		#
-		# @param data [Single Sizes Object, Array of Sizes Objects] (Required)
+		# @param data [Single Sizes Object, Array of Sizes Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
 		# @return [JSON object] HTTP response JSON object.
+		#
+		# @example 
+		#          rest_client.delete_image_sizes(image_sizes_obj)
+		#          rest_client.delete_image_sizes(image_sizes_obj_array)
+		#          rest_client.delete_image_sizes([1,2,3])
+		#          rest_client.delete_image_sizes(['1','2','3'])
+		#          rest_client.delete_image_sizes(1)
+		#          rest_client.delete_image_sizes('1')
 		def delete_image_sizes(data=nil)
 			uri = URI.parse(@uri + "/Sizes")
 			results = delete(uri,data)
