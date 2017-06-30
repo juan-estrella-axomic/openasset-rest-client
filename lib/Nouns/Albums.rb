@@ -1,10 +1,24 @@
+# Albums class
+# 
+# @author Juan Estrella
 class Albums
 
+	# @!parse attr_accessor :all_users_can_modify, :can_modify, :code, :company_album, :created, :description 
 	attr_accessor :all_users_can_modify, :can_modify, :code, :company_album, :created, :description 
+
+	# @!parse attr_accessor :id, :locked, :my_album, :name, :private_image_count, :public_image_count
 	attr_accessor :id, :locked, :my_album, :name, :private_image_count, :public_image_count
+
+	# @!parse :share_with_all_users, :shared_album, :unapproved_image_count, :updated, :user_id
 	attr_accessor :share_with_all_users, :shared_album, :unapproved_image_count, :updated, :user_id
 
-
+	# Creates an Albums object
+	#
+	# @param data [Hash, nil] Takes a JSON object/Hash or no argument 
+	# @return [Albums object]
+	#
+	# @example 
+	#         album = Albums.new
 	def initialize(data=nil)
 		json_obj = Validator::validate_argument(data,'Albums') unless data.is_a?(String)
 		json_obj = {"name" => data}                            if data.is_a?(String)
@@ -55,6 +69,7 @@ class Albums
 		end                 
 	end
 
+	# @!visibility private
 	def json
 		json_data = Hash.new
 		json_data[:all_users_can_modify] = @all_users_can_modify 	 unless @all_users_can_modify.nil?

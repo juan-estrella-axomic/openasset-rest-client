@@ -1,7 +1,18 @@
+# Groups class
+# 
+# @author Juan Estrella
 class Groups
 
+	# @!parse attr_accessor :alive, :id, :name
 	attr_accessor :alive, :id, :name
 
+	# Creates an Groups object
+	#
+	# @param data [Hash, nil] Takes a JSON object/Hash or no argument 
+	# @return [Groups object]
+	#
+	# @example 
+	#         group = Groups.new
 	def initialize(data=nil)
 		json_obj = Validator::validate_argument(data,'Groups')
 		@alive = json_obj['alive']
@@ -9,6 +20,7 @@ class Groups
 		@name = json_obj['name']
 	end
 
+	# @!visibility private
 	def json
 		json_data = Hash.new
 		json_data[:alive] = @alive    	unless @alive.nil?

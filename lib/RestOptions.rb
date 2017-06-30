@@ -1,13 +1,21 @@
 class RestOptions
 
+	# @!parse attr_reader :options
 	attr_reader :options
 
+	# Creates new RestOptions object
+	#
+	# @return [RestClient object]
+	#
+	# @example 
+	#         options = RestOptions.new
 	def initialize
 		@options = ''
 	end
 
 	private
 	#Designed to handle single values and arrays of values ("john, joe , , jim,") => "john,joe,jim"
+	# @!visibility private
 	def clean(value)
 		str = nil
 		if value.is_a?(String) || value.is_a?(Integer)
@@ -32,7 +40,15 @@ class RestOptions
 	end
 
 	public
-
+	# Add search critieria to http query string
+	#
+	# @param field_name [string] Query field name (Required)
+	# @param field_value [string] Query field value (Required)
+	# @return [nil]
+	#
+	# @example 
+	#         options.add_option('name','jim') => ?name=jim
+	#		  options.add_option('limit','100') => ?name=jim&limit=100
 	def add_option(field_name,field_value)
 		field = clean(field_name)
 		value = clean(field_value)
@@ -43,6 +59,14 @@ class RestOptions
 		end
 	end	
 
+	# Remove search critieria to http query string
+	#
+	# @param field_name [string] Query field name (Required)
+	# @param field_value [string] Query field value (Required)
+	# @return [nil]
+	#
+	# @example 
+	#         options.remove_option('name','jim')
 	def remove_option(field_name,field_value)
 		value = clean(field_name) + '=' + clean(field_value)
 		unless @options.empty?
@@ -56,14 +80,27 @@ class RestOptions
 		end
 	end
 
+	# Remove all search critieria to http query string. Alias to clear_options method
+	#
+	# @return [nil]
+	#
+	# @example 
+	#         options.clear()
 	def clear
 		@options = ''
 	end
 
+	# Remove all search critieria to http query string
+	#
+	# @return [nil]
+	#
+	# @example 
+	#         options.clear_options()
 	def clear_options
 		clear
 	end
 
+	# @!visibility private
 	def get_options
 		@options
 	end

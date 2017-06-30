@@ -1,8 +1,21 @@
+#Categories class
+# 
+# @author Juan Estrella
 class Categories
 
+	# @!parse attr_accessor :alive, :code, :default_access_level, :default_rank, :description, :display_order
 	attr_accessor :alive, :code, :default_access_level, :default_rank, :description, :display_order
+
+	# @!parse attr_accessor :alive, :code, :default_access_level, :default_rank, :description, :display_order
 	attr_accessor :id, :name, :projects_category
 
+	# Creates a Categories object
+	#
+	# @param data [Hash, nil] Takes a JSON object/Hash or no argument 
+	# @return [Categories object]
+	#
+	# @example 
+	#         category = Categories.new
 	def initialize(data=nil)
 		json_obj = Validator::validate_argument(data,'Categories')
 		@alive = json_obj['alive']                					
@@ -16,6 +29,7 @@ class Categories
 		@projects_category = json_obj['projects_category']          
 	end
 
+	# @!visibility private
 	def json
 		json_data = Hash.new
 		json_data[:alive] = @alive                					unless @alive.nil?

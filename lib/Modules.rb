@@ -14,7 +14,13 @@ module CSVHelper
     # Generate csv reports from Noun collections. Call on an array of Files Objects, Strings or Array of Strings
     #
     # @param client [String, Integer] Name of the csv being generated
-    # @return [Boolean] Returns false on error.  
+    # @return [Boolean] Returns false on error.
+    # 
+    # @example
+    #       projects = rest_client.get_projects()
+    #       projects.export_to_csv('SE1')
+    #       -- ONE LINER --
+    #       rest_client.get_projects().export_to_csv('SE1') 
     def export_to_csv(client=nil)
         name = client.to_s || 'Client_Name'
         object_variables = nil
@@ -111,7 +117,13 @@ module DownloadHelper
     # @param size [String, Integer] Defaults to 1 to download original image.
     #                               Accepts image size id or postfix string value like 'medium' for example
     # @param download_location [String] Folder where files will be downloaded to.
-    # @return [Boolean] Returns false on error.  
+    # @return [Boolean] Returns false on error.
+    # 
+    # @example
+    #       files_obj_array = rest_client.get_files()
+    #       files_obj_array.download('medium','se1_downloads')
+    #       -- ONE LINER --
+    #       rest_client.get_files().download('medium','se1_downloads') 
     def download(size='1',download_location='./Rest_Downloads')
         #Make sure the download location is Valid directory
         if File.exist?(download_location)

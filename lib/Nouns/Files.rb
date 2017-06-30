@@ -1,13 +1,30 @@
 require_relative 'NestedSizeItems.rb'
 require_relative 'NestedKeywordItems.rb'
 
+# Files class
+# 
+# @author Juan Estrella
 class Files
 
+	# @!parse attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
 	attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
+
+	# @!parse attr_accessor :contains_video, :copyright_holder_id, :created, :description, :download_count, :duration
 	attr_accessor :contains_video, :copyright_holder_id, :created, :description, :download_count, :duration
+
+	# @!parse attr_accessor :filename, :id, :md5_at_upload, :md5_now, :original_filename, :photographer_id, :project_id
 	attr_accessor :filename, :id, :md5_at_upload, :md5_now, :original_filename, :photographer_id, :project_id
+
+	# @!parse attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes
 	attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes
 
+	# Creates an Files object
+	#
+	# @param data [Hash, nil] Takes a JSON object/Hash or no argument 
+	# @return [Files object]
+	#
+	# @example 
+	#         file = Files.new
 	def initialize(*args)
 		json_obj = nil
 
@@ -104,6 +121,7 @@ class Files
 
 	end
 
+	# @!visibility private
 	def json
 		json_data = Hash.new
 		json_data[:access_level] = @access_level    			  	unless @access_level.nil?
@@ -158,7 +176,11 @@ class Files
 	#
 	# @param seach_parameter [String, Integer] Takes image size id or postfix string like 'medium'
 	#                              Defaults to id of 1 which provides path to original image size
-	# @return [String, false] Returns image download path or false when error is encountered.
+	# @return [String, false] Returns image download path or empty string when error is encountered.
+	#
+	# @example 
+	#         file_obj.get_image_size_file_path('1')
+	#		  file_obj.get_image_size_file_path('medium')
 	def get_image_size_file_path(search_parameter='1') #Always returns the original by default
 		if (search_parameter.is_a?(String) && search_parameter.to_i > 0) || search_parameter.is_a?(Integer)
 			#Look for the nested image size containing the id passed as the search_parameter
@@ -177,7 +199,7 @@ class Files
 				puts "Error: Could not find the postfix value => #{size.inspect}. \n" +
 					 "Verify that the image size exists and that the size was generated for file " +
 					 "#{@filename.inspect} in OpenAsset."
-				return false
+				return ''
 			else
 				image.http_root.gsub('//','') + image.http_relative_path
 			end

@@ -1,10 +1,22 @@
 require_relative 'FieldLookupStrings.rb'
-
+# Fields class
+# 
+# @author Juan Estrella
 class Fields 
 
+	# @!parse attr_accessor :alive, :cardinality, :code, :description, :display_order, :field_display_type
 	attr_accessor :alive, :cardinality, :code, :description, :display_order, :field_display_type
+
+	# @!parse attr_accessor :field_type, :id, :include_on_info, :include_on_search, :name, :protected, :built_in
 	attr_accessor :field_type, :id, :include_on_info, :include_on_search, :name, :protected, :built_in
 
+	# Creates an Fields object
+	#
+	# @param data [Hash, nil] Takes a JSON object/Hash or no argument 
+	# @return [Fields object]
+	#
+	# @example 
+	#         field = Fields.new
 	def initialize(*args)
 		json_obj = {}
 		len = args.length
@@ -45,6 +57,7 @@ class Fields
 		end						
 	end
 
+	# @!visibility private
 	def json
 		json_data = Hash.new
 		json_data[:alive] = @alive    							  unless @alive.nil?
