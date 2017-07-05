@@ -46,6 +46,8 @@ class Validator
 				err_header = "Updating \"#{resource}\""
 			when 'DELETE'
 				err_header = "Deleting \"#{resource}\""
+			when 'HEAD'
+				err_header = "Retrieving Header Data for \"#{resoure}\""
 		end
 		
 		if response.kind_of? Net::HTTPSuccess 

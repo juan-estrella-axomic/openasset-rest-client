@@ -67,6 +67,36 @@ module OpenAsset
 				end
 	
 		end 
+
+		# @!visibility private
+		def get_count(object=nil)
+			resource = (object) ? object.class.to_s : object
+			unless Validator::NOUNS.include?(resource)
+				abort("Argument Error: Expected Nouns Object. Instead got #{resource}") 
+			end
+
+			uri = URI.parse(@uri + '/' + resource)								   
+
+			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+				request = Net::HTTP::Head.new(uri.request_uri)
+				if @session
+					request.add_field('X-SessionKey',@session)
+				else
+					@session = @authenticator.get_session
+					request.add_field('X-SessionKey',@session) #For when the token issue is sorted out
+					#request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
+				end
+				http.request(request)
+			end
+
+			unless @session == response['X-SessionKey']
+				@session = response['X-SessionKey']
+			end
+
+			Validator::process_http_response(response,@verbose,resource,'HEAD')
+			response['X-Full-Results-Count'].to_i
+		end
+
 		# @!visibility private
 		def get(uri,options_obj)
 			resource = uri.to_s.split('/').last
@@ -2103,6 +2133,68 @@ module OpenAsset
 		end
 
 	end
+
+	def file_convert_field_to_keywords(scope=nil, field=nil, batch_size=1000)
+		#TO DO:
+		#1. Validate input: scope => Category, Project, Album | field | batch_size
+		unless scope.is_a?(Categories) || scope.is_a?(Projects) || scope.is_a?(Albums)
+			abort("Argument Error: Expected a Categories, Projects, or Albums object for the
+					first argument.\n\tIntead got #{scope.class}")
+		end
+
+		unless field.is_a?(Fields)
+			abort("Argument Error: Expected a Fields object for the
+					second argument.\n\tIntead got #{field.class}")
+		end
+
+		unless batch_size.to_i > 0
+			abort("Argument Error: Invalid batch size of #{batch_size.inspect}.\n\t
+					Please enter number greate than zero.")
+		end
+
+		#2. Check if field exist
+		op = RestOptions.new
+		op.add_option('id',field.id)
+		source_field = get_fields(op).first
+
+		abort("Error: Field id #{field.id} not found in OpenAsset. Aborting") unless source_field
+
+		#3. Get number of files within the specified scope
+		total_files = get_count(scope)
+
+		#4. Calculate number of requests needed based on specified batch_size
+		iterations = 0
+		if total_files % batch_size == 0
+			iterations = total_files / batch_size
+		else
+			iterations = total_files / batch_size + 1  #we'll need one more iteration to grab remaining
+		end
+
+		#5. Create update loop using iteration limit and batch size
+		iterations.times do
+			
+
+		end
+
+
+
+		if scope.is_a?(Categories)
+			#Get number of files in the the category
+			total_files = get_count(scope)
+		elsif scope.is_a?(Projects)
+			#Get number of files in the the project
+		
+		elsif scope.is_a?(Albums)
+			#Get number of files in the the album
+
+		end
+		#3. Look for field in @fields array
+
+		#4. If found, check the value for an empty string
+		#       and split using the specified separator => Default ";" 
+
+	end
+
 end
 
 puts 'Syntax TEST Passed'
