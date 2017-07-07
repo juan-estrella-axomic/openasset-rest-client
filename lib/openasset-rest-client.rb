@@ -68,14 +68,20 @@ module OpenAsset
 	
 		end 
 
-		# @!visibility private
-		def get_count(object=nil)
+		# @!visibility private 
+		def get_count(object=nil,rest_option_obj=nil) #can be used to get count of other resources in the future
 			resource = (object) ? object.class.to_s : object
+			query    = (rest_option_obj) ? rest_option_obj.get_options : ''
 			unless Validator::NOUNS.include?(resource)
-				abort("Argument Error: Expected Nouns Object. Instead got #{resource}") 
+				abort("Argument Error: Expected Nouns Object for first argument in #{__callee__}. Instead got #{resource}") 
 			end
 
-			uri = URI.parse(@uri + '/' + resource)								   
+			unless rest_option_obj.is_a?(RestOptions) || rest_option_obj == nil
+				abort("Argument Error: Expected RestOptions Object or no argument for second argument in #{__callee__}." + 
+						"\n\tInstead got #{rest_option_obj.inspect}") 
+			end
+
+			uri = URI.parse(@uri + '/' + resource + query)								   
 
 			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Head.new(uri.request_uri)
@@ -2134,60 +2140,129 @@ module OpenAsset
 
 	end
 
-	def file_convert_field_to_keywords(scope=nil, field=nil, batch_size=1000)
+	def file_convert_field_to_keywords(scope=nil, keyword_category=nil ,field=nil, batch_size=1000)
 		#TO DO:
 		#1. Validate input: scope => Category, Project, Album | field | batch_size
 		unless scope.is_a?(Categories) || scope.is_a?(Projects) || scope.is_a?(Albums)
-			abort("Argument Error: Expected a Categories, Projects, or Albums object for the
-					first argument.\n\tIntead got #{scope.class}")
+			abort("Argument Error: Expected a Categories, Projects, or Albums object for the first argument in #{__callee__}" +
+					"\n\tIntead got #{scope.class}")
+		end
+
+		unless field.is_a?(KeywordCategories)
+			abort("Argument Error: Expected a KeywordCategories object for the second argument in #{__callee__}." +
+					"\n\tIntead got #{field.class}")
 		end
 
 		unless field.is_a?(Fields)
-			abort("Argument Error: Expected a Fields object for the
-					second argument.\n\tIntead got #{field.class}")
+			abort("Argument Error: Expected a Fields object for the third argument in #{__callee__}." +
+					"\n\tIntead got #{field.class}")
 		end
 
 		unless batch_size.to_i > 0
-			abort("Argument Error: Invalid batch size of #{batch_size.inspect}.\n\t
-					Please enter number greate than zero.")
+			abort("Argument Error: Expected a non zero value for the fourth argument \"batch size\" in #{__callee__}." +
+					"\n\tInstead got #{batch_size.inspect}.")
 		end
 
-		#2. Check if field exist
-		op = RestOptions.new
-		op.add_option('id',field.id)
-		source_field = get_fields(op).first
-
-		abort("Error: Field id #{field.id} not found in OpenAsset. Aborting") unless source_field
-
-		#3. Get number of files within the specified scope
-		total_files = get_count(scope)
-
-		#4. Calculate number of requests needed based on specified batch_size
-		iterations = 0
-		if total_files % batch_size == 0
-			iterations = total_files / batch_size
-		else
-			iterations = total_files / batch_size + 1  #we'll need one more iteration to grab remaining
-		end
-
-		#5. Create update loop using iteration limit and batch size
-		iterations.times do
-			
-
-		end
-
-
-
-		if scope.is_a?(Categories)
-			#Get number of files in the the category
-			total_files = get_count(scope)
-		elsif scope.is_a?(Projects)
-			#Get number of files in the the project
 		
-		elsif scope.is_a?(Albums)
-			#Get number of files in the the album
+		category_found   = nil
+		project_found    = nil
+		album_found      = nil
+		total_file_count = nil
+		file_id_array    = nil
+		op = RestOptions.new
 
+		#2. Check if the category, project, or album exists and get the total file count
+		if scope.is_a?(Categories)
+			op.add_option('id', scope.id)
+			category_found = get_categories(op).first
+			abort("Error: Category id #{scope.id} not found in OpenAsset. Aborting") unless category_found
+			op.clear
+			op.add_option('category_id', scope.id)
+			file_count = get_count(Files.new, op)
+			op.clear
+		elsif scope.is_a?(Projects)
+			op.add_option('id', scope.id)
+			project_found = get_projects(op).first
+			abort("Error: Project id #{scope.id} not found in OpenAsset. Aborting")  unless project_found
+			op.clear
+			op.add_option('project_id', scope.id)
+			file_count = get_count(Files.new, op)
+			op.clear
+		elsif scope.is_a?(Albums)
+			op.add_option('id', scope.id)
+			album_found = get_albums(op).first
+			abort("Error: Album id #{scope.id} not found in OpenAsset. Aborting")    unless album_found
+			file_id_array = album_found.files
+			file_count    = file_id_array.length
+			op.clear
+		else
+			abort("An Unknown Error occured converting the field specified into keywords.")
 		end
+
+		#3. Check if field exists
+		op.add_option('id',field.id)
+		source_field_found = get_fields(op).first
+		op.clear
+		abort("Error: Field id #{field.id} not found in OpenAsset. Aborting") unless source_field_found
+		
+
+		#4. check if the keyword category exists
+		op.add_option('id',keyword_category.id)
+		keyword_category_found = get_fields(op).first
+		op.clear
+		abort("Error: Keyword Category id #{keyword_cat.id} not found in OpenAsset. Aborting") unless keyword_category_found
+		
+
+		#6. Get all file keywords in the specified keyword category
+		op.add_option('keyword_category_id', keyword_category.id)
+		op.add_option('limit', '0')
+		keywords = get_keywords(op)
+		op.clear
+
+		#7. Calculate number of requests needed based on specified batch_size
+		iterations = 0
+		if total_file_count % batch_size == 0
+			iterations = total_file_count / batch_size
+		else
+			iterations = total_file_count / batch_size + 1  #we'll need one more iteration to grab remaining
+		end
+
+		offset = 0
+		limit  = batch_size.to_i
+		#8. Create update loop using iteration limit and batch size
+		iterations.times do
+
+			op.add_option('offset', offset)
+			op.add_option('limit', offset + limit )
+
+			if scope.is_a?(Categories)
+				op.add('category_id', scope.id)
+			elsif scope.is_a?(Projects)
+				op.add('project_id', scope.id)
+			elsif scope.is_a?(Albums)
+				op.add('id', file_id_array.join)
+			end
+
+			#Get files for current batch
+			files = get_files(op)
+
+			# Iterate through the files and make the changes
+			files.each do |file|
+				file.convert_field_to_keywords(field.id, keywords) #trick ruby into making a ref of keywords array inside files method 
+			end
+
+			#9. Perform the update
+			res = update_files(files)
+
+			# TO DO:
+			# 	Check for a server timeout and adjust wait time as necessary
+			op.clear
+			offset += limit
+		end
+
+
+
+	
 		#3. Look for field in @fields array
 
 		#4. If found, check the value for an empty string
