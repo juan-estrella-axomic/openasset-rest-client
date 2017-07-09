@@ -4,7 +4,7 @@ class Keywords
 
 	def initialize(*args)
 		json_obj = nil
-		#This check is specific to the Fields object
+		#This check is specific to the Keywords object
 		if args.length > 1 && args.first.is_a?(String)#Make sure only two non-null arguments are passed
 			unless args.length == 2 && !args.include?(nil) && (args.first.is_a?(String) || args.first.is_a?(Integer)) &&
 				(args[1].is_a?(String) || args[1].is_a?(Integer))

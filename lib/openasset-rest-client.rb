@@ -2233,7 +2233,7 @@ module OpenAsset
 		iterations.times do
 
 			op.add_option('offset', offset)
-			op.add_option('limit', offset + limit )
+			op.add_option('limit', limit)
 
 			if scope.is_a?(Categories)
 				op.add('category_id', scope.id)
@@ -2248,16 +2248,68 @@ module OpenAsset
 
 			# Iterate through the files and make the changes
 			files.each do |file|
-				file.convert_field_to_keywords(field.id, keywords) #trick ruby into making a ref of keywords array inside files method 
+				
+				item_keywords = file.keywords
+				item_fields   = file.fields
+
+				item_keywords.each do |item|
+
+					# TO DO:
+					# Look for the keyword id in the nested fields attribute
+
+					# IF FOUND => check for empty string, strip whitespace, split it
+					# 	Loop through strings and check if their names are found in the existing keywords
+					# 	IF FOUND => grab the id of the keyword object
+					# 				check if it exists in nested keywords 
+					#  				insert new object NestedKeywordItems.new(id) if necessary
+					#   IF NOT FOUND => create new keyword -> create_keyword(Keywords.new("keyword_category_id", "name"))
+					# IF NOT FOUND => simply return bc no update
+
+				end
+
+				file.convert_field_to_keywords(field.id, keyword_category.id, keywords)
 			end
 
-			#9. Perform the update
-			res = update_files(files)
+			# Use another loop to control the number of times we retry the request in case it fails
+			#9. Perform the update => 3 tries MAX with 5,10  second waits between retries respectively
+			res = nil
+			attempts = 0
+			loop do
 
-			# TO DO:
-			# 	Check for a server timeout and adjust wait time as necessary
+				attempts += 1
+
+				# This code executes if the web server hangs or takes too long 
+				# to respond after the first update is performed => Possible cause can the too large a batch
+				if attempts == 3
+					Validator::process_http_response(res,@verbose,'Files','PUT')
+					abort("Max Number of attempts reached!\nThe web server may have taken too long to respond.")
+				end
+
+				#check if the server is responding
+				server_test = get_count(Files.new)
+
+				if server_test.is_a? Net::HTTPSuccess
+
+					res = update_files(files)
+
+					if res.kind_of? Net::HTTPSuccess
+						offset += limit
+						puts "\rSuccessfully updated #{offset.inspect} files."
+					else
+						Validator::process_http_response(res,@verbose,'Files','PUT')
+						abort
+					end
+
+				else
+
+					sleep(5 * attempts)
+
+				end
+			end
+			
 			op.clear
 			offset += limit
+			
 		end
 
 

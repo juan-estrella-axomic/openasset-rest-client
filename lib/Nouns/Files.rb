@@ -211,4 +211,17 @@ class Files
 		end
 	end
 
+	def convert_field_to_keywords(field_id, keyword_category_id, existing_keywords)
+		# TO DO:
+		# Look for the field id in the nested fields attribute
+		# IF FOUND => check for empty string, strip whitespace, split it
+		# 	Loop through strings and check if their names are found in the existing keywords
+		# 	IF FOUND => grab the id of the keyword object
+		# 				check if it exists in nested keywords 
+		#  				insert new object NestedKeywordItems.new(id) if necessary
+		#   IF NOT FOUND => create new keyword -> create_keyword(Keywords.new("keyword_category_id", "name"))
+		# IF NOT FOUND => simply return bc no update
+		
+	end
+
 end
