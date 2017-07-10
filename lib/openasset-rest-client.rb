@@ -6,6 +6,8 @@ require_relative 'RestOptions.rb'
 require_relative 'Helpers.rb'
 require_relative 'Validator.rb'
 
+require 'net/http'
+
 #Includes all the nouns in one shot
 Dir[File.join(File.dirname(__FILE__),'Nouns','*.rb')].each { |file| require_relative file }
 
@@ -50,19 +52,18 @@ module OpenAsset
 
 		private
 		# @!visibility private
-		def generate_objects_from_json_response(json_response)
+		def generate_objects_from_json_response_body(json_response,resource_type)
 
-				res_body = JSON.parse(response.body)
-				response.body = res_body
+				parsed_response_body = JSON.parse(json_response.body)
 
-				if body.is_a?(Array) && (body.empty? == false)
+				if parsed_response_body.is_a?(Array) && (parsed_response_body.empty? == false)
 
-					inferred_class = Object.const_get('Files')
+					inferred_class = Object.const_get(resource_type)
 					
-					objects_array = res_body.map { |item| inferred_class.new(item) }
+					objects_array = parsed_response_body.map { |item| inferred_class.new(item) }
 
 				else
-					# JSON response with objects array in the body
+					# return raw JSON response if empty body comes back
 					json_response
 				end
 	
@@ -200,7 +201,7 @@ module OpenAsset
 
 			if generate_objects
 
-				generate_objects_from_json_response(response)
+				generate_objects_from_json_response_body(response,resource)
 
 			else
 				# JSON object
@@ -238,7 +239,7 @@ module OpenAsset
 
 			if generate_objects
 
-				generate_objects_from_json_response(response)
+				generate_objects_from_json_response_body(response,resource)
 
 			else
 				# JSON object
@@ -870,7 +871,7 @@ module OpenAsset
 
 			if generate_objects
 				
-				generate_objects_from_json_response(response)
+				generate_objects_from_json_response_body(response)
 
 			else
 				# JSON Object
@@ -964,7 +965,7 @@ module OpenAsset
 
 			if generate_objects
 				
-				generate_objects_from_json_response(response)
+				generate_objects_from_json_response_body(response)
 
 			else
 				# JSON Object
@@ -2140,7 +2141,7 @@ module OpenAsset
 
 	end
 
-	def file_convert_field_to_keywords(scope=nil, keyword_category=nil ,field=nil, batch_size=1000)
+	def file_convert_field_to_keywords(scope=nil, keyword_category=nil ,field=nil, batch_size=100, field_separator=';')
 		#TO DO:
 		#1. Validate input: scope => Category, Project, Album | field | batch_size
 		unless scope.is_a?(Categories) || scope.is_a?(Projects) || scope.is_a?(Albums)
@@ -2163,6 +2164,11 @@ module OpenAsset
 					"\n\tInstead got #{batch_size.inspect}.")
 		end
 
+		unless field_separator.is_a?(String)
+			abort("Argument Error: Expected a string value for the fifth argument \"field_separator\" in #{__callee__}." +
+					"\n\tInstead got #{field_separator.class}.")
+		end
+
 		
 		category_found   = nil
 		project_found    = nil
@@ -2178,7 +2184,7 @@ module OpenAsset
 			abort("Error: Category id #{scope.id} not found in OpenAsset. Aborting") unless category_found
 			op.clear
 			op.add_option('category_id', scope.id)
-			file_count = get_count(Files.new, op)
+			total_file_count = get_count(Files.new, op)
 			op.clear
 		elsif scope.is_a?(Projects)
 			op.add_option('id', scope.id)
@@ -2186,17 +2192,15 @@ module OpenAsset
 			abort("Error: Project id #{scope.id} not found in OpenAsset. Aborting")  unless project_found
 			op.clear
 			op.add_option('project_id', scope.id)
-			file_count = get_count(Files.new, op)
+			_total_file_count = get_count(Files.new, op)
 			op.clear
 		elsif scope.is_a?(Albums)
 			op.add_option('id', scope.id)
 			album_found = get_albums(op).first
 			abort("Error: Album id #{scope.id} not found in OpenAsset. Aborting")    unless album_found
 			file_id_array = album_found.files
-			file_count    = file_id_array.length
+			total_file_count  = file_id_array.length
 			op.clear
-		else
-			abort("An Unknown Error occured converting the field specified into keywords.")
 		end
 
 		#3. Check if field exists
@@ -2208,7 +2212,7 @@ module OpenAsset
 
 		#4. check if the keyword category exists
 		op.add_option('id',keyword_category.id)
-		keyword_category_found = get_fields(op).first
+		keyword_category_found = get_keyword_categories(op).first
 		op.clear
 		abort("Error: Keyword Category id #{keyword_cat.id} not found in OpenAsset. Aborting") unless keyword_category_found
 		
@@ -2216,7 +2220,7 @@ module OpenAsset
 		#6. Get all file keywords in the specified keyword category
 		op.add_option('keyword_category_id', keyword_category.id)
 		op.add_option('limit', '0')
-		keywords = get_keywords(op)
+		existing_keywords = get_keywords(op)
 		op.clear
 
 		#7. Calculate number of requests needed based on specified batch_size
@@ -2245,33 +2249,90 @@ module OpenAsset
 
 			#Get files for current batch
 			files = get_files(op)
+			op.clear
 
-			# Iterate through the files and make the changes
+			keywords_to_create = []
+
+			# Iterate through the files and find the keywords that need to be created
 			files.each do |file|
 				
 				item_keywords = file.keywords
 				item_fields   = file.fields
 
-				item_keywords.each do |item|
+				# Look for the field id in the nested fields attribute
+				field_obj_found = item_fields.find { |f| f.id == field.id }
 
-					# TO DO:
-					# Look for the keyword id in the nested fields attribute
+				if field_obj_found && (field_obj_found.values.first != '' || field_obj_found.values.first != nil)
+					# split the string using the specified separator
+					keywords_to_append = field_obj_found.values.first.split(field_separator)
+					keywords_to_append.each do |val|
 
-					# IF FOUND => check for empty string, strip whitespace, split it
-					# 	Loop through strings and check if their names are found in the existing keywords
-					# 	IF FOUND => grab the id of the keyword object
-					# 				check if it exists in nested keywords 
-					#  				insert new object NestedKeywordItems.new(id) if necessary
-					#   IF NOT FOUND => create new keyword -> create_keyword(Keywords.new("keyword_category_id", "name"))
-					# IF NOT FOUND => simply return bc no update
+						# Trim the value
+						val = val.strip
 
+						# Check if the value exists in existing keywords
+						keyword_found_in_existing = existing_keywords.find { |k| k.name == val }
+
+						if keyword_found_in_existing
+							# Check if the file is already tagged with that keyword
+							already_tagged = item_keywords.find { |k| k.id == keyword_found_in_existing.id }
+							unless already_tagged
+								# Tag the file with the keyword
+								file.keywords.push(NestedKeywordItems.new(keyword_found_in_existing.id))
+							end	
+						else
+							# Insert into keywords_to_create array
+							keywords_to_create.push(Keywords.new(keyword_category.id,val))
+						end
+						
+					end
 				end
+			end
 
-				file.convert_field_to_keywords(field.id, keyword_category.id, keywords)
+			# Remove dupes, Create the keywords for the current batch and set the generate objects flag to true.
+			# Next, append the returned keyword objects to the existing keywords array
+			unless keywords_to_create.empty?
+				keywords_to_create.uniq! { |item| item.name }
+				new_keywords = create_keywords(keywords_to_create, true)
+
+
+				unless new_keywords.is_a?(Array) && !new_keywords.empty?
+					existing_keywords.push(new_keywords)
+				else
+					Validator::process_http_response(new_keywords,@verbose,'Keywords','POST')
+					abort("An error occured creating keywords in #{__callee__}")
+				end
+			end
+
+			# Loop though the files again and tag them with the newly created keywords.
+			files.each do | file |
+				current_item_keywords = file.keywords
+				current_item_fields   = file.fields
+
+				# Check if the field has data in it
+				field_found = current_item_fields.find { |nested_field_obj| nested_field_obj.id.to_s == field.id.to_s }
+
+				if field_found
+					data = field_found.values.first
+					unless data == nil || data == ''
+						keywords = data.split(field_separator)
+						keywords.each do |value|
+							#check if the string already exists as a keyword
+							keyword_obj = existing_keywords.find { |item| item.name == value.strip }
+
+							#check if current file is already tagged
+							already_tagged = current_item_keywords.find { |item| item.id.to_s == keyword_obj.id.to_s}
+
+							# Tag the file
+							file.keywords.push(keyword_obj) unless already_tagged
+
+						end
+					end
+				end
 			end
 
 			# Use another loop to control the number of times we retry the request in case it fails
-			#9. Perform the update => 3 tries MAX with 5,10  second waits between retries respectively
+			#9. Perform the update => 3 tries MAX with 5,10,15  second waits between retries respectively
 			res = nil
 			attempts = 0
 			loop do
@@ -2279,13 +2340,14 @@ module OpenAsset
 				attempts += 1
 
 				# This code executes if the web server hangs or takes too long 
-				# to respond after the first update is performed => Possible cause can the too large a batch
-				if attempts == 3
+				# to respond after the first update is performed => Possible cause can be too large a batch size
+				if attempts == 4
 					Validator::process_http_response(res,@verbose,'Files','PUT')
-					abort("Max Number of attempts reached!\nThe web server may have taken too long to respond.")
+					abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
+						   " Try adjusting the batch size.")
 				end
 
-				#check if the server is responding
+				#check if the server is responding (This is a HEAD request)
 				server_test = get_count(Files.new)
 
 				if server_test.is_a? Net::HTTPSuccess
@@ -2294,7 +2356,8 @@ module OpenAsset
 
 					if res.kind_of? Net::HTTPSuccess
 						offset += limit
-						puts "\rSuccessfully updated #{offset.inspect} files."
+						puts "Successfully updated #{offset.inspect} files."
+						break
 					else
 						Validator::process_http_response(res,@verbose,'Files','PUT')
 						abort
@@ -2307,18 +2370,7 @@ module OpenAsset
 				end
 			end
 			
-			op.clear
-			offset += limit
-			
-		end
-
-
-
-	
-		#3. Look for field in @fields array
-
-		#4. If found, check the value for an empty string
-		#       and split using the specified separator => Default ";" 
+		end 
 
 	end
 
