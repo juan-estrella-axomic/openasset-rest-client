@@ -2632,42 +2632,16 @@ module OpenAsset
 		end 
 	end
 
-	def create_file_keywords_from_field_data_by_project(category=nil,project=nil,target_keyword_category=nil,field=nil,batch_size=100,field_separator=';')
+	def create_file_keywords_from_field_data_by_project(project=nil,target_keyword_category=nil,field=nil,batch_size=100,field_separator=';')
 		
 		op = RestOptions.new
 
-		category_found              = nil
 		project_found               = nil
 		file_keyword_category_found = nil
 		source_field_found          = nil
 		
 		
-
 		#1. Validate input
-		if category.is_a?(Categories)
-			op.add_option('id',category.id)
-			category_found = get_categories(op).first
-			abort("Error: Category id #{category.id} not found in OpenAsset. Aborting") unless category_found
-		elsif (category.is_a?(String) && category.to_i > 0) || category.is_a?(Integer)
-			op.add_option('id',category)
-			category_found = get_categories(op).first
-			abort("Error: Category id #{category} not found in OpenAsset. Aborting") unless category_found
-		elsif category.is_a?(String)
-			op.add_option('name',category)
-			category_found = get_categories(op).first
-			abort("Error: Category named #{category} not found in OpenAsset. Aborting") unless category_found
-		else
-			abort("Argument Error: Expected a Categories object, Category name, or Category id for the first argument in #{__callee__}" +
-					"\n\tIntead got #{category.inspect}")
-		end
-
-		# Make sure the category is a PROJECTS category
-		unless category_found.project_category == '1'
-			abort("Error: Category #{category_found.name} with id => #{category_found.id} is a REFERENCE category. Aborting")
-		end
-
-		op.clear
-
 		if project.is_a?(Projects)
 			op.add_option('id',project.id)
 			project_found = get_projects(op).first
@@ -2687,29 +2661,29 @@ module OpenAsset
 
 		op.clear
 
-		# ISSUE:    THERE IS NO DIRECT WAY OF VERIFYING THAT A PROJECT IS UNDER THE SPECIFIED CATEGORY
-		# SOLUTION: GET A FILE USING THE PROJECT ID SPECIFIED AND CHECK IF ITS CATEGORY ID MATCHES THE ONE SPECIFIED
+		# # ISSUE:    THERE IS NO DIRECT WAY OF VERIFYING THAT A PROJECT IS UNDER THE SPECIFIED CATEGORY
+		# # SOLUTION: GET A FILE USING THE PROJECT ID SPECIFIED AND CHECK IF ITS CATEGORY ID MATCHES THE ONE SPECIFIED
 
-		op.add_option('project_id',project_found.id)
-		project_to_category_test = get_files(op).first
+		# op.add_option('project_id',project_found.id)
+		# project_to_category_test = get_files(op).first
 
-		op.clear
+		# op.clear
 
-		if project_to_category_test.nil?
-			warn "Error: Project #{project_found.name} with id => #{project_found.id} is empty."
-			return
-		elsif project_to_category_test.category_id != category_found.id
-			# Tell the user there is a mismatch between the category and project specified.
-			error = "Error: The Project #{project_found.name} with id => #{project_found.id} " +
-				    "does NOT belong to the #{category_found.name} category."
+		# if project_to_category_test.nil?
+		# 	warn "Error: Project #{project_found.name} with id => #{project_found.id} is empty."
+		# 	return
+		# elsif project_to_category_test.category_id != category_found.id
+		# 	# Tell the user there is a mismatch between the category and project specified.
+		# 	error = "Error: The Project #{project_found.name} with id => #{project_found.id} " +
+		# 		    "does NOT belong to the #{category_found.name} category."
 
-			if @verbose
-				op.add_option('id',project_to_category_test.category_id)
-				wrong_category = get_categories(op).first
-				error += "\nIt belongs to the #{wrong_category.name} category."
-			end
-			abort(error)
-		end
+		# 	if @verbose
+		# 		op.add_option('id',project_to_category_test.category_id)
+		# 		wrong_category = get_categories(op).first
+		# 		error += "\nIt belongs to the #{wrong_category.name} category."
+		# 	end
+		# 	abort(error)
+		# end
 
 		op.clear
 
@@ -2749,6 +2723,8 @@ module OpenAsset
 					"\n\tIntead got #{target_keyword_category.inspect}")
 		end
 
+		abort("Error: Field is not an image field. Aborting") unless source_field_found.field_type == 'image'
+		
 		op.clear
 
 		unless batch_size.to_i > 0
@@ -2760,23 +2736,52 @@ module OpenAsset
 			abort("Argument Error: Expected a string value for the fifth argument \"field_separator\" in #{__callee__}." +
 					"\n\tInstead got #{field_separator.class}.")
 		end
+		
+		# Get all the categories associated with the files in the project then using the target_keyword_category,  
+		# create the file keyword category in all the system categories that don't have them
+
+		# Capture associated system categories
+		op.add_option('limit','0')
+		op.add_option('project_id',project_found.id)
+		op.add_option('displayFields','category_id')
+		file_category_ids_contained_in_project = get_file(op).uniq { |obj| obj.category_id }
+		file_category_ids_contained_in_project = file_category_ids_contained_in_project.map { |obj| obj.category_id } # We just want the ids
+		op.clear
+
+		keyword_categories = []
+		keyword_categories << file_keyword_category_found
+
+		# Create the keyword category in all associated categories => remove the category that the target_keyword_category
+		# belongs to because it already exists
+		file_cat_ids = file_category_ids_contained_in_project.reject { |val| val == file_keyword_category_found.category_id }
+
+		# Now loop throught the file categories, create the needed keyword category, and store an association for referencing below
+		file_cat_ids.each do |id|
+			obj = KeywordCategories.new(file_keyword_category_found.name, id)
+			kwd_cat_obj = create_keyword_categories(obj, true).first
+			abort("Error creating keyword category in #{__callee__}") unless kwd_cat_obj
+			keyword_categories.push(kwd_cat_obj)
+		end
 
 		#2. Get total file count
-		op.add_option('category_id', category_found.id)
+		op.add_option('category_id', project.id)
 		total_file_count = get_count(Files.new, op)
 		op.clear
-		
-		abort("Error: Field is not an image field. Aborting") unless source_field_found.field_type == 'image'
 
 		#3. Check field type
 		builtin = (source_field_found.built_in == '1') ? true : false
 
-		#4. Get all file keywords in the specified keyword category
-		op.add_option('keyword_category_id', file_keyword_category_found.id)
+		#4. Get all file keywords in the specified keyword category for all the file categories found in the project
+		query_ids = keyword_categories.map { |item| item.id }.join(',')
+		
+		op.add_option('keyword_category_id', query_ids)
 		op.add_option('limit', '0')
+
 		existing_keywords = get_keywords(op)
 		op.clear
 
+		keyword_store = Hash.new{ |h, k| h[k] = Hash.new(&h.default_proc) }
+		
 		#5. Calculate number of requests needed based on specified batch_size
 		iterations = 0
 		if total_file_count % batch_size == 0
@@ -2805,8 +2810,8 @@ module OpenAsset
 			#8. Iterate through the files and find the keywords that need to be created
 			files.each do |file|
 				
-				field_data            = nil
-				field_obj_found       = nil
+				field_data      = nil
+				field_obj_found = nil
 
 				#9. Look for the field id in the nested fields attribute or get the string value if it's builtin
 				if builtin
@@ -2828,11 +2833,17 @@ module OpenAsset
 					val = val.strip
 
 					#12. Check if the value exists in existing keywords
-					keyword_found_in_existing = existing_keywords.find { |k| k.name.downcase == val.downcase }
+					keyword_found_in_existing = existing_keywords.find do |k|
+						# Match the existing keywords check by the name of the value and the category
+						# id of the current file to establish the the link between the two
+						k.name.downcase == val.downcase && file.category_id == k.keyword_category_id
+					end
 
 					unless keyword_found_in_existing
+						# find  keyword cat id and system cat id of file
+						obj = keyword_categories.find { |item| item.category_id == file.category_id }
 						#13. Insert into keywords_to_create array
-						keywords_to_create.push(Keywords.new(keyword_category.id, val.capitalize))
+						keywords_to_create.push(Keywords.new(.id, val.capitalize))
 					end
 					
 				end
