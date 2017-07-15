@@ -2139,448 +2139,489 @@ module OpenAsset
 			end
 		end
 
-	end
+		def file_create_keywords_from_field_by_album(album=nil, target_keyword_category=nil, source_field=nil, batch_size=100, field_separator=';')
+			
+			#1. Validate input:
+			op = RestOptions.new
 
-	def file_create_keywords_from_field_by_album(scope=nil, keyword_category=nil ,field=nil, batch_size=100, field_separator=';')
-		#TO DO:
-		#1. Validate input: scope => Category, Project, Album | field | batch_size
-		unless scope.is_a?(Categories) || scope.is_a?(Projects) || scope.is_a?(Albums)
-			abort("Argument Error: Expected a Categories, Projects, or Albums object for the first argument in #{__callee__}" +
-					"\n\tIntead got #{scope.class}")
-		end
+			album_found                 = nil
+			file_keyword_category_found = nil
+			source_field_found          = nil
 
-		unless keyword_category.is_a?(KeywordCategories)
-			abort("Argument Error: Expected a KeywordCategories object for the second argument in #{__callee__}." +
-					"\n\tIntead got #{field.class}")
-		end
-
-		unless field.is_a?(Fields)
-			abort("Argument Error: Expected a Fields object for the third argument in #{__callee__}." +
-					"\n\tIntead got #{field.class}")
-		end
-
-		unless batch_size.to_i > 0
-			abort("Argument Error: Expected a non zero value for the fourth argument \"batch size\" in #{__callee__}." +
-					"\n\tInstead got #{batch_size.inspect}.")
-		end
-
-		unless field_separator.is_a?(String)
-			abort("Argument Error: Expected a string value for the fifth argument \"field_separator\" in #{__callee__}." +
-					"\n\tInstead got #{field_separator.class}.")
-		end
-
-		
-		category_found   = nil
-		project_found    = nil
-		album_found      = nil
-		total_file_count = nil
-		file_id_array    = nil
-
-		operating_scope  = nil
-		op = RestOptions.new
-
-		#2. Check if the category, project, or album exists and get the total file count
-		if scope.is_a?(Categories)
-			operating_scope = 'category'
-			op.add_option('id', scope.id)
-			category_found = get_categories(op).first
-			abort("Error: Category id #{scope.id} not found in OpenAsset. Aborting") unless category_found
-			op.clear
-			op.add_option('category_id', scope.id)
-			total_file_count = get_count(Files.new, op)
-			op.clear
-		elsif scope.is_a?(Projects)
-			operating_scope = 'project'
-			op.add_option('id', scope.id)
-			project_found = get_projects(op).first
-			abort("Error: Project id #{scope.id} not found in OpenAsset. Aborting")  unless project_found
-			op.clear
-			op.add_option('project_id', scope.id)
-			total_file_count = get_count(Files.new, op)
-			op.clear
-		elsif scope.is_a?(Albums)
-			operating_scope = 'album'
-			op.add_option('id', scope.id)
-			album_found = get_albums(op).first
-			abort("Error: Album id #{scope.id} not found in OpenAsset. Aborting")    unless album_found
-			file_id_array = album_found.files
-			total_file_count  = file_id_array.length
-			op.clear
-		end
-
-		#3. Check if field exists, if it's built-in or custom, and validate that it is a file field
-		op.add_option('id',field.id)
-		source_field_found = get_fields(op).first
-		op.clear
-		abort("Error: Field id #{field.id} not found in OpenAsset. Aborting") unless source_field_found.empty?
-		abort("Error: Field is not an image field. Aborting") unless source_field_found.field_type == 'image'
-
-		builtin = (source_field_found.built_in == '1') ? true : false
-		
-		#4. check if the keyword category exists, Make sure it belongs to the category specified
-		op.add_option('id',keyword_category.id)
-		keyword_category_found = get_keyword_categories(op).first
-		op.clear
-		if keyword_category_found.empty?
-			abort("Error: Keyword Category #{keyword_category_found.name} id => #{keyword_category_found.id} not found in OpenAsset. Aborting")
-		elsif keyword_category_found.category_id.to_i != scope.id.to_i
-
-        # TO DO: FINISH THIS
-
-		end
-
-		# Verify all images in the album are from the same same category
-
-		
-
-		#6. Get all file keywords in the specified keyword category
-		op.add_option('keyword_category_id', keyword_category.id)
-		op.add_option('limit', '0')
-		existing_keywords = get_keywords(op)
-		op.clear
-
-		#7. Calculate number of requests needed based on specified batch_size
-		iterations = 0
-		if total_file_count % batch_size == 0
-			iterations = total_file_count / batch_size
-		else
-			iterations = total_file_count / batch_size + 1  #we'll need one more iteration to grab remaining
-		end
-
-		offset = 0
-		limit  = batch_size.to_i
-		#8. Create update loop using iteration limit and batch size
-		iterations.times do
-
-			op.add_option('offset', offset)
-			op.add_option('limit', limit)
-
-			if scope.is_a?(Categories)
-				op.add('category_id', scope.id)
-			elsif scope.is_a?(Projects)
-				op.add('project_id', scope.id)
-			elsif scope.is_a?(Albums)
-				op.add('id', file_id_array.join)
+			if album.is_a?(Albums) # Object
+				op.add_option('id',album.id)
+				album_found = get_albums(op).first
+				abort("Error: Album id #{album.id} not found in OpenAsset. Aborting") unless album_found
+			elsif (album.is_a?(String) && album.to_i > 0) || album.is_a?(Integer) # Album id
+				op.add_option('id',album)
+				album_found = get_albums(op).first
+				abort("Error: Album id #{album} not found in OpenAsset. Aborting") unless album_found
+			elsif album.is_a?(String) # Album name
+				op.add_option('name',album)
+				album_found = get_albums(op).first
+				abort("Error: Album named #{album} not found in OpenAsset. Aborting") unless album_found
+			else
+				abort("Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
+						"\n\tIntead got #{album.inspect}")
 			end
 
-			#Get files for current batch
-			files = get_files(op)
 			op.clear
 
-			keywords_to_create = []
+			if target_keyword_category.is_a?(KeywordCategories) # Object
+				op.add_option('id',target_keyword_category.id)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category id #{target_keyword_category.id} not found in OpenAsset. Aborting") unless file_keyword_category_found
+			elsif (target_kwyword_category.is_a?(String) && 
+				   target_kwyword_category.to_i > 0) || target_kwyword_category.is_a?(Integer) # Keyword category id
+				op.add_option('id',target_keyword_category)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category id #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
+			elsif target_kwyword_category.is_a?(String) # Keyword category name
+				op.add_option('name',target_keyword_category)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category named #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
+			else
+				abort("Argument Error: Expected a KeywordCategories object, File Keyword Category name, or File Keyword Category id for the second argument in #{__callee__}" +
+						"\n\tIntead got #{target_keyword_category.inspect}")
+			end
 
-			# Iterate through the files and find the keywords that need to be created
-			files.each do |file|
+			op.clear
+
+			if source_field.is_a?(Fields) # Object
+				op.add_option('id',source_field.id)
+				source_field_found = get_fields(op).first
+				abort("Error: Field id #{source_field.id} not found in OpenAsset. Aborting") unless source_field_found
+			elsif (source_field.is_a?(String) && source_field.to_i > 0) || source_field.is_a?(Integer) # Field id
+				op.add_option('id',source_field)
+				source_field_found = get_fields(op).first
+				abort("Error: Field id #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+			elsif source_field.is_a?(String) # Field name
+				op.add_option('name',source_field)
+				source_field_found = get_fields(op).first
+				abort("Error: Field named #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+			else
+				abort("Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
+						"\n\tIntead got #{source_field.inspect}")
+			end
+
+			op.clear
+
+			unless batch_size.to_i > 0
+				abort("Argument Error: Expected a non zero numeric value for the fourth argument \"batch size\" in #{__callee__}." +
+						"\n\tInstead got #{batch_size.inspect}.")
+			end
+
+			unless field_separator.is_a?(String)
+				abort("Argument Error: Expected a string value for the fifth argument \"field_separator\" in #{__callee__}." +
+						"\n\tInstead got #{field_separator.class}.")
+			end
+
+			# Get all the categories associated with the files in the project then using the target_keyword_category,  
+			# create the file keyword category in all the system categories that don't have them
+
+			# Get files in the album
+			if album_found && !album_found.files.empty?
+				warn "Error: Album #{album_found.name} is empty"
+				return
+			end
+
+			file_ids = album_found.files.join(',') # Search string containing file ids in album
+			op.add_option('limit','0')
+			op.add_option('id', file_ids)
+			op.add_option('displayFields','category_id')
+
+			# Remove duplicates categories
+			file_category_ids_contained_in_album = get_files(op).uniq { |obj| obj.category_id }
+			op.clear
+
+			keyword_categories = []
+			keyword_categories << file_keyword_category_found
+
+			# Create the keyword category in all associated categories => except the one 
+			# that the target_keyword_category belongs to because it already exists
+			file_cat_ids = file_category_ids_contained_in_project.reject { |val| val.to_s == file_keyword_category_found.category_id.to_s }
+
+			# Now loop throught the file categories, create the needed keyword categories for referencing below
+			file_cat_ids.each do |id|
+				obj = KeywordCategories.new(file_keyword_category_found.name, id)
+				kwd_cat_obj = create_keyword_categories(obj, true).first
+				abort("Error creating keyword category in #{__callee__}") unless kwd_cat_obj
+				keyword_categories.push(kwd_cat_obj)
+			end
+
+			#2. Get total file count
+			total_file_count = album_found.files.length
+			
+			#3. Check the source_field field type
+			builtin = (source_field_found.built_in == '1') ? true : false
+
+			#4. Get all file keywords in the specified keyword category for all the file categories found in the project
+			query_ids = keyword_categories.map { |item| item.id }.join(',')
+			
+			op.add_option('keyword_category_id', query_ids)
+			op.add_option('limit', '0')
+
+			existing_keywords = get_keywords(op)
+			op.clear
+
+			#keyword_store = Hash.new{ |h, k| h[k] = Hash.new(&h.default_proc) }
+			
+			#5. Calculate number of requests needed based on specified batch_size
+			batch_size = batch_size.to_i
+			iterations = 0
+			if total_file_count % batch_size == 0
+				iterations = total_file_count / batch_size
+			else
+				iterations = total_file_count / batch_size + 1  #we'll need one more iteration to grab remaining
+			end
+
+			# Set up loop controls
+			offset = 0
+			limit  = batch_size
+			total_files_updated = 0
+
+			#6. Create update loop using iteration limit and batch size
+			iterations.times do
+
+				op.add_option('offset', offset)
+				op.add_option('limit', limit)
+				op.add('id', file_ids)
 				
-				item_keywords = file.keywords
-				 
-				item_fields   = file.fields
+				#7. Get current batch of files => body length used to track total files updated
+				files = get_files(op)
+				op.clear
 
-				# Look for the field id in the nested fields attribute
-				field_obj_found = item_fields.find { |f| f.id == field.id }
+				keywords_to_create = []
 
-				if field_obj_found && (field_obj_found.values.first != '' || field_obj_found.values.first != nil)
-					# split the string using the specified separator
-					keywords_to_append = field_obj_found.values.first.split(field_separator)
+				#8. Iterate through the files and find the keywords that need to be created
+				files.each do |file|
+					
+					field_data      = nil
+					field_obj_found = nil
+
+					#9. Check if the field has any data in it
+					if builtin
+						field_name = source_field_found.name.downcase.gsub(' ','_')
+						field_data = file.instance_variable_get("@#{field_name}")
+						next if field_data.nil? || field_data == ''
+					else
+						field_obj_found = file.fields.find { |f| f.id == source_field_found.id }
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
+							next
+						end
+						field_data = field_obj_found.values.first
+					end
+
+					#10. split the string using the specified separator and remove empty strings
+					keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.empty? }
 					keywords_to_append.each do |val|
 
-						# Trim the value
+						#11. remove leading and trailing white space
 						val = val.strip
 
-						# Check if the value exists in existing keywords
-						keyword_found_in_existing = existing_keywords.find { |k| k.name == val }
+						#12. Check if the value exists in existing keywords
+						keyword_found_in_existing = existing_keywords.find do |k|
+							# Match the existing keywords check by the name of the value and the category
+							# id of the current file to establish the the link between the two
+							k.name.downcase == val.downcase && file.category_id == k.keyword_category_id
+						end
 
-						if keyword_found_in_existing
-							# Check if the file is already tagged with that keyword
-							already_tagged = item_keywords.find { |k| k.id == keyword_found_in_existing.id }
-							unless already_tagged
-								# Tag the file with the keyword
-								file.keywords.push(NestedKeywordItems.new(keyword_found_in_existing.id))
-							end	
-						else
-							# Insert into keywords_to_create array
-							keywords_to_create.push(Keywords.new(keyword_category.id,val))
+						unless keyword_found_in_existing
+							# find keyword cat id matching the category id of current file to establish the association
+							obj = keyword_categories.find { |item| item.category_id == file.category_id }
+							#13. Insert into keywords_to_create array
+							keywords_to_create.push(Keywords.new(obj.id, val.capitalize))
+						end
+						
+					end
+		
+				end
+
+				#14. Remove duplicate keywords in the same keyword category and create them
+				unless keywords_to_create.empty?
+					payload = keywords_to_create.uniq { |item| [item.name, item.keyword_category_id] }
+					#15. Create the keywords for the current batch and set the generate objects flag to true.
+					new_keywords = create_keywords(payload, true)
+
+					#16. Append the returned keyword objects to the existing keywords array
+					unless new_keywords.is_a?(Array) && !new_keywords.empty?	
+						new_keywords.each { |item| existing_keywords.push(item) }
+					else
+						abort("An error occured creating keywords in #{__callee__}")
+					end
+				end
+
+				#17. Loop though the files again and tag them with the newly created keywords.
+				#    This is faster than making individual requests
+				files.each do | file |
+
+					field_data = nil
+
+					# Look for the field and check if the field has any data in it
+					if builtin
+						field_name = source_field_found.name.downcase.gsub(' ','_')
+						field_data = file.instance_variable_get("@#{field_name}")
+						next if field_data.nil? || field_data == ''
+					else
+						field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
+							next
+						end
+						field_data = field_obj_found.values.first
+					end
+
+					if field_data
+						# Remove empty strings
+						keywords = data.split(field_separator).reject { |val| val.empty? }
+
+						# Loop through the key words and tag the file
+						keywords.each do |value|
+							# Trim leading & trailing whitespace
+							value = value.strip
+							#find the string in existing keywords
+							keyword_obj = existing_keywords.find do |item| 
+								item.name.downcase == value.downcase && item.category_id.to_s == file.category_id.to_s
+							end
+
+							#check if current file is already tagged
+							already_tagged = file.keywords.find { |item| item.id.to_s == keyword_obj.id.to_s }
+
+							# Tag the file
+							file.keywords.push(NestedKeywordItems.new(keyword_obj.id)) unless already_tagged
+
 						end
 						
 					end
 				end
-			end
 
-			# Remove dupes, Create the keywords for the current batch and set the generate objects flag to true.
-			# Next, append the returned keyword objects to the existing keywords array
-			unless keywords_to_create.empty?
-				keywords_to_create.uniq! { |item| item.name }
-				new_keywords = create_keywords(keywords_to_create, true)
+				# Use another loop to control the number of times we retry the request in case it fails
+				#18. Perform the update => 3 tries MAX with 5,10,15  second waits between retries respectively
+				res = nil
+				attempts = 0
+				
+				loop do
 
+					attempts += 1
 
-				unless new_keywords.is_a?(Array) && !new_keywords.empty?
-					existing_keywords.push(new_keywords)
-				else
-					Validator::process_http_response(new_keywords,@verbose,'Keywords','POST')
-					abort("An error occured creating keywords in #{__callee__}")
-				end
-			end
+					# This code executes if the web server hangs or takes too long 
+					# to respond after the first update is performed => Possible cause can be too large a batch size
+					if attempts == 4
+						Validator::process_http_response(res,@verbose,'Files','HEAD')
+						abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
+							   " Try adjusting the batch size.")
+					end
 
-			# Loop though the files again and tag them with the newly created keywords.
-			files.each do | file |
-				current_item_keywords = file.keywords
-				current_item_fields   = file.fields
+					#check if the server is responding (This is a HEAD request)
+					server_test = get_count(Files.new)
 
-				# Check if the field has data in it
-				field_found = current_item_fields.find { |nested_field_obj| nested_field_obj.id.to_s == field.id.to_s }
+					if server_test.is_a? Net::HTTPSuccess
 
-				if field_found
-					data = field_found.values.first
-					unless data == nil || data == ''
-						keywords = data.split(field_separator)
-						keywords.each do |value|
-							#check if the string already exists as a keyword
-							keyword_obj = existing_keywords.find { |item| item.name == value.strip }
+						res = update_files(files)
 
-							#check if current file is already tagged
-							already_tagged = current_item_keywords.find { |item| item.id.to_s == keyword_obj.id.to_s}
-
-							# Tag the file
-							file.keywords.push(keyword_obj) unless already_tagged
-
+						if res.kind_of? Net::HTTPSuccess
+							offset += limit
+							total_files_updated += files.length
+							puts "Successfully updated #{total_files_updated.inspect} files."
+							break
+						else
+							Validator::process_http_response(res,@verbose,'Files','PUT')
+							abort
 						end
-					end
-				end
-			end
-
-			# Use another loop to control the number of times we retry the request in case it fails
-			#9. Perform the update => 3 tries MAX with 5,10,15  second waits between retries respectively
-			res = nil
-			attempts = 0
-			loop do
-
-				attempts += 1
-
-				# This code executes if the web server hangs or takes too long 
-				# to respond after the first update is performed => Possible cause can be too large a batch size
-				if attempts == 4
-					Validator::process_http_response(server_test,@verbose,'Files','HEAD')
-					abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
-						   " Try adjusting the batch size.")
-				end
-
-				#check if the server is responding (This is a HEAD request)
-				server_test = get_count(Files.new)
-
-				if server_test.is_a? Net::HTTPSuccess
-
-					res = update_files(files)
-
-					if res.kind_of? Net::HTTPSuccess
-						offset += limit
-						puts "Successfully updated #{offset.inspect} files."
-						break
 					else
-						Validator::process_http_response(res,@verbose,'Files','PUT')
-						abort
+						sleep(5 * attempts)
+
 					end
-
-				else
-
-					sleep(5 * attempts)
-
-				end
-			end
-			
-		end 
-
-	end
-
-	def create_file_keywords_from_field_data_by_category(category=nil,target_keyword_category=nil,source_field=nil,batch_size=100,field_separator=';')
-	
-		#1. Validate input:
-		op = RestOptions.new
-
-		category_found              = nil
-		file_keyword_category_found = nil
-		source_field_found          = nil
-
-		if category.is_a?(Categories) # Object
-			op.add_option('id',category.id)
-			category_found = get_categories(op).first
-			abort("Error: Category id #{category.id} not found in OpenAsset. Aborting") unless category_found
-		elsif (category.is_a?(String) && category.to_i > 0) || category.is_a?(Integer) # Category id
-			op.add_option('id',category)
-			category_found = get_categories(op).first
-			abort("Error: Category id #{category} not found in OpenAsset. Aborting") unless category_found
-		elsif category.is_a?(String) # Category name
-			op.add_option('name',category)
-			category_found = get_categories(op).first
-			abort("Error: Category named #{category} not found in OpenAsset. Aborting") unless category_found
-		else
-			abort("Argument Error: Expected a Categories object, Category name, or Category id for the first argument in #{__callee__}" +
-					"\n\tIntead got #{category.inspect}")
+				end	
+			end  
 		end
 
-		op.clear
-
-		if target_keyword_category.is_a?(KeywordCategories) # Object
-			op.add_option('id',target_keyword_category.id)
-			file_keyword_category_found = get_keyword_categories(op).first
-			abort("Error: File Keyword Category id #{target_keyword_category.id} not found in OpenAsset. Aborting") unless file_keyword_category_found
-		elsif (target_kwyword_category.is_a?(String) && 
-			   target_kwyword_category.to_i > 0) || target_kwyword_category.is_a?(Integer) # Keyword category id
-			op.add_option('id',target_keyword_category)
-			file_keyword_category_found = get_keyword_categories(op).first
-			abort("Error: File Keyword Category id #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
-		elsif target_kwyword_category.is_a?(String) # Keyword category name
-			op.add_option('name',target_keyword_category)
-			file_keyword_category_found = get_keyword_categories(op).first
-			abort("Error: File Keyword Category named #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
-		else
-			abort("Argument Error: Expected a KeywordCategories object, File Keyword Category name, or File Keyword Category id for the second argument in #{__callee__}" +
-					"\n\tIntead got #{target_keyword_category.inspect}")
-		end
-
-		op.clear
-
-		if source_field.is_a?(Fields) # Object
-			op.add_option('id',source_field.id)
-			source_field_found = get_fields(op).first
-			abort("Error: Field id #{source_field.id} not found in OpenAsset. Aborting") unless source_field_found
-		elsif (source_field.is_a?(String) && source_field.to_i > 0) || source_field.is_a?(Integer) # Field id
-			op.add_option('id',source_field)
-			source_field_found = get_fields(op).first
-			abort("Error: Field id #{source_field} not found in OpenAsset. Aborting") unless source_field_found
-		elsif source_field.is_a?(String) # Field name
-			op.add_option('name',source_field)
-			source_field_found = get_fields(op).first
-			abort("Error: Field named #{source_field} not found in OpenAsset. Aborting") unless source_field_found
-		else
-			abort("Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
-					"\n\tIntead got #{target_keyword_category.inspect}")
-		end
-
-		op.clear
-
-		unless batch_size.to_i > 0
-			abort("Argument Error: Expected a non zero numeric value for the fourth argument \"batch size\" in #{__callee__}." +
-					"\n\tInstead got #{batch_size.inspect}.")
-		end
-
-		unless field_separator.is_a?(String)
-			abort("Argument Error: Expected a string value for the fifth argument \"field_separator\" in #{__callee__}." +
-					"\n\tInstead got #{field_separator.class}.")
-		end
-
-		#2. Get total file count for the category
-		op.add_option('category_id', category_found.id)
-		total_file_count = get_count(Files.new, op)
-		op.clear
+		def create_file_keywords_from_field_data_by_category(category=nil,target_keyword_category=nil,source_field=nil,batch_size=100,field_separator=';')
 		
-		abort("Error: Field is not an image field. Aborting") unless source_field_found.field_type == 'image'
+			#1. Validate input:
+			op = RestOptions.new
 
-		#3. Check field type
-		builtin = (source_field_found.built_in == '1') ? true : false
+			category_found              = nil
+			file_keyword_category_found = nil
+			source_field_found          = nil
 
-		#4. Get all file keywords in the specified keyword category
-		op.add_option('keyword_category_id', file_keyword_category_found.id)
-		op.add_option('limit', '0')
-		existing_keywords = get_keywords(op)
-		op.clear
+			if category.is_a?(Categories) # Object
+				op.add_option('id',category.id)
+				category_found = get_categories(op).first
+				abort("Error: Category id #{category.id} not found in OpenAsset. Aborting") unless category_found
+			elsif (category.is_a?(String) && category.to_i > 0) || category.is_a?(Integer) # Category id
+				op.add_option('id',category)
+				category_found = get_categories(op).first
+				abort("Error: Category id #{category} not found in OpenAsset. Aborting") unless category_found
+			elsif category.is_a?(String) # Category name
+				op.add_option('name',category)
+				category_found = get_categories(op).first
+				abort("Error: Category named #{category} not found in OpenAsset. Aborting") unless category_found
+			else
+				abort("Argument Error: Expected a Categories object, Category name, or Category id for the first argument in #{__callee__}" +
+						"\n\tIntead got #{category.inspect}")
+			end
 
-		#5. Calculate number of requests needed based on specified batch_size
-		batch_size = batch_size.to_i
-		iterations = 0
-		if total_file_count % batch_size == 0
-			iterations = total_file_count / batch_size
-		else
-			iterations = total_file_count / batch_size + 1  #we'll need one more iteration to grab remaining
-		end
-
-		offset = 0
-		limit  = batch_size
-		total_files_updated = 0
-
-		#6. Create update loop using iteration limit and batch size
-		iterations.times do
-
-			op.add_option('offset', offset)
-			op.add_option('limit', limit)
-			op.add('category_id', category_found.id)
-			
-			#7. Get current batch of files => body length used to track total files updated
-			files = get_files(op)
 			op.clear
 
-			keywords_to_create = []
+			if target_keyword_category.is_a?(KeywordCategories) # Object
+				op.add_option('id',target_keyword_category.id)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category id #{target_keyword_category.id} not found in OpenAsset. Aborting") unless file_keyword_category_found
+			elsif (target_kwyword_category.is_a?(String) && 
+				   target_kwyword_category.to_i > 0) || target_kwyword_category.is_a?(Integer) # Keyword category id
+				op.add_option('id',target_keyword_category)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category id #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
+			elsif target_kwyword_category.is_a?(String) # Keyword category name
+				op.add_option('name',target_keyword_category)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category named #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
+			else
+				abort("Argument Error: Expected a KeywordCategories object, File Keyword Category name, or File Keyword Category id for the second argument in #{__callee__}" +
+						"\n\tIntead got #{target_keyword_category.inspect}")
+			end
 
-			#8. Iterate through the files and find the keywords that need to be created
-			files.each do |file|
+			op.clear
+
+			if source_field.is_a?(Fields) # Object
+				op.add_option('id',source_field.id)
+				source_field_found = get_fields(op).first
+				abort("Error: Field id #{source_field.id} not found in OpenAsset. Aborting") unless source_field_found
+			elsif (source_field.is_a?(String) && source_field.to_i > 0) || source_field.is_a?(Integer) # Field id
+				op.add_option('id',source_field)
+				source_field_found = get_fields(op).first
+				abort("Error: Field id #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+			elsif source_field.is_a?(String) # Field name
+				op.add_option('name',source_field)
+				source_field_found = get_fields(op).first
+				abort("Error: Field named #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+			else
+				abort("Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
+						"\n\tIntead got #{source_field.inspect}")
+			end
+
+			op.clear
+
+			unless batch_size.to_i > 0
+				abort("Argument Error: Expected a non zero numeric value for the fourth argument \"batch size\" in #{__callee__}." +
+						"\n\tInstead got #{batch_size.inspect}.")
+			end
+
+			unless field_separator.is_a?(String)
+				abort("Argument Error: Expected a string value for the fifth argument \"field_separator\" in #{__callee__}." +
+						"\n\tInstead got #{field_separator.class}.")
+			end
+
+			#2. Get total file count for the category
+			op.add_option('category_id', category_found.id)
+			total_file_count = get_count(Files.new, op)
+			op.clear
+			
+			abort("Error: Field is not an image field. Aborting") unless source_field_found.field_type == 'image'
+
+			#3. Check field type
+			builtin = (source_field_found.built_in == '1') ? true : false
+
+			#4. Get all file keywords in the specified keyword category
+			op.add_option('keyword_category_id', file_keyword_category_found.id)
+			op.add_option('limit', '0')
+			existing_keywords = get_keywords(op)
+			op.clear
+
+			#5. Calculate number of requests needed based on specified batch_size
+			batch_size = batch_size.to_i
+			iterations = 0
+			if total_file_count % batch_size == 0
+				iterations = total_file_count / batch_size
+			else
+				iterations = total_file_count / batch_size + 1  #we'll need one more iteration to grab remaining
+			end
+
+			offset = 0
+			limit  = batch_size
+			total_files_updated = 0
+
+			#6. Create update loop using iteration limit and batch size
+			iterations.times do
+
+				op.add_option('offset', offset)
+				op.add_option('limit', limit)
+				op.add('category_id', category_found.id)
 				
-				field_data            = nil
-				field_obj_found       = nil
+				#7. Get current batch of files => body length used to track total files updated
+				files = get_files(op)
+				op.clear
 
-				#9. Look for the field id in the nested fields and get the data or get the string value if it's builtin
-				if builtin
-					field_name = source_field_found.name.downcase.gsub(' ','_')
-					field_data = file.instance_variable_get("@#{field_name}")
-					next if field_data.nil? || field_data == ''
-				else
-					field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id }
-					if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
-						next
-					end
-					field_data = field_obj_found.values.first
-				end
+				keywords_to_create = []
 
-				#10. split the string using the specified separator and remove empty strings
-				keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.empty? }
-				keywords_to_append.each do |val|
-
-					#11. remove leading and trailing white space
-					val = val.strip
-
-					#12. Check if the value exists in existing keywords
-					keyword_found_in_existing = existing_keywords.find { |k| k.name.downcase == val.downcase }
-
-					unless keyword_found_in_existing
-						#13. Insert into keywords_to_create array
-						keywords_to_create.push(Keywords.new(file_keyword_category_found.id, val.capitalize))
-					end
+				#8. Iterate through the files and find the keywords that need to be created
+				files.each do |file|
 					
-				end
-	
-			end
+					field_data = nil
 
-			#14. Remove duplicate keywords => just in case
-			unless keywords_to_create.empty?
-				payload = keywords_to_create.uniq { |item| item.name }
-				#15. Create the keywords for the current batch and set the generate objects flag to true.
-				new_keywords = create_keywords(payload, true)
-
-				#16. Append the returned keyword objects to the existing keywords array
-				unless new_keywords.is_a?(Array) && !new_keywords.empty?
-					new_keywords.each { |item| existing_keywords.push(item) }
-				else
-					abort("An error occured creating keywords in #{__callee__}")
-				end
-			end
-
-			#17. Loop though the files again and tag them with the newly created keywords.
-			files.each do | file |
-
-				field_found = nil
-
-				if builtin
-					field_name = source_field_found.name.downcase.gsub(' ','_')
-					field_data = file.instance_variable_get("@#{field_name}")
-					next if field_data.nil? || field_data == ''
-				else
-					field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
-					if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
-						next
+					#9. Look for the field and check if the field has any data in it
+					if builtin
+						field_name = source_field_found.name.downcase.gsub(' ','_')
+						field_data = file.instance_variable_get("@#{field_name}")
+						next if field_data.nil? || field_data == ''
+					else
+						field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id }
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
+							next
+						end
+						field_data = field_obj_found.values.first
 					end
-					field_data = field_obj_found.values.first
+
+					#10. split the string using the specified separator and remove empty strings
+					keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.empty? }
+					keywords_to_append.each do |val|
+
+						#11. remove leading and trailing white space
+						val = val.strip
+
+						#12. Check if the value exists in existing keywords
+						keyword_found_in_existing = existing_keywords.find { |k| k.name.downcase == val.downcase }
+
+						unless keyword_found_in_existing
+							#13. Insert into keywords_to_create array
+							keywords_to_create.push(Keywords.new(file_keyword_category_found.id, val.capitalize))
+						end
+						
+					end
+		
 				end
 
-				if field_found
-					data = field_found.values.first
+				#14. Remove duplicate keywords => just in case
+				unless keywords_to_create.empty?
+					payload = keywords_to_create.uniq { |item| item.name }
+					#15. Create the keywords for the current batch and set the generate objects flag to true.
+					new_keywords = create_keywords(payload, true)
+
+					#16. Append the returned keyword objects to the existing keywords array
+					unless new_keywords.is_a?(Array) && !new_keywords.empty?
+						new_keywords.each { |item| existing_keywords.push(item) }
+					else
+						abort("An error occured creating keywords in #{__callee__}")
+					end
+				end
+
+				#17. Loop though the files again and tag them with the newly created keywords.
+				files.each do | file |
+
+					field_data = nil
+
+					#9. Look for the field and check if the field has any data in it
+					if builtin
+						field_name = source_field_found.name.downcase.gsub(' ','_')
+						field_data = file.instance_variable_get("@#{field_name}")
+						next if field_data.nil? || field_data == ''
+					else
+						field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
+							next
+						end
+						field_data = field_obj_found.values.first
+					end
 
 					keywords = data.split(field_separator)
 					keywords.each do |value|
@@ -2597,313 +2638,307 @@ module OpenAsset
 
 					end
 				end
+
+				# Use another loop to control the number of times we retry the request in case it fails
+				#18. Perform the update => 3 tries MAX with 5,10,15  second waits between retries respectively
+				res = nil
+				attempts = 0
+				
+				loop do
+
+					attempts += 1
+
+					# This code executes if the web server hangs or takes too long 
+					# to respond after the first update is performed => Possible cause can be too large a batch size
+					if attempts == 4
+						Validator::process_http_response(server_test,@verbose,'Files','HEAD')
+						abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
+							   " Try adjusting the batch size.")
+					end
+
+					#check if the server is responding (This is a HEAD request)
+					server_test = get_count(Files.new)
+
+					if server_test.is_a? Net::HTTPSuccess
+
+						res = update_files(files)
+
+						if res.kind_of? Net::HTTPSuccess
+							offset += limit
+							total_files_updated += files.length
+							puts "Successfully updated #{total_files_updated.inspect} files."
+							break
+						else
+							Validator::process_http_response(res,@verbose,'Files','PUT')
+							abort
+						end
+					else
+						sleep(5 * attempts)
+					end
+				end	
+			end 
+		end
+
+		def create_file_keywords_from_field_data_by_project(project=nil,target_keyword_category=nil,source_field=nil,batch_size=100,field_separator=';')
+			
+			op = RestOptions.new
+
+			project_found               = nil
+			file_keyword_category_found = nil
+			source_field_found          = nil
+			
+			
+			#1. Validate input
+			if project.is_a?(Projects) #Object
+
+				op.add_option('id',project.id)
+				project_found = get_projects(op).first
+				abort("Error: Project id #{project.id} not found in OpenAsset. Aborting") unless project_found
+
+			elsif (project.is_a?(String) && project.to_i > 0) || project.is_a?(Integer) #Project id
+
+				op.add_option('id',project)
+				project_found = get_projects(op).first
+				abort("Error: Project id #{project} not found in OpenAsset. Aborting") unless project_found
+
+			elsif project.is_a?(String) #Project name
+
+				op.add_option('name',project)
+				project_found = get_projects(op).first
+				abort("Error: Project named #{project} not found in OpenAsset. Aborting") unless project_found
+
+			else
+
+				abort("Argument Error: Expected a Projects object, Project name, or Project id for the second argument in #{__callee__}" +
+						"\n\tIntead got #{project.inspect}")
+
 			end
 
-			# Use another loop to control the number of times we retry the request in case it fails
-			#18. Perform the update => 3 tries MAX with 5,10,15  second waits between retries respectively
-			res = nil
-			attempts = 0
-			
-			loop do
-
-				attempts += 1
-
-				# This code executes if the web server hangs or takes too long 
-				# to respond after the first update is performed => Possible cause can be too large a batch size
-				if attempts == 4
-					Validator::process_http_response(server_test,@verbose,'Files','HEAD')
-					abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
-						   " Try adjusting the batch size.")
-				end
-
-				#check if the server is responding (This is a HEAD request)
-				server_test = get_count(Files.new)
-
-				if server_test.is_a? Net::HTTPSuccess
-
-					res = update_files(files)
-
-					if res.kind_of? Net::HTTPSuccess
-						offset += limit
-						total_files_updated += files.length
-						puts "Successfully updated #{total_files_updated.inspect} files."
-						break
-					else
-						Validator::process_http_response(res,@verbose,'Files','PUT')
-						abort
-					end
-				else
-					sleep(5 * attempts)
-				end
-			end	
-		end 
-	end
-
-	def create_file_keywords_from_field_data_by_project(project=nil,target_keyword_category=nil,source_field=nil,batch_size=100,field_separator=';')
-		
-		op = RestOptions.new
-
-		project_found               = nil
-		file_keyword_category_found = nil
-		source_field_found          = nil
-		
-		
-		#1. Validate input
-		if project.is_a?(Projects) #Object
-
-			op.add_option('id',project.id)
-			project_found = get_projects(op).first
-			abort("Error: Project id #{project.id} not found in OpenAsset. Aborting") unless project_found
-
-		elsif (project.is_a?(String) && project.to_i > 0) || project.is_a?(Integer) #Project id
-
-			op.add_option('id',project)
-			project_found = get_projects(op).first
-			abort("Error: Project id #{project} not found in OpenAsset. Aborting") unless project_found
-
-		elsif project.is_a?(String) #Project name
-
-			op.add_option('name',project)
-			project_found = get_projects(op).first
-			abort("Error: Project named #{project} not found in OpenAsset. Aborting") unless project_found
-
-		else
-
-			abort("Argument Error: Expected a Projects object, Project name, or Project id for the second argument in #{__callee__}" +
-					"\n\tIntead got #{project.inspect}")
-
-		end
-
-		op.clear
-
-		if target_keyword_category.is_a?(KeywordCategories) #Object
-
-			op.add_option('id',target_keyword_category.id)
-			file_keyword_category_found = get_keyword_categories(op).first
-			abort("Error: File Keyword Category id #{target_keyword_category.id} not found in OpenAsset. Aborting") unless file_keyword_category_found
-		
-		elsif (target_keyword_category.is_a?(String) && # file keyword category id
-			   target_keyword_category.to_i > 0) || 
-			   target_keyword_category.is_a?(Integer)
-			
-			op.add_option('id',target_keyword_category)
-			file_keyword_category_found = get_keyword_categories(op).first
-			abort("Error: File Keyword Category id #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
-		
-		elsif target_keyword_category.is_a?(String) # file keyword category name
-
-			op.add_option('name',target_keyword_category)
-			file_keyword_category_found = get_keyword_categories(op).first
-			abort("Error: File Keyword Category named #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
-		
-		else
-			
-			abort("Argument Error: Expected a KeywordCategories object, File Keyword Category name, or File Keyword Category id for the second argument in #{__callee__}" +
-					"\n\tIntead got #{target_keyword_category.inspect}")
-
-		end
-
-		op.clear
-
-		if source_field.is_a?(Fields) #Object
-
-			op.add_option('id',source_field.id)
-			source_field_found = get_fields(op).first
-			abort("Error: Field id #{source_field.id} not found in OpenAsset. Aborting") unless source_field_found
-
-		elsif (source_field.is_a?(String) && source_field.to_i > 0) || source_field.is_a?(Integer) #Field id
-
-			op.add_option('id',source_field)
-			source_field_found = get_fields(op).first
-			abort("Error: Field id #{source_field} not found in OpenAsset. Aborting") unless source_field_found
-
-		elsif source_field.is_a?(String) #Field name
-
-			op.add_option('name',source_field)
-			source_field_found = get_fields(op).first
-			abort("Error: Field named #{source_field} not found in OpenAsset. Aborting") unless source_field_found
-
-		else
-
-			abort("Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
-					"\n\tIntead got #{target_keyword_category.inspect}")
-
-		end
-
-		abort("Error: Field is not an image field. Aborting") unless source_field_found.field_type == 'image'
-		
-		op.clear
-
-		unless batch_size.to_i > 0
-			abort("Argument Error: Expected a non zero numeric value for the fourth argument \"batch size\" in #{__callee__}." +
-					"\n\tInstead got #{batch_size.inspect}.")
-		end
-
-		unless field_separator.is_a?(String)
-			abort("Argument Error: Expected a string value for the fifth argument \"field_separator\" in #{__callee__}." +
-					"\n\tInstead got #{field_separator.class}.")
-		end
-		
-		# Get all the categories associated with the files in the project then using the target_keyword_category,  
-		# create the file keyword category in all the system categories that don't have them
-
-		# Capture associated system categories
-		op.add_option('limit','0')
-		op.add_option('project_id',project_found.id)
-		op.add_option('displayFields','category_id')
-
-		#Remove duplicates
-		file_category_ids_contained_in_project = get_files(op).uniq { |obj| obj.category_id }
-
-		# We just want the ids => Array of ids
-		file_category_ids_contained_in_project = file_category_ids_contained_in_project.map { |obj| obj.category_id } 
-		op.clear
-
-		keyword_categories = []
-		keyword_categories << file_keyword_category_found
-
-		# Create the keyword category in all associated categories => except the one 
-		# that the target_keyword_category belongs to because it already exists
-		file_cat_ids = file_category_ids_contained_in_project.reject { |val| val.to_s == file_keyword_category_found.category_id.to_s }
-
-		# Now loop throught the file categories, create the needed keyword categories for referencing below
-		file_cat_ids.each do |id|
-			obj = KeywordCategories.new(file_keyword_category_found.name, id)
-			kwd_cat_obj = create_keyword_categories(obj, true).first
-			abort("Error creating keyword category in #{__callee__}") unless kwd_cat_obj
-			keyword_categories.push(kwd_cat_obj)
-		end
-
-		#2. Get total file count
-		op.add_option('category_id', project.id)
-		total_file_count = get_count(Files.new, op)
-		op.clear
-
-		#3. Check the source_field field type
-		builtin = (source_field_found.built_in == '1') ? true : false
-
-		#4. Get all file keywords in the specified keyword category for all the file categories found in the project
-		query_ids = keyword_categories.map { |item| item.id }.join(',')
-		
-		op.add_option('keyword_category_id', query_ids)
-		op.add_option('limit', '0')
-
-		existing_keywords = get_keywords(op)
-		op.clear
-
-		keyword_store = Hash.new{ |h, k| h[k] = Hash.new(&h.default_proc) }
-		
-		#5. Calculate number of requests needed based on specified batch_size
-		batch_size = batch_size.to_i
-		iterations = 0
-		if total_file_count % batch_size == 0
-			iterations = total_file_count / batch_size
-		else
-			iterations = total_file_count / batch_size + 1  #we'll need one more iteration to grab remaining
-		end
-
-		# Set up loop controls
-		offset = 0
-		limit  = batch_size
-		total_files_updated = 0
-
-		#6. Create update loop using iteration limit and batch size
-		iterations.times do
-
-			op.add_option('offset', offset)
-			op.add_option('limit', limit)
-			op.add('project_id', project_found.id)
-			
-			#7. Get current batch of files => body length used to track total files updated
-			files = get_files(op)
 			op.clear
 
-			keywords_to_create = []
+			if target_keyword_category.is_a?(KeywordCategories) #Object
 
-			#8. Iterate through the files and find the keywords that need to be created
-			files.each do |file|
+				op.add_option('id',target_keyword_category.id)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category id #{target_keyword_category.id} not found in OpenAsset. Aborting") unless file_keyword_category_found
+			
+			elsif (target_keyword_category.is_a?(String) && # file keyword category id
+				   target_keyword_category.to_i > 0) || 
+				   target_keyword_category.is_a?(Integer)
 				
-				field_data      = nil
-				field_obj_found = nil
+				op.add_option('id',target_keyword_category)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category id #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
+			
+			elsif target_keyword_category.is_a?(String) # file keyword category name
 
-				#9. Look for the field id in the nested fields attribute or get the string value if it's builtin
-				if builtin
-					field_name = source_field_found.name.downcase.gsub(' ','_')
-					field_data = file.instance_variable_get("@#{field_name}")
-					next if field_data.nil? || field_data == ''
-				else
-					field_obj_found = file.fields.find { |f| f.id == source_field_found.id }
-					if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
-						next
-					end
-					field_data = field_obj_found.values.first
-				end
+				op.add_option('name',target_keyword_category)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category named #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
+			
+			else
+				
+				abort("Argument Error: Expected a KeywordCategories object, File Keyword Category name, or File Keyword Category id for the second argument in #{__callee__}" +
+						"\n\tIntead got #{target_keyword_category.inspect}")
 
-				#10. split the string using the specified separator and remove empty strings
-				keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.empty? }
-				keywords_to_append.each do |val|
+			end
 
-					#11. remove leading and trailing white space
-					val = val.strip
+			op.clear
 
-					#12. Check if the value exists in existing keywords
-					keyword_found_in_existing = existing_keywords.find do |k|
-						# Match the existing keywords check by the name of the value and the category
-						# id of the current file to establish the the link between the two
-						k.name.downcase == val.downcase && file.category_id == k.keyword_category_id
-					end
+			if source_field.is_a?(Fields) #Object
 
-					unless keyword_found_in_existing
-						# find keyword cat id matching the category id of current file to establish the association
-						obj = keyword_categories.find { |item| item.category_id == file.category_id }
-						#13. Insert into keywords_to_create array
-						keywords_to_create.push(Keywords.new(obj.id, val.capitalize))
-					end
+				op.add_option('id',source_field.id)
+				source_field_found = get_fields(op).first
+				abort("Error: Field id #{source_field.id} not found in OpenAsset. Aborting") unless source_field_found
+
+			elsif (source_field.is_a?(String) && source_field.to_i > 0) || source_field.is_a?(Integer) #Field id
+
+				op.add_option('id',source_field)
+				source_field_found = get_fields(op).first
+				abort("Error: Field id #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+
+			elsif source_field.is_a?(String) #Field name
+
+				op.add_option('name',source_field)
+				source_field_found = get_fields(op).first
+				abort("Error: Field named #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+
+			else
+
+				abort("Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
+						"\n\tIntead got #{target_keyword_category.inspect}")
+
+			end
+
+			abort("Error: Field is not an image field. Aborting") unless source_field_found.field_type == 'image'
+			
+			op.clear
+
+			unless batch_size.to_i > 0
+				abort("Argument Error: Expected a non zero numeric value for the fourth argument \"batch size\" in #{__callee__}." +
+						"\n\tInstead got #{batch_size.inspect}.")
+			end
+
+			unless field_separator.is_a?(String)
+				abort("Argument Error: Expected a string value for the fifth argument \"field_separator\" in #{__callee__}." +
+						"\n\tInstead got #{field_separator.class}.")
+			end
+			
+			# Get all the categories associated with the files in the project then using the target_keyword_category,  
+			# create the file keyword category in all the system categories that don't have them
+
+			# Capture associated system categories
+			op.add_option('limit','0')
+			op.add_option('project_id',project_found.id)
+			op.add_option('displayFields','category_id')
+
+			# Get category ids
+			file_category_ids_contained_in_project = get_files(op).uniq { |obj| obj.category_id } 
+			op.clear
+
+			keyword_categories = []
+			keyword_categories << file_keyword_category_found
+
+			# Create the keyword category in all associated categories => except the one 
+			# that the target_keyword_category belongs to because it already exists
+			file_cat_ids = file_category_ids_contained_in_project.reject { |val| val.to_s == file_keyword_category_found.category_id.to_s }
+
+			# Now loop throught the file categories, create the needed keyword categories for referencing below
+			file_cat_ids.each do |id|
+				obj = KeywordCategories.new(file_keyword_category_found.name, id)
+				kwd_cat_obj = create_keyword_categories(obj, true).first
+				abort("Error creating keyword category in #{__callee__}") unless kwd_cat_obj
+				keyword_categories.push(kwd_cat_obj)
+			end
+
+			#2. Get total file count
+			op.add_option('category_id', project.id)
+			total_file_count = get_count(Files.new, op)
+			op.clear
+
+			#3. Check the source_field field type
+			builtin = (source_field_found.built_in == '1') ? true : false
+
+			#4. Get all file keywords in the specified keyword category for all the file categories found in the project
+			query_ids = keyword_categories.map { |item| item.id }.join(',')
+			
+			op.add_option('keyword_category_id', query_ids)
+			op.add_option('limit', '0')
+
+			existing_keywords = get_keywords(op)
+			op.clear
+
+			#keyword_store = Hash.new{ |h, k| h[k] = Hash.new(&h.default_proc) }
+			
+			#5. Calculate number of requests needed based on specified batch_size
+			batch_size = batch_size.to_i
+			iterations = 0
+			if total_file_count % batch_size == 0
+				iterations = total_file_count / batch_size
+			else
+				iterations = total_file_count / batch_size + 1  #we'll need one more iteration to grab remaining
+			end
+
+			# Set up loop controls
+			offset = 0
+			limit  = batch_size
+			total_files_updated = 0
+
+			#6. Create update loop using iteration limit and batch size
+			iterations.times do
+
+				op.add_option('offset', offset)
+				op.add_option('limit', limit)
+				op.add('project_id', project_found.id)
+				
+				#7. Get current batch of files => body length used to track total files updated
+				files = get_files(op)
+				op.clear
+
+				keywords_to_create = []
+
+				#8. Iterate through the files and find the keywords that need to be created
+				files.each do |file|
 					
-				end
-	
-			end
+					field_data = nil
 
-			#14. Remove duplicate keywords in the same keyword category 
-			unless keywords_to_create.empty?
-				payload = keywords_to_create.uniq { |item| [item.name, item.keyword_category_id] }
-				#15. Create the keywords for the current batch and set the generate objects flag to true.
-				new_keywords = create_keywords(payload, true)
-
-				#16. Append the returned keyword objects to the existing keywords array
-				unless new_keywords.is_a?(Array) && !new_keywords.empty?	
-					new_keywords.each { |item| existing_keywords.push(item) }
-				else
-					abort("An error occured creating keywords in #{__callee__}")
-				end
-			end
-
-			#17. Loop though the files again and tag them with the newly created keywords.
-			#    This is faster than making individual requests
-			files.each do | file |
-
-				field_data = nil
-
-				if builtin
-					field_name = source_field_found.name.downcase.gsub(' ','_')
-					field_data = file.instance_variable_get("@#{field_name}")
-					next if field_data.nil? || field_data == ''
-				else
-					field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
-					if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
-						next
+					#9. Look for the field id in the nested fields attribute or get the string value if it's builtin
+					if builtin
+						field_name = source_field_found.name.downcase.gsub(' ','_')
+						field_data = file.instance_variable_get("@#{field_name}")
+						next if field_data.nil? || field_data == ''
+					else
+						field_obj_found = file.fields.find { |f| f.id == source_field_found.id }
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
+							next
+						end
+						field_data = field_obj_found.values.first
 					end
-					field_data = field_obj_found.values.first
+
+					#10. split the string using the specified separator and remove empty strings
+					keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.empty? }
+					keywords_to_append.each do |val|
+
+						#11. remove leading and trailing white space
+						val = val.strip
+
+						#12. Check if the value exists in existing keywords
+						keyword_found_in_existing = existing_keywords.find do |k|
+							# Match the existing keywords check by the name of the value and the category
+							# id of the current file to establish the the link between the two
+							k.name.downcase == val.downcase && file.category_id == k.keyword_category_id
+						end
+
+						unless keyword_found_in_existing
+							# find keyword cat id matching the category id of current file to establish the association
+							obj = keyword_categories.find { |item| item.category_id == file.category_id }
+							#13. Insert into keywords_to_create array
+							keywords_to_create.push(Keywords.new(obj.id, val.capitalize))
+						end
+						
+					end
+		
 				end
 
-				# Check if the field has data in it
-				#field_found = file.fields.find do |nested_field_obj| 
-				#	nested_field_obj.id.to_s == source_field_found.id.to_s 
-				#end
+				#14. Remove duplicate keywords in the same keyword category 
+				unless keywords_to_create.empty?
+					payload = keywords_to_create.uniq { |item| [item.name, item.keyword_category_id] }
+					#15. Create the keywords for the current batch and set the generate objects flag to true.
+					new_keywords = create_keywords(payload, true)
 
-				if field_data
+					#16. Append the returned keyword objects to the existing keywords array
+					unless new_keywords.is_a?(Array) && !new_keywords.empty?	
+						new_keywords.each { |item| existing_keywords.push(item) }
+					else
+						abort("An error occured creating keywords in #{__callee__}")
+					end
+				end
+
+				#17. Loop though the files again and tag them with the newly created keywords.
+				#    This is faster than making individual requests
+				files.each do | file |
+
+					field_data = nil
+
+					if builtin
+						field_name = source_field_found.name.downcase.gsub(' ','_')
+						field_data = file.instance_variable_get("@#{field_name}")
+						next if field_data.nil? || field_data == ''
+					else
+						field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
+							next
+						end
+						field_data = field_obj_found.values.first
+					end
+
+					# Check if the field has data in it
+					#field_found = file.fields.find do |nested_field_obj| 
+					#	nested_field_obj.id.to_s == source_field_found.id.to_s 
+					#end
+
 					# Remove empty strings
-					keywords = data.split(field_separator).reject { |val| val.empty? }
+					keywords = field_data.split(field_separator).reject { |val| val.empty? }
 
 					# Loop through the key words and tag the file
 					keywords.each do |value|
@@ -2921,51 +2956,50 @@ module OpenAsset
 						file.keywords.push(NestedKeywordItems.new(keyword_obj.id)) unless already_tagged
 
 					end
-					
-				end
-			end
-
-			# Use another loop to control the number of times we retry the request in case it fails
-			#18. Perform the update => 3 tries MAX with 5,10,15  second waits between retries respectively
-			res = nil
-			attempts = 0
-			
-			loop do
-
-				attempts += 1
-
-				# This code executes if the web server hangs or takes too long 
-				# to respond after the first update is performed => Possible cause can be too large a batch size
-				if attempts == 4
-					Validator::process_http_response(res,@verbose,'Files','HEAD')
-					abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
-						   " Try adjusting the batch size.")
+						
 				end
 
-				#check if the server is responding (This is a HEAD request)
-				server_test = get_count(Files.new)
+				# Use another loop to control the number of times we retry the request in case it fails
+				#18. Perform the update => 3 tries MAX with 5,10,15  second waits between retries respectively
+				res = nil
+				attempts = 0
+				
+				loop do
 
-				if server_test.is_a? Net::HTTPSuccess
+					attempts += 1
 
-					res = update_files(files)
-
-					if res.kind_of? Net::HTTPSuccess
-						offset += limit
-						total_files_updated += files.length
-						puts "Successfully updated #{total_files_updated.inspect} files."
-						break
-					else
-						Validator::process_http_response(res,@verbose,'Files','PUT')
-						abort
+					# This code executes if the web server hangs or takes too long 
+					# to respond after the first update is performed => Possible cause can be too large a batch size
+					if attempts == 4
+						Validator::process_http_response(res,@verbose,'Files','HEAD')
+						abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
+							   " Try adjusting the batch size.")
 					end
-				else
-					sleep(5 * attempts)
 
-				end
-			end	
-		end 
+					#check if the server is responding (This is a HEAD request)
+					server_test = get_count(Files.new)
+
+					if server_test.is_a? Net::HTTPSuccess
+
+						res = update_files(files)
+
+						if res.kind_of? Net::HTTPSuccess
+							offset += limit
+							total_files_updated += files.length
+							puts "Successfully updated #{total_files_updated.inspect} files."
+							break
+						else
+							Validator::process_http_response(res,@verbose,'Files','PUT')
+							abort
+						end
+					else
+						sleep(5 * attempts)
+
+					end
+				end	
+			end 
+		end
 	end
-
 end
 
 puts 'Syntax TEST Passed blah' 
