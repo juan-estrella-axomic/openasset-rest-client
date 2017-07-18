@@ -56,17 +56,23 @@ module OpenAsset
 
 				parsed_response_body = JSON.parse(json_response.body)
 
-				if parsed_response_body.is_a?(Array) && (parsed_response_body.empty? == false)
+				puts "parsed_response_body: #{parsed_response_body}"
+				if parsed_response_body != [] && parsed_response_body != {} && parsed_response_body != nil
+
+					parsed_response_body = 
+						(parsed_response_body.is_a?(Array)) ? parsed_response_body : [parsed_response_body]
 
 					inferred_class = Object.const_get(resource_type)
+					#puts "inferred_class: #{inferred_class}"
 					
 					objects_array = parsed_response_body.map { |item| inferred_class.new(item) }
-
+					#puts "objects_array #{objects_array}"
+					#puts "OBJECTS ARRAY => #{objects_array}"
+					return objects_array
 				else
 					# return raw JSON response if empty body comes back
-					json_response
+					 return json_response
 				end
-	
 		end 
 
 		# @!visibility private 
@@ -101,6 +107,9 @@ module OpenAsset
 			end
 
 			Validator::process_http_response(response,@verbose,resource,'HEAD')
+
+			return unless response.kind_of?(Net::HTTPSuccess)
+
 			response['X-Full-Results-Count'].to_i
 		end
 
@@ -156,6 +165,8 @@ module OpenAsset
 				@session = response['X-SessionKey']
 			end
 			Validator::process_http_response(response,@verbose,resource,'GET')
+
+			return unless response.kind_of?(Net::HTTPSuccess)
 				
 			#Dynamically infer the the class needed to create objects by using the request_uri REST endpoint
 			#returns the Class constant so we can dynamically set it below
@@ -171,15 +182,18 @@ module OpenAsset
 			resource = ''
 			if uri.to_s.split('/').last.to_i == 0 #its a non numeric string meaning its a resource endpoint
 				resource = uri.to_s.split('/').last
+				puts "resource: #{resource}"
 			else
 				resource = uri.to_s.split('/')[-2] #the request is using a REST shortcut so we need to grab 
 			end									   #second to last string of the url as the endpoint
 
 			json_body = Validator::validate_and_process_request_data(data)
+
 			unless json_body
 				puts "Error: Undefined json_body Error in POST request."
 				return false
 			end
+
 			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Post.new(uri.request_uri)
 				if @session
@@ -199,16 +213,17 @@ module OpenAsset
 
 			Validator::process_http_response(response,@verbose,resource,'POST')
 
-			if generate_objects
+			return unless response.kind_of?(Net::HTTPSuccess)
 
-				generate_objects_from_json_response_body(response,resource)
+			if generate_objects == true
+
+				return generate_objects_from_json_response_body(response,resource)
 
 			else
 				# JSON object
-				response
+				return response
 
 			end
-
 		end
 
 		# @!visibility private
@@ -237,16 +252,17 @@ module OpenAsset
 
 			Validator::process_http_response(response,@verbose,resource,'PUT')
 
-			if generate_objects
+			return unless response.kind_of?(Net::HTTPSuccess)
 
-				generate_objects_from_json_response_body(response,resource)
+			if generate_objects == true
+
+				return generate_objects_from_json_response_body(response,resource)
 
 			else
 				# JSON object
-				response
+				return response
 
-			end
-			
+			end	
 		end
 
 		# @!visibility private
@@ -292,6 +308,7 @@ module OpenAsset
 		# @example rest_client.kill_session()
 		def kill_session
 			@authenticator.kill_session
+			@session = ''
 		end
 
 		# Generates a new session
@@ -2158,7 +2175,11 @@ module OpenAsset
 				abort("Error: Album id #{album} not found in OpenAsset. Aborting") unless album_found
 			elsif album.is_a?(String) # Album name
 				op.add_option('name',album)
-				album_found = get_albums(op).first
+				album_found = get_albums(op)
+				if album_found.length > 1
+					warn "Error: Multiple albums found named #{album}. Specify an id instead."
+					return
+				end
 				abort("Error: Album named #{album} not found in OpenAsset. Aborting") unless album_found
 			else
 				abort("Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
@@ -2171,12 +2192,12 @@ module OpenAsset
 				op.add_option('id',target_keyword_category.id)
 				file_keyword_category_found = get_keyword_categories(op).first
 				abort("Error: File Keyword Category id #{target_keyword_category.id} not found in OpenAsset. Aborting") unless file_keyword_category_found
-			elsif (target_kwyword_category.is_a?(String) && 
-				   target_kwyword_category.to_i > 0) || target_kwyword_category.is_a?(Integer) # Keyword category id
+			elsif (target_keyword_category.is_a?(String) && 
+				   target_keyword_category.to_i > 0) || target_keyword_category.is_a?(Integer) # Keyword category id
 				op.add_option('id',target_keyword_category)
 				file_keyword_category_found = get_keyword_categories(op).first
 				abort("Error: File Keyword Category id #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
-			elsif target_kwyword_category.is_a?(String) # Keyword category name
+			elsif target_keyword_category.is_a?(String) # Keyword category name
 				op.add_option('name',target_keyword_category)
 				file_keyword_category_found = get_keyword_categories(op).first
 				abort("Error: File Keyword Category named #{target_keyword_category} not found in OpenAsset. Aborting") unless file_keyword_category_found
@@ -2197,6 +2218,7 @@ module OpenAsset
 				abort("Error: Field id #{source_field} not found in OpenAsset. Aborting") unless source_field_found
 			elsif source_field.is_a?(String) # Field name
 				op.add_option('name',source_field)
+				op.add_option('textMatching','exact')
 				source_field_found = get_fields(op).first
 				abort("Error: Field named #{source_field} not found in OpenAsset. Aborting") unless source_field_found
 			else
@@ -2216,37 +2238,60 @@ module OpenAsset
 						"\n\tInstead got #{field_separator.class}.")
 			end
 
+
 			# Get all the categories associated with the files in the project then using the target_keyword_category,  
 			# create the file keyword category in all the system categories that don't have them
 
 			# Get files in the album
-			if album_found && !album_found.files.empty?
+			unless album_found && !album_found.files.empty?
 				warn "Error: Album #{album_found.name} is empty"
 				return
 			end
 
-			file_ids = album_found.files.join(',') # Search string containing file ids in album
+			file_ids = album_found.files.map { |obj| obj.id }.join(',') # Search string containing file ids in album
+			puts "FILE COUNT #{file_ids.length}"
+
 			op.add_option('limit','0')
 			op.add_option('id', file_ids)
 			op.add_option('displayFields','category_id')
 
-			# Remove duplicates categories
-			file_category_ids_contained_in_album = get_files(op).uniq { |obj| obj.category_id }
+			# Remove duplicates categories found in album
+			file_category_ids_contained_in_album = get_files(op).uniq { |obj| obj.category_id }.map { |obj| obj.category_id.to_s }
 			op.clear
 
-			keyword_categories = []
-			keyword_categories << file_keyword_category_found
+			# Get the keyword categories associated with the files in the album
+			cat_id_string = file_category_ids_contained_in_album.join(',')
+			op.add_option('limit', '0')
+			op.add_option('category_id', cat_id_string)
 
-			# Create the keyword category in all associated categories => except the one 
-			# that the target_keyword_category belongs to because it already exists
-			file_cat_ids = file_category_ids_contained_in_project.reject { |val| val.to_s == file_keyword_category_found.category_id.to_s }
+			existing_keyword_categories = get_keyword_categories(op)
+
+			keyword_categories_ids_contained_in_album = existing_keyword_categories.map { |obj| obj.category_id.to_s }
+
+			op.clear
+			puts "Album keyword cat ids: #{keyword_categories_ids_contained_in_album}"
+
+			# Check if any of the system categories found in the album DO NOT CONTAIN 
+			# the target_keyword_category and create it 
+			puts "cat ids: #{file_category_ids_contained_in_album}"
+
+			keyword_categories = []
+
+			# Make sure the keyword category is in all associated categories
+			file_cat_ids = file_category_ids_contained_in_album
 
 			# Now loop throught the file categories, create the needed keyword categories for referencing below
 			file_cat_ids.each do |id|
-				obj = KeywordCategories.new(file_keyword_category_found.name, id)
-				kwd_cat_obj = create_keyword_categories(obj, true).first
-				abort("Error creating keyword category in #{__callee__}") unless kwd_cat_obj
-				keyword_categories.push(kwd_cat_obj)
+				puts "Creating keyword categories"
+				
+				# Look for the category id in existing keword categories to check 
+				# if the file category already has a keyword category with that name
+				unless keyword_categories_ids_contained_in_album.include?(id.to_s)
+					obj = KeywordCategories.new(file_keyword_category_found.name, id)
+					kwd_cat_obj = create_keyword_categories(obj, true).first
+					abort("Error creating keyword category in #{__callee__}") unless kwd_cat_obj
+					keyword_categories.push(kwd_cat_obj)
+				end
 			end
 
 			#2. Get total file count
@@ -2255,18 +2300,25 @@ module OpenAsset
 			#3. Check the source_field field type
 			builtin = (source_field_found.built_in == '1') ? true : false
 
+			puts "builtin variable value: #{builtin.inspect}"
+
+			require 'pp'
+			pp source_field_found
+
 			#4. Get all file keywords in the specified keyword category for all the file categories found in the project
 			query_ids = keyword_categories.map { |item| item.id }.join(',')
 			
 			op.add_option('keyword_category_id', query_ids)
 			op.add_option('limit', '0')
 
+			puts "Getting existing keywords"
 			existing_keywords = get_keywords(op)
 			op.clear
 
 			#keyword_store = Hash.new{ |h, k| h[k] = Hash.new(&h.default_proc) }
 			
 			#5. Calculate number of requests needed based on specified batch_size
+			puts "setting batch size"
 			batch_size = batch_size.to_i
 			iterations = 0
 			if total_file_count % batch_size == 0
@@ -2275,6 +2327,7 @@ module OpenAsset
 				iterations = total_file_count / batch_size + 1  #we'll need one more iteration to grab remaining
 			end
 
+			puts "Iterations: #{iterations}"
 			# Set up loop controls
 			offset = 0
 			limit  = batch_size
@@ -2282,10 +2335,10 @@ module OpenAsset
 
 			#6. Create update loop using iteration limit and batch size
 			iterations.times do
-
+				puts "in iterations loop"
 				op.add_option('offset', offset)
 				op.add_option('limit', limit)
-				op.add('id', file_ids)
+				op.add_option('id', file_ids)
 				
 				#7. Get current batch of files => body length used to track total files updated
 				files = get_files(op)
@@ -2295,13 +2348,14 @@ module OpenAsset
 
 				#8. Iterate through the files and find the keywords that need to be created
 				files.each do |file|
-					
+					puts "In files create keywords from field before using instance_variable_get 1"
 					field_data      = nil
 					field_obj_found = nil
 
 					#9. Check if the field has any data in it
 					if builtin
 						field_name = source_field_found.name.downcase.gsub(' ','_')
+						puts "Field name 1 : #{field_name}"
 						field_data = file.instance_variable_get("@#{field_name}")
 						next if field_data.nil? || field_data == ''
 					else
@@ -2321,14 +2375,27 @@ module OpenAsset
 
 						#12. Check if the value exists in existing keywords
 						keyword_found_in_existing = existing_keywords.find do |k|
+							puts "KEYWORD found in existing"
+							pp k,val,file.category_id
+
 							# Match the existing keywords check by the name of the value and the category
 							# id of the current file to establish the the link between the two
-							k.name.downcase == val.downcase && file.category_id == k.keyword_category_id
+                            
+                            # establish link between keyword and current file
+                            k_cat_ref_id = keyword_categories_ids_contained_in_album.find { |val| val.to_s == file.category_id.to_s }
+
+							k.name.downcase == val.downcase && k.keyword_category_id == k_cat_ref_id
 						end
 
-						unless keyword_found_in_existing
+						puts "FOUND => #{keyword_found_in_existing.inspect}"
+
+						if !keyword_found_in_existing
 							# find keyword cat id matching the category id of current file to establish the association
-							obj = keyword_categories.find { |item| item.category_id == file.category_id }
+							puts "KEYWORD CATEGORIES "
+							pp keyword_categories
+							obj = existing_keyword_categories.find { |item| item.category_id == file.category_id }
+							puts "Existing keyword categories object"
+							pp obj
 							#13. Insert into keywords_to_create array
 							keywords_to_create.push(Keywords.new(obj.id, val.capitalize))
 						end
@@ -2340,11 +2407,15 @@ module OpenAsset
 				#14. Remove duplicate keywords in the same keyword category and create them
 				unless keywords_to_create.empty?
 					payload = keywords_to_create.uniq { |item| [item.name, item.keyword_category_id] }
-					#15. Create the keywords for the current batch and set the generate objects flag to true.
-					new_keywords = create_keywords(payload, true)
 
+					puts "PAYLOAD"
+					pp payload
+					#15. Create the keywords for the current batch and set the generate objects flag to true.
+					puts "Creating individual keywords"
+					new_keywords = create_keywords(payload, true)
+					puts "NEW KEYWORDS #{new_keywords.inspect}"
 					#16. Append the returned keyword objects to the existing keywords array
-					unless new_keywords.is_a?(Array) && !new_keywords.empty?	
+					if new_keywords.is_a?(Array) && !new_keywords.empty?	
 						new_keywords.each { |item| existing_keywords.push(item) }
 					else
 						abort("An error occured creating keywords in #{__callee__}")
@@ -2354,13 +2425,15 @@ module OpenAsset
 				#17. Loop though the files again and tag them with the newly created keywords.
 				#    This is faster than making individual requests
 				files.each do | file |
-
+					puts "In files tag before using instance_variable_get 2"
 					field_data = nil
 
 					# Look for the field and check if the field has any data in it
 					if builtin
 						field_name = source_field_found.name.downcase.gsub(' ','_')
+						puts "Field name: #{field_name}"
 						field_data = file.instance_variable_get("@#{field_name}")
+						puts "Field value: #{field_data}"
 						next if field_data.nil? || field_data == ''
 					else
 						field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
@@ -2371,8 +2444,9 @@ module OpenAsset
 					end
 
 					if field_data
+						puts "In tag files loop"
 						# Remove empty strings
-						keywords = data.split(field_separator).reject { |val| val.empty? }
+						keywords = field_data.split(field_separator).reject { |val| val.empty? }
 
 						# Loop through the key words and tag the file
 						keywords.each do |value|
@@ -2380,6 +2454,9 @@ module OpenAsset
 							value = value.strip
 							#find the string in existing keywords
 							keyword_obj = existing_keywords.find do |item| 
+
+								# TO DO => ESTABLISH LINK BETWEEN FILE AND KEYWORD
+
 								item.name.downcase == value.downcase && item.category_id.to_s == file.category_id.to_s
 							end
 
@@ -2400,6 +2477,7 @@ module OpenAsset
 				attempts = 0
 				
 				loop do
+					puts "In file update loop"
 
 					attempts += 1
 
@@ -2410,14 +2488,16 @@ module OpenAsset
 						abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
 							   " Try adjusting the batch size.")
 					end
-
+					puts "Before get count"
 					#check if the server is responding (This is a HEAD request)
 					server_test = get_count(Files.new)
 
-					if server_test.is_a? Net::HTTPSuccess
+					puts "After get count"
 
+					if server_test.first.is_a? Net::HTTPSuccess
+						puts "before update file"
 						res = update_files(files)
-
+						puts "after update file"
 						if res.kind_of? Net::HTTPSuccess
 							offset += limit
 							total_files_updated += files.length
@@ -2429,6 +2509,7 @@ module OpenAsset
 						end
 					else
 						sleep(5 * attempts)
+						puts "Sleeping"
 
 					end
 				end	

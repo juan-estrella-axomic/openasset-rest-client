@@ -47,7 +47,7 @@ class Validator
 			when 'DELETE'
 				err_header = "Deleting \"#{resource}\""
 			when 'HEAD'
-				err_header = "Retrieving Header Data for \"#{resoure}\""
+				err_header = "Retrieving Header Data for \"#{resource}\""
 		end
 		
 		if response.kind_of? Net::HTTPSuccess 
@@ -55,10 +55,10 @@ class Validator
 			return response
 		elsif response.kind_of? Net::HTTPRedirection 
 			location = response['location']
-			warn "Warning: Redirected to #{location}"
+			warn "Warning: Redirected to #{location}" 
 			return response
 		elsif response.kind_of? Net::HTTPUnauthorized 
-			warn "Error: #{response.message}: invalid credentials."
+			warn "Error: #{response.message}: invalid credentials." 
 			return response
 		elsif response.kind_of? Net::HTTPServerError 
 			warn "Error: #{response.message}: try again later."
