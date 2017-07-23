@@ -5,7 +5,7 @@ class KeywordCategories
 	def initialize(*args)
 		json_obj = nil
 	
-		if args.length > 1 #We only want one arguement or 2 non-null ones
+		if args.length > 1 #We only want one Hash arguement or 2 non-null ones
 			unless args.length == 2 && !args.include?(nil) && (args[0].is_a?(String) || args[0].is_a?(Integer)) && (!args[1].is_a?(String) || !args[1].is_a?(Integer))
 				warn "Argument Error:\n\tExpected either\n\t1. No Arguments\n\t2. A Hash\n\t" + 
 					 "3. Two separate string arguments." +

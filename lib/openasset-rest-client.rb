@@ -1852,8 +1852,8 @@ module OpenAsset
 				return false			
 			end 
 
-			unless project_keywords.is_a?(ProjectKeywords) || (project_keywords.is_a?(Array) && 
-					project_keywords.first.is_a?(ProjectKeywords))
+			unless proj_keywords.is_a?(ProjectKeywords) || (proj_keywords.is_a?(Array) && 
+					proj_keywords.first.is_a?(ProjectKeywords))
 				warn "Argument Error: Invalid type for second argument in \"project_add_keywords\" method.\n" +
 					 "\tExpected one the following:\n" +
 					 "\t1. Single ProjectKeywords object\n" +
@@ -1866,32 +1866,32 @@ module OpenAsset
 		 	project_keyword = Struct.new(:id)
 
 			if projects.is_a?(Projects)  
-				if project_keywords.is_a?(ProjectKeywords) #1. Two Single objects
+				if proj_keywords.is_a?(ProjectKeywords) #1. Two Single objects
 					uri = URI.parse(@uri + "/Projects/#{projects.id}/ProjectKeywords/#{proj_keywords.id}")
-					post(uri,{})
+					post(uri,{},false)
 				else						#2. One Project object and an array of project Keyword objects
 					#loop through Projects objects and append the new nested keyword to them
 					proj_keywords.each do |keyword|
 						projects.project_keywords << project_keyword.new(keyword.id)  
 					end
 					uri = URI.parse(@uri + "/Projects")
-					put(uri,projects)
+					put(uri,projects,false)
 				end
 			else 		
-				if keywords.is_a?(Array)	#3. Two arrays
+				if proj_keywords.is_a?(Array)	#3. Two arrays
 					projects.each do |proj|
 						proj_keywords.each do |keyword|
 							proj.project_keywords << project_keyword.new(keyword.id)
 						end
 					end
 					uri = URI.parse(@uri + "/Projects")
-					put(uri,projects)
+					put(uri,projects,false)
 				else						#4. Projects array and a single Keywords object
 					projects.each do |proj|
 						proj.project_keywords << project_keyword.new(proj_keywords.id)
 					end	
 					uri = URI.parse(@uri + "/Projects") #/ProjectKeywords/:id/Projects 
-					put(uri,projects)					#shortcut not implemented yet					
+					put(uri,projects,false)					#shortcut not implemented yet					
 				end
 			end
 		end
