@@ -1,4 +1,7 @@
 class NestedKeywordItems
+
+    attr_accessor :id
+
     def initialize(data=nil)
         json_obj = nil
         #check for an integer or string that can be converted to an integer
