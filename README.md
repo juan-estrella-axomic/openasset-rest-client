@@ -1,4 +1,4 @@
-# Openasset
+# Openasset Rest Client
 
 ## Install the Ruby interpreter if you don't already have it
 
