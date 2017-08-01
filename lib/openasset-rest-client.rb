@@ -54,149 +54,153 @@ module OpenAsset
 		# @!visibility private
 		def process_field_to_keyword_move_args(scope,container,target_keyword_category,source_field,field_separator,batch_size)
 			
-		op = RestOptions.new
+			op = RestOptions.new
 
-		container_found             = nil
-		file_keyword_category_found = nil
-		source_field_found          = nil
+			container_found             = nil
+			file_keyword_category_found = nil
+			source_field_found          = nil
 
-		if scope.downcase == 'albums'
+			if scope.downcase == 'albums'
 
-			if container.is_a?(Albums) # Object
-				op.add_option('id',container.id)
-				container_found = get_albums(op).first
-				abort("Error: Album id #{album.id} not found in OpenAsset. Aborting") unless container_found
-			elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
-				op.add_option('id',container)
-				container_found = get_albums(op).first
-				abort("Error: Album id #{album} not found in OpenAsset. Aborting") unless container_found
-			elsif container.is_a?(String) # Album name
-				op.add_option('name',container)
-				container_found = get_albums(op)
-				if container_found.length > 1
-					abort("Error: Multiple #{scope} found named #{container}. Specify an id instead.")
+				if container.is_a?(Albums) # Object
+					op.add_option('id',container.id)
+					container_found = get_albums(op).first
+					abort("Error: Album id #{album.id} not found in OpenAsset. Aborting") unless container_found
+				elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
+					op.add_option('id',container)
+					container_found = get_albums(op).first
+					abort("Error: Album id #{album.inspect} not found in OpenAsset. Aborting") unless container_found
+				elsif container.is_a?(String) # Album name
+					op.add_option('name',container)
+					container_found = get_albums(op)
+					if container_found.length > 1
+						abort("Error: Multiple #{scope} found named #{container.inspect}. Specify an id instead.")
+					end
+					abort("Error: Album named #{container.inspect} not found in OpenAsset. Aborting") unless container_found
+					container_found = container_found.first
+				else
+					abort("Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
+							"\n\tIntead got #{container.inspect}")
 				end
-				abort("Error: Album named #{container} not found in OpenAsset. Aborting") unless container_found
-				container_found = container_found.first
-			else
-				abort("Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
-						"\n\tIntead got #{container.inspect}")
-			end
 
-			# Get files in the album
-			unless container_found && !container_found.files.empty?
-				warn "Error: Album #{container_found.name} is empty"
-				return
-			end
-
-		elsif scope.downcase == 'projects'
-
-			if container.is_a?(Projects) # Object
-				op.add_option('id',container.id)
-				container_found = get_projects(op).first
-				abort("Error: Projects id #{container.id} not found in OpenAsset. Aborting") unless container_found
-			elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
-				op.add_option('id',container)
-				container_found = get_projects(op).first
-				abort("Error: Projects id #{container} not found in OpenAsset. Aborting") unless container_found
-			elsif container.is_a?(String) # Album name
-				op.add_option('name',container)
-				container_found = get_projects(op)
-				if container_found.length > 1
-					abort("Error: Multiple #{scope} found named #{container}. Specify an id instead.")
+				# Get files in the album
+				unless container_found && !container_found.files.empty?
+					warn "Error: Album #{container_found.name} is empty"
+					return
 				end
-				abort("Error: Album named #{container} not found in OpenAsset. Aborting") unless container_found
-				container_found = container_found.first
-			else
-				abort("Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
-						"\n\tIntead got #{container.inspect}")
-			end
 
-		elsif scope.downcase == 'categories'
+			elsif scope.downcase == 'projects'
 
-			if container.is_a?(Categories) # Object
-				op.add_option('id',container.id)
-				container_found = get_categories(op).first
-				abort("Error: Projects id #{container.id} not found in OpenAsset. Aborting") unless container_found
-			elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
-				op.add_option('id',container)
-				container_found = get_projects(op).first
-				abort("Error: Projects id #{container} not found in OpenAsset. Aborting") unless container_found
-			elsif container.is_a?(String) 
-				op.add_option('name',container)
-				container_found = get_categories(op)
-				if container_found.length > 1
-					abort("Error: Multiple #{scope} found named #{container}. Specify an id instead.")
+				if container.is_a?(Projects) # Object
+					op.add_option('id',container.id)
+					container_found = get_projects(op).first
+					abort("Error: Project id #{container.id} not found in OpenAsset. Aborting") unless container_found
+				elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
+					op.add_option('id',container)
+					container_found = get_projects(op).first
+					abort("Error: Project id #{container} not found in OpenAsset. Aborting") unless container_found
+				elsif container.is_a?(String) # Album name
+					op.add_option('name',container)
+					container_found = get_projects(op)
+					if container_found.length > 1
+						abort("Error: Multiple #{scope} found named #{container.inspect}. Specify an id instead.")
+					end
+					abort("Error: Project named #{container.inspect} not found in OpenAsset. Aborting") unless container_found
+					container_found = container_found.first
+				else
+					abort("Argument Error: Expected a Projects object, Project name, or Project id for the first argument in #{__callee__}" +
+							"\n\tIntead got #{container.inspect}")
 				end
-				abort("Error: Album named #{container} not found in OpenAsset. Aborting") unless container_found
-				container_found = container_found.first
+
+			elsif scope.downcase == 'categories'
+
+				if container.is_a?(Categories) # Object
+					op.add_option('id',container.id)
+					container_found = get_categories(op).first
+					abort("Error: Category id #{container.id} not found in OpenAsset. Aborting") unless container_found
+				elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
+					op.add_option('id',container)
+					container_found = get_projects(op).first
+					abort("Error: Category id #{container.inspect} not found in OpenAsset. Aborting") unless container_found
+				elsif container.is_a?(String) 
+					op.add_option('name',container)
+					container_found = get_categories(op)
+					if container_found.length > 1
+						abort("Error: Multiple #{scope} found named #{container.inspect}. Specify an id instead.")
+					end
+					abort("Error: Category named #{container.name.inspect} not found in OpenAsset. Aborting") unless container_found
+					container_found = container_found.first
+				else
+					abort("Argument Error: Expected a Categories object, Category name, or Category id for the first argument in #{__callee__}" +
+							"\n\tIntead got #{container.inspect}")
+				end
+
+			end
+				
+			op.clear
+
+			if target_keyword_category.is_a?(KeywordCategories) # Object
+				op.add_option('id',target_keyword_category.id)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category id \"#{target_keyword_category.id}\" not found in OpenAsset. Aborting") unless file_keyword_category_found
+			elsif (target_keyword_category.is_a?(String) && 
+				   target_keyword_category.to_i > 0) || target_keyword_category.is_a?(Integer) # Keyword category id
+				op.add_option('id',target_keyword_category)
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category id \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless file_keyword_category_found
+			elsif target_keyword_category.is_a?(String) # Keyword category name
+				op.add_option('name',target_keyword_category)
+				op.add_option('textMatching','exact')
+				file_keyword_category_found = get_keyword_categories(op).first
+				abort("Error: File Keyword Category named \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless file_keyword_category_found
+				if file_keyword_category_found.category_id != container_found.id
+					abort("Error: Target keyword category specified not found under category #{container_found.name.inspect}.\n" +
+						   "If you believe you received this message in error, use an ID instead.")
+				end
 			else
-				abort("Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
-						"\n\tIntead got #{container.inspect}")
+				abort("Argument Error: Expected a KeywordCategories object, File Keyword Category name, or File Keyword Category id for the second argument in #{__callee__}" +
+						"\n\tIntead got #{target_keyword_category.inspect}")
 			end
 
+			op.clear
+
+			if source_field.is_a?(Fields) # Object
+				op.add_option('id',source_field.id)
+				source_field_found = get_fields(op).first
+				abort("Error: Field id #{source_field.id} not found in OpenAsset. Aborting") unless source_field_found
+			elsif (source_field.is_a?(String) && source_field.to_i > 0) || source_field.is_a?(Integer) # Field id
+				op.add_option('id',source_field)
+				source_field_found = get_fields(op).first
+				abort("Error: Field id #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+			elsif source_field.is_a?(String) # Field name
+				op.add_option('name',source_field)
+				op.add_option('textMatching','exact')
+				source_field_found = get_fields(op).first
+				abort("Error: Field named #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+			else
+				abort("Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
+						"\n\tIntead got #{source_field.inspect}")
+			end
+
+			abort("Error: Field is not an image field. Aborting") unless source_field_found.field_type == 'image'
+
+			op.clear
+
+			unless field_separator.is_a?(String)
+				abort("Argument Error: Expected a string value for the fourth argument \"field_separator\"." +
+						"\n\tInstead got #{field_separator.class}.")
+			end
+
+			unless batch_size.to_i > 0
+				abort("Argument Error: Expected a non zero numeric value for the fifth argument \"batch size\" in #{__callee__}." +
+						"\n\tInstead got #{batch_size.inspect}.")
+			end
+
+			args = Struct.new(:container, :source_field, :target_keyword_category)
+
+			return args.new(container_found, source_field_found, file_keyword_category_found)
+
 		end
-			
-		op.clear
-
-		if target_keyword_category.is_a?(KeywordCategories) # Object
-			op.add_option('id',target_keyword_category.id)
-			file_keyword_category_found = get_keyword_categories(op).first
-			abort("Error: File Keyword Category id \"#{target_keyword_category.id}\" not found in OpenAsset. Aborting") unless file_keyword_category_found
-		elsif (target_keyword_category.is_a?(String) && 
-			   target_keyword_category.to_i > 0) || target_keyword_category.is_a?(Integer) # Keyword category id
-			op.add_option('id',target_keyword_category)
-			file_keyword_category_found = get_keyword_categories(op).first
-			abort("Error: File Keyword Category id \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless file_keyword_category_found
-		elsif target_keyword_category.is_a?(String) # Keyword category name
-			op.add_option('name',target_keyword_category)
-			op.add_option('textMatching','exact')
-			file_keyword_category_found = get_keyword_categories(op).first
-			abort("Error: File Keyword Category named \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless file_keyword_category_found
-		else
-			abort("Argument Error: Expected a KeywordCategories object, File Keyword Category name, or File Keyword Category id for the second argument in #{__callee__}" +
-					"\n\tIntead got #{target_keyword_category.inspect}")
-		end
-
-		op.clear
-
-		if source_field.is_a?(Fields) # Object
-			op.add_option('id',source_field.id)
-			source_field_found = get_fields(op).first
-			abort("Error: Field id #{source_field.id} not found in OpenAsset. Aborting") unless source_field_found
-		elsif (source_field.is_a?(String) && source_field.to_i > 0) || source_field.is_a?(Integer) # Field id
-			op.add_option('id',source_field)
-			source_field_found = get_fields(op).first
-			abort("Error: Field id #{source_field} not found in OpenAsset. Aborting") unless source_field_found
-		elsif source_field.is_a?(String) # Field name
-			op.add_option('name',source_field)
-			op.add_option('textMatching','exact')
-			source_field_found = get_fields(op).first
-			abort("Error: Field named #{source_field} not found in OpenAsset. Aborting") unless source_field_found
-		else
-			abort("Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
-					"\n\tIntead got #{source_field.inspect}")
-		end
-
-		abort("Error: Field is not an image field. Aborting") unless source_field_found.field_type == 'image'
-
-		op.clear
-
-		unless field_separator.is_a?(String)
-			abort("Argument Error: Expected a string value for the fourth argument \"field_separator\"." +
-					"\n\tInstead got #{field_separator.class}.")
-		end
-
-		unless batch_size.to_i > 0
-			abort("Argument Error: Expected a non zero numeric value for the fifth argument \"batch size\" in #{__callee__}." +
-					"\n\tInstead got #{batch_size.inspect}.")
-		end
-
-		args = Struct.new(:container, :source_field, :target_keyword_category)
-
-		return args.new(container_found, source_field_found, file_keyword_category_found)
-
-	end
 		# @!visibility private
 		def generate_objects_from_json_response_body(json_response,resource_type)	
 
@@ -2411,7 +2415,7 @@ module OpenAsset
 			op.clear
 			
 			# Calculate number of requests needed based on specified batch_size
-			puts "[INFO] setting batch size."
+			puts "[INFO] Setting batch size."
 			if total_file_count % batch_size == 0
 				iterations = total_file_count / batch_size
 			else
@@ -2436,8 +2440,6 @@ module OpenAsset
                 num += 1
 				puts "[INFO] Batch #{num} => Extracting keywords from \"#{source_field_found.name}\" field."
 				keywords_to_create = []
-
-
 				
 				# Iterate through the files and find the keywords that need to be created
 				files.each do |file|
@@ -2641,7 +2643,7 @@ module OpenAsset
 													   source_field,
 													   field_separator,
 		  											   batch_size)
-
+			
 			category_found              = args.container
 			file_keyword_category_found = args.target_keyword_category
 			source_field_found          = args.source_field
@@ -2658,16 +2660,19 @@ module OpenAsset
 			op                          = RestOptions.new
 
 			if file_keyword_category_found.category_id != category_found.id
-				error = "Error: Specified keyword category \"#{file_keyword_category_found.name}\" " +
-						"DOES NOT EXIST in \"#{category_found.name}\" category."
+				error = "Error: Specified keyword category #{file_keyword_category_found.name.inspect} " +
+				        "with id #{file_keyword_category_found.id.inspect} not found in #{category_found.name.inspect}."
 				abort(error)
 			end
 
 			# Get ids and total file count for the category
 			op.add_option('category_id', category_found.id)
 			op.add_option('displayFields', 'id')
+			op.add_option('limit','0')
 			file_ids = get_files(op).map { |obj| obj.id.to_s  }
 			total_file_count = file_ids.length
+
+			puts "Total file count => #{total_file_count}"
 
 			op.clear	
 
@@ -2691,45 +2696,51 @@ module OpenAsset
 			# Create update loop using iteration limit and batch size
 			iterations.times do |num|
 
-				op.add_option('offset', offset)
-				op.add_option('limit', limit)
-				op.add_option('category_id', category_found.id)
+				# More efficient than setting the offset and limit in the query
+				start_index = offset
+			    end_index   = offset + limit
+			    ids = file_ids[start_index...end_index].join(',')
 				
-				#7. Get current batch of files
+				op.add_option('id',ids)
+				# Get current batch of files
 				files = get_files(op)
+
+				#p files
+
 				op.clear
 
 				keywords_to_create = []
 				num += 1
-				puts "[INFO] Batch #{num} => Extracting keywords from \"#{source_field_found.name}\" field."
+				puts "[INFO] Batch #{num} => Extracting keywords from #{source_field_found.name.inspect} field."
 
-				#8. Iterate through the files and find the keywords that need to be created
+				# Iterate through the files and find the keywords that need to be created
 				files.each do |file|
 					
 					field_data = nil
-
-					#9. Look for the field and check if the field has any data in it
+					puts file.filename 
+					# Look for the field and check if the field has any data in it
 					if builtin
 						field_name = source_field_found.name.downcase.gsub(' ','_')
 						field_data = file.instance_variable_get("@#{field_name}")
+						field_data = field_data.strip
 						next if field_data.nil? || field_data == ''
 					else
-						field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id }
-						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
+						field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first.strip == ''
 							next
 						end
 						field_data = field_obj_found.values.first
 					end
 
-					#10. split the string using the specified separator and remove empty strings
+					# Split the string using the specified separator and remove empty strings
 					keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
 
 					keywords_to_append.each do |val|
 
-						#11. remove leading and trailing white space
+						# Remove leading and trailing white space
 						val = val.strip
 
-						#12. Check if the value exists in existing keywords
+						# Check if the value exists in existing keywords
 						keyword_found_in_existing = existing_keywords.find do |k|
 							begin 
 								k.name.downcase == val.downcase 
@@ -2739,24 +2750,24 @@ module OpenAsset
 						end
 
 						unless keyword_found_in_existing
-							#13. Insert into keywords_to_create array
+							# Populate list of keywords that need to be created
 							keywords_to_create.push(Keywords.new(file_keyword_category_found.id, val))
 						end
 						
 					end
 		
 				end
-
+				p keywords_to_create
 				puts "[INFO] Batch #{num} => Creating keywords."
 
-				#14. Remove duplicate keywords => just in case
+				# Remove duplicate keywords => just in case
 				unless keywords_to_create.empty?
 					
 					payload = keywords_to_create.uniq { |item| item.name }
-					#15. Create the keywords for the current batch and set the generate objects flag to true.
+					# Create the keywords for the current batch and set the generate objects flag to true.
 					new_keywords = create_keywords(payload, true)
 
-					#16. Append the returned keyword objects to the existing keywords array
+					# Append the returned keyword objects to the existing keywords array
 					if new_keywords
 						if new_keywords.is_a?(Array) && !new_keywords.empty?
 							new_keywords.each { |item| existing_keywords.push(item) }
@@ -2765,8 +2776,9 @@ module OpenAsset
 						end
 					end
 				end
+
 				puts "[INFO] Batch #{num} => Tagging files."
-				#17. Loop though the files again and tag them with the newly created keywords.
+				# Loop though the files again and tag them with the newly created keywords.
 				files.each do | file |
 
 					field_data = nil
@@ -2775,10 +2787,11 @@ module OpenAsset
 					if builtin
 						field_name = source_field_found.name.downcase.gsub(' ','_')
 						field_data = file.instance_variable_get("@#{field_name}")
+						field_data = field_data.strip
 						next if field_data.nil? || field_data == ''
 					else
 						field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
-						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first.strip == ''
 							next
 						end
 						field_data = field_obj_found.values.first
@@ -2788,7 +2801,6 @@ module OpenAsset
 						
 						# Remove empty strings
 						keywords = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
-				
 
 						# Loop through the keywords and tag the file
 						keywords.each do |value|
@@ -2806,15 +2818,16 @@ module OpenAsset
 
 							if keyword_obj
 								#check if current file is already tagged
-								already_tagged = file.keywords.find { |item| item.to_s == keyword_obj.id.to_s }
+								already_tagged = file.keywords.find { |item| item.id.to_s == keyword_obj.id.to_s }
 								# Tag the file
-								file.keywords.push(NestedKeywordItems.new(keyword_obj.id)) unless already_tagged
+								unless already_tagged
+									puts "[INFO] Tagging file #{file.filename.inspect} => #{keyword_obj.name.inspect}"
+									file.keywords.push(NestedKeywordItems.new(keyword_obj.id))
+							    end
 							else
 								abort("Fatal Error: Unable to retrieve previously created keyword!")
-							end
-							
-						end
-						
+							end		
+						end	
 					end
 				end
 
@@ -2844,7 +2857,8 @@ module OpenAsset
 
 						if res.kind_of? Net::HTTPSuccess
 							offset += limit
-							total_files_updated += res['X-Full-Results-Count'].to_i - 1
+							total_files_updated += res['X-Full-Results-Count'].to_i
+							print "[INFO] "
 							print "Successfully " if total_files_updated > 0
 							puts "Updated #{total_files_updated.inspect} files."
 							break
