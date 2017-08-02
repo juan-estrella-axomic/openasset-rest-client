@@ -66,11 +66,11 @@ class Authenticator
 	def config_set_up
 		#Make sure the the config directory is created
 		unless Dir.exists?(File.join(File.dirname(__FILE__),"configuration"))
-			FileUtils.mkdir_p("configuration")
+			FileUtils.mkdir_p(File.join(File.dirname(__FILE__),"configuration"))
 		end	
 		#Make sure the the config file is created withing the configuration directory
-		unless File.exists?(File.join(Dir.pwd,"configuration","config.yml"))
-			File.new(File.join(Dir.pwd,"configuration","config.yml"), File::CREAT)
+		unless File.exists?(File.join(File.dirname(__FILE__),"configuration","config.yml"))
+			File.new(File.join(File.dirname(__FILE__),"configuration","config.yml"), File::CREAT)
 		end		
 	end
 
@@ -203,7 +203,7 @@ class Authenticator
 		enc_session_key = Security::encrypt(session)
 		enc_token       = Security::encrypt(token)
 
-		yml_file = File.join(Dir.pwd,"configuration","config.yml")
+		yml_file = File.join(File.dirname(__FILE__),"configuration","config.yml")
 		
 		conf = YAML::load_file(yml_file) || Hash.new
 		url = URI.parse(@url).host #get url w/o protocol
@@ -234,7 +234,7 @@ class Authenticator
 
 	def retrieve_session_data
 		
-		yml_file = File.join(Dir.pwd,"configuration","config.yml")
+		yml_file = File.join(File.dirname(__FILE__),"configuration","config.yml")
 		
 		conf = YAML::load_file(yml_file)
 		url = URI.parse(@url).host #get url w/o protocol
