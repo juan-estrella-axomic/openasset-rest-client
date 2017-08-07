@@ -2424,6 +2424,8 @@ module OpenAsset
 
 			# Create update loop using iteration limit and batch size
 			iterations.times do |num|
+
+				num += 1
 				
 				# More efficient than setting the offset and limit in the query
 				start_index = offset
@@ -2437,7 +2439,6 @@ module OpenAsset
 
 				op.clear
 
-                num += 1
 				puts "[INFO] Batch #{num} => Extracting keywords from \"#{source_field_found.name}\" field."
 				keywords_to_create = []
 				
@@ -2696,6 +2697,8 @@ module OpenAsset
 			# Create update loop using iteration limit and batch size
 			iterations.times do |num|
 
+				num += 1
+
 				# More efficient than setting the offset and limit in the query
 				start_index = offset
 			    end_index   = offset + limit
@@ -2709,7 +2712,7 @@ module OpenAsset
 				op.clear
 
 				keywords_to_create = []
-				num += 1
+				
 				puts "[INFO] Batch #{num} => Extracting keywords from #{source_field_found.name.inspect} field."
 
 				# Iterate through the files and find the keywords that need to be created
@@ -2756,7 +2759,7 @@ module OpenAsset
 					end
 		
 				end
-				p keywords_to_create
+				#p keywords_to_create
 				puts "[INFO] Batch #{num} => Creating keywords."
 
 				# Remove duplicate keywords => just in case
@@ -2898,7 +2901,6 @@ module OpenAsset
 			results                     = nil
 			existing_keywords           = nil
 			existing_keyword_categories = nil
-			keyword_file_category_ids   = nil
 			total_file_count            = 0
 			total_files_updated         = 0
 			offset                      = 0
@@ -2907,6 +2909,7 @@ module OpenAsset
 
 			cat_id_string               = ''
 			query_ids                   = ''
+			keyword_file_category_ids   = ''
 			
 			# Check the source_field field type
 			builtin = (source_field_found.built_in == '1') ? true : false
@@ -2919,13 +2922,16 @@ module OpenAsset
 			op.add_option('project_id',project_found.id)
 			op.add_option('displayFields','id,category_id')
 
-			puts "[INFO] Retrieving files associated with project."
+			puts "[INFO] Retrieving files and file categories associated with project."
 			# Get category ids and file ids  
-		    results           = get_files(op).uniq { |obj| obj.category_id }.map { |obj| obj.category_id.to_s } 
+		    results           = get_files(op)
 			file_category_ids = results.map { |obj| obj.category_id  }.uniq
-			file_ids          = results.map { |obj| obj.id  }
+			file_ids          = results.map { |obj| obj.id }
+			total_file_count  = file_ids.length
 
 			op.clear
+            
+            puts "[INFO] Total file count => #{total_file_count}"
 
 			# Get the keyword categories associated with the files in the project
 			cat_id_string = file_category_ids.join(',')
@@ -2936,7 +2942,7 @@ module OpenAsset
 
 			op.clear
 
-			# Check if any of the system categories found in the project DO NOT CONTAIN 
+			# Check if any of the file categories found in the project DO NOT CONTAIN 
 			# the target_keyword_category name and create it
 			keyword_file_category_ids = existing_keyword_categories.map { |obj| obj.category_id.to_s }.uniq
 
@@ -2950,7 +2956,7 @@ module OpenAsset
 				unless keyword_file_category_ids.include?(file_cat_id.to_s)
 					obj = KeywordCategories.new(file_keyword_category_found.name, file_cat_id)
 					kwd_cat_obj = create_keyword_categories(obj, true).first
-					puts "Keyword Categories: #{keyword_categories}"
+					#puts "Keyword Categories: #{keyword_categories}"
 					abort("Error creating keyword category in #{__callee__}") unless kwd_cat_obj
 					existing_keyword_categories.push(kwd_cat_obj)
 				else
@@ -2972,7 +2978,6 @@ module OpenAsset
 			
 			# Get the file count and calculate number of requests needed based on specified batch_size
 			puts "[INFO] Calulating batch size."
-			total_file_count = file_ids.length
 
 			if total_file_count % batch_size == 0
 				iterations = total_file_count / batch_size
@@ -2983,7 +2988,8 @@ module OpenAsset
 			# Set up loop controls
 			# Create update loop using iteration limit and batch size
 			iterations.times do |num|
-	
+				
+				num += 1
 				# More efficient than setting the offset and limit in the query
 				# TO DO: Implement this in the other admin functions
 				start_index = offset
@@ -2994,14 +3000,15 @@ module OpenAsset
 				op.add_option('limit','0')
 				
 				# Get current batch of files => body length of response used to track total files updated
+				puts "[INFO] Batch #{num} => Retrieving files."
 				files = get_files(op)
 
 				op.clear
 
 				#puts "File objects #{files.inspect}"
-
 				keywords_to_create = []
-
+                
+                puts "[INFO] Batch #{num} => Extracting Keywords from fields."
 				# Iterate through the files and find the keywords that need to be created
 				files.each do |file|
 					#puts "In files create keywords from field before using instance_variable_get 1"
@@ -3023,39 +3030,14 @@ module OpenAsset
 						field_data = field_obj_found.values.first
 					end
 
-					# establish link between keyword and current file
+					# Establish link between keyword and current file
 					associated_kwd_cat = existing_keyword_categories.find do |obj|
 						obj.name.downcase == file_keyword_category_found.name.downcase && 
 						obj.category_id.to_s == file.category_id.to_s 
 					end
 
 					abort("Fatal Error: Unable to retrieve associated keyword category.") unless associated_kwd_cat
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-					
+			
 
 					# split the string using the specified separator and remove empty strings
 					keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
@@ -3069,9 +3051,9 @@ module OpenAsset
                             	# In case we get an invalid input string like "\xA9" => copyright binary representation
                             	# The downcase method can choke on this depending on the platform
                             	# It works in windows but chokes in linux and possibly mac OS
-								k.name.downcase == val.downcase && k.keyword_category_id == k_cat_id_for_current_file
+								k.name.downcase == val.downcase && k.keyword_category_id == associated_kwd_cat.id
 							rescue
-								k.name == val && k.keyword_category_id == k_cat_id_for_current_file
+								k.name == val && k.keyword_category_id == associated_kwd_cat.id
 							end
 
 						end
@@ -3093,18 +3075,16 @@ module OpenAsset
 						
 					end
 				end
-	
 
 				# Remove duplicate keywords in the same keyword category and create them
 				unless keywords_to_create.empty?
 					payload = keywords_to_create.uniq { |item| [item.name, item.keyword_category_id] }
 					
 					# Create the keywords for the current batch and set the generate objects flag to true.
-					puts "Creating new keywords"
+					puts "[INFO] Batch #{num} => Creating Keywords."
 					new_keywords = create_keywords(payload, true)
 
 					# Append the returned keyword objects to the existing keywords array
-
 					if new_keywords
 						if new_keywords.is_a?(Array) && !new_keywords.empty? 	
 							new_keywords.each { |item| existing_keywords.push(item) }
@@ -3113,26 +3093,26 @@ module OpenAsset
 						end
 					end
 				end
-
-				#puts "EXISTING KEYWORDS #{existing_keywords.inspect}"
-
+				
 				# Loop though the files again and tag them with the newly created keywords.
 				# This is faster than making individual requests
 				puts "[INFO] Batch #{num} => Tagging files."
 				files.each do | file |
 					#puts "In files tag before using instance_variable_get 2"
-					field_data = nil
+					field_data      = nil
+					field_obj_found = nil
 
 					# Look for the field and check if the field has any data in it
 					if builtin
 						field_name = source_field_found.name.downcase.gsub(' ','_')
 						#puts "Field name: #{field_name}"
 						field_data = file.instance_variable_get("@#{field_name}")
+						field_data = field_data.strip
 						#puts "Field value: #{field_data}"
 						next if field_data.nil? || field_data == ''
 					else
 						field_obj_found = file.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
-						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first == ''
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first.strip == ''
 							next
 						end
 						field_data = field_obj_found.values.first
@@ -3143,9 +3123,11 @@ module OpenAsset
 						# Remove empty strings
 						keywords = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
 
+
 						# ESTABLISH LINK BETWEEN FILE AND KEYWORD
 						associated_kwd_cat = existing_keyword_categories.find do |item|
-							item.category_id == file.category_id
+							item.name.downcase == file_keyword_category_found.name.downcase &&
+							item.category_id.to_s == file.category_id.to_s
 						end
 
 						unless associated_kwd_cat
@@ -3159,11 +3141,10 @@ module OpenAsset
 							# Find the string in existing keywords
 							keyword_obj = existing_keywords.find do |item| 
 								begin
-									item.name.downcase == value.downcase && 
-									associated_kwd_cat.category_id.to_s == file.category_id.to_s
+									item.name.downcase == value.downcase && associated_kwd_cat.id.to_s == item.keyword_category_id.to_s
 								rescue
 									item.name == value && 
-									associated_kwd_cat.category_id.to_s == file.category_id.to_s
+									associated_kwd_cat.id.to_s == item.keyword_category_id.to_s
 								end
 
 							end
@@ -3187,6 +3168,7 @@ module OpenAsset
 				res = nil
 				attempts = 0
 				
+				puts "[INFO] Batch #{num} => Attempting to perform file updates."
 				loop do
 
 					attempts += 1
@@ -3209,7 +3191,8 @@ module OpenAsset
 						if res.kind_of? Net::HTTPSuccess
 							offset += limit
 							total_files_updated += res['X-Full-Results-Count'].to_i - 1
-							print "Successfully" if total_files_updated > 0
+							print "[INFO] "
+							print "Successfully " if total_files_updated > 0
 							puts "Updated #{total_files_updated.inspect} files."
 							break
 						else
