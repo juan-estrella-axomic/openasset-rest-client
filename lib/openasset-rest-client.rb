@@ -2312,7 +2312,19 @@ module OpenAsset
 					 "for project => #{current_project.code} - #{current_project.name}"
 			end
 		end
-
+        
+        # Create file keywords BY ALBUM for ANY File field (built-in or custom) and tag associated files.
+		#
+		# @param album [Albums Object, String album name, String id, Integer id] (Required)
+		# @param target_keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
+		# @param field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param field_separator [String] (Required)
+		# @return [nil] nil.
+		#
+		# @example rest_client.create_file_keywords_from_field_by_album(album_obj,keyword_cat_obj,fields_obj,';',250)
+		#          rest_client.create_file_keywords_from_field_by_album("myalbum","my_k_cat_name","file_field_name",';',250)
+		#          rest_client.create_file_keywords_from_field_by_album("9","1","7",';',250)
+		#          rest_client.create_file_keywords_from_field_by_album(9,1,7,';',250)
 		def create_file_keywords_from_field_by_album(album=nil,target_keyword_category=nil,source_field=nil,field_separator=nil,batch_size=100)
 			
 			# Validate input:
@@ -2634,7 +2646,19 @@ module OpenAsset
 				end	
 			end  
 		end
-
+        
+        # Create file keywords BY CATEGORY for ANY File field (built-in or custom) and tag associated files.
+		#
+		# @param album [Categories Object, String File category name, String id, Integer id] (Required)
+		# @param target_keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
+		# @param field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param field_separator [String] (Required)
+		# @return [nil] nil.
+		#
+		# @example rest_client.create_file_keywords_from_field_by_album(file_category_obj,keyword_cat_obj,fields_obj,';',250)
+		#          rest_client.create_file_keywords_from_field_by_album("Projects","my_k_cat_name","file_field_name",';',250)
+		#          rest_client.create_file_keywords_from_field_by_album("2","1","7",';',250)
+		#          rest_client.create_file_keywords_from_field_by_album(2,1,7,';',250)
 		def create_file_keywords_from_field_by_category(category=nil,target_keyword_category=nil,source_field=nil,field_separator=nil,batch_size=100)
 		
 			# Validate input:
@@ -2878,7 +2902,19 @@ module OpenAsset
 				end	
 			end 
 		end
-
+        
+        # Create file keywords BY PROJECT for ANY File field (built-in or custom) and tag associated files.
+		#
+		# @param album [Projects Object, String project name, String id, Integer id] (Required)
+		# @param target_keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
+		# @param field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param field_separator [String] (Required)
+		# @return [nil] nil.
+		#
+		# @example rest_client.create_file_keywords_from_field_by_album(projects_obj,keyword_cat_obj,fields_obj,';',250)
+		#          rest_client.create_file_keywords_from_field_by_album("MyProject","my_k_cat_name","file_field_name",';',250)
+		#          rest_client.create_file_keywords_from_field_by_album("9","1","7",';',250)
+		#          rest_client.create_file_keywords_from_field_by_album(9,1,7,';',250)
 		def create_file_keywords_from_field_by_project(project=nil,target_keyword_category=nil,source_field=nil,field_separator=nil,batch_size=100)
 			
 			op = RestOptions.new
