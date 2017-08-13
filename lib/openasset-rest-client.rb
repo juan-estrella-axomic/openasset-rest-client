@@ -52,12 +52,17 @@ module OpenAsset
 
 		private
 		# @!visibility private
-		def process_field_to_keyword_move_args(scope,container,target_keyword_category,source_field,field_separator,batch_size)
-			
+		def process_field_to_keyword_move_args(scope,
+			                                   container,
+			                                   target_keyword_category,
+			                                   source_field,
+			                                   field_separator,
+			                                   batch_size)
+			                                   
 			op = RestOptions.new
 
 			container_found             = nil
-			file_keyword_category_found = nil
+			keyword_category_found = nil
 			source_field_found          = nil
 
 			if scope.downcase == 'albums'
@@ -123,13 +128,17 @@ module OpenAsset
 					container_found = get_projects(op).first
 					abort("Error: Category id #{container.inspect} not found in OpenAsset. Aborting") unless container_found
 				elsif container.is_a?(String) 
+
 					op.add_option('name',container)
 					container_found = get_categories(op)
+
 					if container_found.length > 1
 						abort("Error: Multiple #{scope} found named #{container.inspect}. Specify an id instead.")
 					end
+
 					abort("Error: Category named #{container.name.inspect} not found in OpenAsset. Aborting") unless container_found
 					container_found = container_found.first
+
 				else
 					abort("Argument Error: Expected a Categories object, Category name, or Category id for the first argument in #{__callee__}" +
 							"\n\tIntead got #{container.inspect}")
@@ -140,44 +149,65 @@ module OpenAsset
 			op.clear
 
 			if target_keyword_category.is_a?(KeywordCategories) # Object
+
 				op.add_option('id',target_keyword_category.id)
-				file_keyword_category_found = get_keyword_categories(op).first
-				abort("Error: File Keyword Category id \"#{target_keyword_category.id}\" not found in OpenAsset. Aborting") unless file_keyword_category_found
+				keyword_category_found = get_keyword_categories(op).first
+
+				abort("Error: File Keyword Category id \"#{target_keyword_category.id}\" not found in OpenAsset. Aborting") unless keyword_category_found
+
 			elsif (target_keyword_category.is_a?(String) && 
-				   target_keyword_category.to_i > 0) || target_keyword_category.is_a?(Integer) # Keyword category id
+				   target_keyword_category.to_i > 0) || 
+				   target_keyword_category.is_a?(Integer) # Keyword category id
+
 				op.add_option('id',target_keyword_category)
-				file_keyword_category_found = get_keyword_categories(op).first
-				abort("Error: File Keyword Category id \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless file_keyword_category_found
+				keyword_category_found = get_keyword_categories(op).first
+
+				abort("Error: File Keyword Category id \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless keyword_category_found
+
 			elsif target_keyword_category.is_a?(String) # Keyword category name
+
 				op.add_option('name',target_keyword_category)
 				op.add_option('textMatching','exact')
-				file_keyword_category_found = get_keyword_categories(op).first
-				abort("Error: File Keyword Category named \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless file_keyword_category_found
-				if file_keyword_category_found.category_id != container_found.id
-					abort("Error: Target keyword category specified not found under category #{container_found.name.inspect}.\n" +
-						   "If you believe you received this message in error, use an ID instead.")
+
+				keyword_category_found = get_keyword_categories(op)		
+				abort("Error: File Keyword Category name \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless keyword_category_found
+
+				if keyword_category_found.length > 1
+					abort("Error: Multiple File keyword categories found with name => #{target_keyword_category.inspect}. Specify an id instead.")
+				else
+					keyword_category_found = keyword_category_found.first
 				end
+			
 			else
-				abort("Argument Error: Expected a KeywordCategories object, File Keyword Category name, or File Keyword Category id for the second argument in #{__callee__}" +
-						"\n\tIntead got #{target_keyword_category.inspect}")
+				error = "Argument Error: Expected \n\t1.) File keyword categories object\n\t2.) File keyword " +
+				        "category name\n\t3.) File keyword category id\nfor the second argument in #{__callee__}." +
+						"\n\tIntead got #{target_keyword_category.inspect}"
+				abort(error)
 			end
 
 			op.clear
 
 			if source_field.is_a?(Fields) # Object
+
 				op.add_option('id',source_field.id)
 				source_field_found = get_fields(op).first
 				abort("Error: Field id #{source_field.id} not found in OpenAsset. Aborting") unless source_field_found
+
 			elsif (source_field.is_a?(String) && source_field.to_i > 0) || source_field.is_a?(Integer) # Field id
+
 				op.add_option('id',source_field)
 				source_field_found = get_fields(op).first
 				abort("Error: Field id #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+
 			elsif source_field.is_a?(String) # Field name
+
 				op.add_option('name',source_field)
 				op.add_option('textMatching','exact')
 				source_field_found = get_fields(op).first
 				abort("Error: Field named #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+
 			else
+
 				abort("Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
 						"\n\tIntead got #{source_field.inspect}")
 			end
@@ -198,7 +228,7 @@ module OpenAsset
 
 			args = Struct.new(:container, :source_field, :target_keyword_category)
 
-			return args.new(container_found, source_field_found, file_keyword_category_found)
+			return args.new(container_found, source_field_found, keyword_category_found)
 
 		end
 		# @!visibility private
@@ -2325,7 +2355,11 @@ module OpenAsset
 		#          rest_client.create_file_keywords_from_field_by_album("myalbum","my_k_cat_name","file_field_name",';',250)
 		#          rest_client.create_file_keywords_from_field_by_album("9","1","7",';',250)
 		#          rest_client.create_file_keywords_from_field_by_album(9,1,7,';',250)
-		def create_file_keywords_from_field_by_album(album=nil,target_keyword_category=nil,source_field=nil,field_separator=nil,batch_size=100)
+		def create_file_keywords_from_field_by_album(album=nil,
+			                                         target_keyword_category=nil,
+			                                         source_field=nil,
+			                                         field_separator=nil,
+			                                         batch_size=100)
 			
 			# Validate input:
 			args = process_field_to_keyword_move_args('albums',
@@ -2659,7 +2693,11 @@ module OpenAsset
 		#          rest_client.create_file_keywords_from_field_by_album("Projects","my_k_cat_name","file_field_name",';',250)
 		#          rest_client.create_file_keywords_from_field_by_album("2","1","7",';',250)
 		#          rest_client.create_file_keywords_from_field_by_album(2,1,7,';',250)
-		def create_file_keywords_from_field_by_category(category=nil,target_keyword_category=nil,source_field=nil,field_separator=nil,batch_size=100)
+		def create_file_keywords_from_field_by_category(category=nil,
+			                                            target_keyword_category=nil,
+			                                            source_field=nil,
+			                                            field_separator=nil,
+			                                            batch_size=100)
 		
 			# Validate input:
 			args = process_field_to_keyword_move_args('categories',
@@ -2915,7 +2953,11 @@ module OpenAsset
 		#          rest_client.create_file_keywords_from_field_by_album("MyProject","my_k_cat_name","file_field_name",';',250)
 		#          rest_client.create_file_keywords_from_field_by_album("9","1","7",';',250)
 		#          rest_client.create_file_keywords_from_field_by_album(9,1,7,';',250)
-		def create_file_keywords_from_field_by_project(project=nil,target_keyword_category=nil,source_field=nil,field_separator=nil,batch_size=100)
+		def create_file_keywords_from_field_by_project(project=nil,
+			                                           target_keyword_category=nil,
+			                                           source_field=nil,
+			                                           field_separator=nil,
+			                                           batch_size=100)
 			
 			op = RestOptions.new
 
@@ -3221,9 +3263,9 @@ module OpenAsset
 					end
 
 					if server_test_passed
-						puts "before update file"
+						#puts "before update file"
 						res = update_files(files,false)
-						puts "after update file"
+						#puts "after update file"
 						if res.kind_of? Net::HTTPSuccess
 							offset += limit
 							total_files_updated += res['X-Full-Results-Count'].to_i - 1
@@ -3244,6 +3286,277 @@ module OpenAsset
 					end
 				end	
 			end  
+		end
+
+		def move_project_keywords_to_field(target_project_keyword_category=nil,
+                                           project_field=nil,
+                                           field_separator=nil,
+                                           insert_mode='append',
+                                           batch_size=100)
+
+			batch_size                     = batch_size.to_i.abs
+			project_ids                    = nil
+			projects                       = nil
+			project_field_found            = nil
+			project_keyword_category_found = nil
+			project_keywords               = nil
+			total_project_count            = 0
+			iterations                     = 0
+			offset                         = 0
+			total_projects_updated         = 0
+			limit                          = batch_size
+			nested_field                   = Struct.new(:id, :values)
+
+			ALLOWED_FIELD_TYPES = %w[ singleLine multiLine ]
+
+		    op = RestOptions.new
+
+			# Validate input:
+		    
+		    # Retrieve project keyword category
+		    if target_project_keyword_category.is_a?(ProjectKeywordCategories) &&  # Object
+		       !target_project_keyword_category.id.nil?
+
+		       op.add_option('id',target_project_keyword_category.id)
+		       project_keyword_category_found = get_project_keyword_categories(op).first
+
+		    elsif target_project_keyword_category.is_a?(String) &&  # Id
+		    	  !target_project_keyword_category.to_i.zero?
+
+		    	op.add_option('id',target_project_keyword_category)
+		        project_keyword_category_found = get_project_keyword_categories(op).first
+
+		    elsif target_project_keyword_category.is_a?(String) # Name
+
+		    	op.add_option('name',target_project_keyword_category)
+		        project_keyword_category_found = get_project_keyword_categories(op)
+
+		        unless project_keyword_category_found
+	        		abort("Error: Project keyword category with name #{project_field.inspect} not found in OpenAsset.")
+	        	end
+
+	        	if project_keyword_category_found.length > 1
+	        		error = "Error: Multiple Project keyword categories found with name #{project_field.inspect}." +
+	        		        " Specify an id instead."
+	        		abort(error)
+	        	else
+	        		project_keyword_category_found = project_keyword_category_found.first
+	        	end
+
+		    else
+		    	error = "Error: Expected one of the following: " +
+				        "\n\t1. Valid project keyword category object." +
+				        "\n\t2. Project keyword category id."
+				        "\n\t3. Project keyword category name."
+				        "\nfor first argument in #{__callee__} method." +
+				        "\nInstead got #{target_project_keyword_category.inspect}."
+				abort(error)
+		    end
+
+		    # Make sure it's a project keyword catgory
+		    unless project_keyword_category_found.is_a?(ProjectKeywordCategories)
+		    	error = "Error: Specified Project keyword category named #{project_keyword_category_found.name.inspect} with id " +
+		    	        "#{project_keyword_category_found.id.inspect} is actually a #{project_keyword_category_found.class.inspect}."
+		    	abort(error)
+		    end
+
+		    op.clear
+
+		    # Retrieve project field
+		    if project_field.is_a?(Fields) && !project_field.id.nil?# Object
+
+			    op.add_option('id',project_field.id)
+			    project_field_found = get_fields(op).first
+
+			    abort("Error: Field with id #{project_field.id.inspect} not found in OpenAsset.") unless project_field_found
+
+            elsif (project_field.is_a?(String) && !project_field.to_i.zero?) ||  # Id
+            	  (project_field.is_a?(Integer) && !project_field.zero?)
+
+	        	op.add_option('id',project_field)
+	        	project_field_found	= get_fields(op).first
+
+	        	abort("Error: Field with id #{project_field.inspect} not found in OpenAsset.") unless project_field_found
+
+	        elsif project_field.is_a?(String) # Name
+
+	        	op.add_option('name',project_field)
+	        	project_field_found = get_fields(op)
+
+	        	unless project_field_found
+	        		abort("Error: Field with name #{project_field.inspect} not found in OpenAsset.")
+	        	end
+
+	        	if project_field_found.length > 1
+	        		error = "Error: Multiple fields found with name #{project_field.inspect}. Specify an id instead."
+	        		abort(error)
+	        	else
+	        		project_field_found = project_field_found.first
+	        	end
+	        else 
+	        	error = "Error: Expected one of the following: " +
+				        "\n\t1. Valid Fields object." +
+				        "\n\t2. Field id."
+				        "\n\t3. Field name."
+				        "\nfor second argument in #{__callee__} method." +
+				        "\nInstead got #{project_field.inspect}."
+				abort(error)
+		    end
+
+		    # Make sure it's a project field
+		    unless project_field_found.field_type == 'project'
+		    	error = "Error: Specified field #{project_field_found.name.inspect} with id " +
+		    	        "#{project_field_found.id.inspect} is not an image field"
+		    	abort(error)
+		    end
+
+		    # Make sure it's an allowed field type
+		    unless ALLOWED_FIELD_TYPES.include?(project_field_found.field_display_type.to_s)
+		    	error = "Error: Only singleLine and multiLine fields permitted for this operation."
+		    	abort(error)
+		    end
+
+		    if field_separator.nil?
+		    	abort("Error: Must specify field separator.")
+		    end
+
+		    unless ['append','overwrite'].include?(insert_mode.to_s)
+		    	abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. Instead got #{overwrite.inspect}")
+		    end
+
+		    abort('Invalid batch size. Specify a positive numeric value or use default value of 100') unless !batch_size.zero?
+
+		    op.clear
+
+			# Get projects keywords
+			op.add_option('limit','0')
+			op.add_option('project_keyword_category_id',project_keyword_category_found.id)
+
+			project_keywords = get_project_keywords(op)
+
+			op.add_option('limit','0')
+            op.add_option('displayFields','id')
+
+            project_ids = get_projects(op).map { |obj| obj.id.to_s }
+
+            op.clear
+
+            total_project_count = project_ids.length
+
+            # Set up iterations loop
+			if total_project_count % batch_size == 0
+				iterations = total_project_count / batch_size
+			else
+				iterations = total_project_count / batch_size + 1 # To grab remaining
+			end
+
+			iterations.times do |num|
+
+				start_index = offset
+				end_index   = offset + limit
+				ids         = project_ids[start_index...end_index].join(',')
+
+				op.add_option('limit','0')
+				op.add_option('id',ids)
+
+				projects = get_projects(op)
+
+				projects.each do |project|
+
+					tmp_keyword_collection = []
+
+					project.project_keywords.each do |nested_keyword_obj|
+
+						# Match keyword id so we can retrieve its name
+						keyword_found = project_keywords.find { |obj| obj.id.to_s == nested_keyword_obj.id.to_s }
+
+						if keyword_found
+							tmp_keyword_collection << keyword_found
+						end
+
+					end	
+
+					field_string = tmp_keyword_collection.map { |k_obj| k_obj.name.to_s }.join(field_separator)
+
+					# Check if there's already a value in the field
+					index = project.fields.find_index { |f_obj| f_obj.id.to_s == project_field_found.id.to_s }
+
+					# over
+					if index && project.fields[index].values.first != "0" &&
+					   project.fields[index].values.first != '' && insert_mode == 'append'
+
+						if project_field_found.field_display_type.to_s == 'singleLine'
+
+							project.fields[index].values.first = project.fiels[index].values.first + ' ' + field_string
+
+						elsif project_field_found.field_display_type.to_s == 'multiLine'
+
+							project.fields[index].values.first = project.fiels[index].values.first + "\n" + field_string
+
+						end
+
+					elsif index && insert_mode == 'overwrite'
+
+						project.fields[index].values.first = field_string
+
+					end
+
+					# Update projects
+					loop do
+
+						attempts += 1
+
+						#check if the server is responding (This is a HEAD request)
+						server_test_passed = get_count(Categories.new)
+
+						# This code executes if the web server hangs or takes too long 
+						# to respond after the first update is performed => Possible cause can be too large a batch size
+						if attempts == 4
+							#Validator::process_http_response(res,@verbose,'Categories','HEAD')
+							abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
+								   " Try adjusting the batch size.")
+						end
+
+						if server_test_passed
+							#puts "before update file"
+							res = update_projects(projects,false)
+							#puts "after update file"
+							if res.kind_of? Net::HTTPSuccess
+								offset += limit
+								total_projects_updated += res['X-Full-Results-Count'].to_i
+								print "[INFO] "
+								print "Successfully " if total_projects_updated > 0
+								puts "Updated #{total_projects_updated.inspect} projects."
+								break
+							else
+								Validator::process_http_response(res,@verbose,'Projects','PUT')
+								abort
+							end
+						else
+							time_lapse = 5 * attempts
+							time_lapse.times do |num|
+								print "\rWaiting for server to respond" + ("." * (num + 1))
+								sleep(1)
+							end
+						end
+					end	
+
+					op.clear
+				end
+			end            
+
+		end
+
+		def move_file_keywords_to_field_by_album()
+			
+		end
+
+		def move_file_keywords_to_field_by_project()
+
+		end
+
+		def move_file_keywords_to_field_by_category()
+			
 		end
 	end
 end
