@@ -293,6 +293,63 @@ module OpenAsset
 		end
 
 		# @!visibility private
+		def run_smart_update(payload,total_objects_updated)
+
+			scope    = payload.first.class.downcase
+			res      = nil
+			attempts = 0
+
+			# Perform the update => 3 tries MAX with 5,10,15 second waits between retries
+			loop do
+
+				attempts += 1
+
+				#check if the server is responding (This is a HEAD request)
+				server_test_passed = get_count(Categories.new)
+
+				# This code executes if the web server hangs or takes too long 
+				# to respond after the first update is performed => Possible cause can be too large a batch size
+				if attempts == 4
+					Validator::process_http_response(res,@verbose,scope.capitalize,'HEAD')
+					abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
+						   " Try adjusting the batch size.")
+				end
+
+				if server_test_passed
+					#puts "before update file"
+					if scope == 'files'
+						res = update_files(payload,false)
+				    elsif scope == 'Projects'
+				    	res = update_projects(payload,false)
+				    else
+				    	abort("Error: Invalid update scope. Expected Files or Projects in payload.")
+				    end
+						
+					#puts "after update file"
+					if res.kind_of? Net::HTTPSuccess
+						total_objects_updated = res['X-Full-Results-Count'].to_i + total_objects_updated
+						print "[INFO] "
+						print "Successfully " if total_objects_updated > 0
+						puts "Updated #{total_objects_updated.inspect} #{scope}."
+						break
+					else
+						Validator::process_http_response(res,@verbose,scope.capitalize,'PUT')
+						abort
+					end
+				else
+					time_lapse = 5 * attempts
+					time_lapse.times do |num|
+						print "\rWaiting for server to respond" + ("." * (num + 1))
+						sleep(1)
+					end
+				end
+			end
+
+			return total_objects_updated
+			
+		end
+
+		# @!visibility private
 		def get(uri,options_obj)
 			resource = uri.to_s.split('/').last
 			options = options_obj || RestOptions.new
@@ -2381,9 +2438,9 @@ module OpenAsset
 			existing_keyword_categories = nil
 			existing_keywords           = nil
 			cat_id_string               = nil
-			batch_size                  = batch_size.to_i
+			batch_size                  = batch_size.to_i.abs
 
-			limit                       = batch_size # For better readability in update loop
+			limit                       = batch_size # For better readability
 			total_files_updated         = 0
 			offset                      = 0
 			iterations                  = 0
@@ -2635,49 +2692,13 @@ module OpenAsset
 					end
 				end
 
-				# Use another loop to control the number of times we retry the request in case it fails
-				# Perform the update => 3 tries MAX with 5,10,15  second waits between retries respectively
-				res = nil
-				attempts = 0
-				
-				loop do
+				puts "[INFO] Batch #{num} => Attempting to perform file updates."
+				# Update files
+				updated_obj_count = run_smart_update(files,total_files_updated)
 
-					attempts += 1
+				total_files_updated += updated_obj_count
 
-					#check if the server is responding (This is a HEAD request)
-					server_test_passed = get_count(Categories.new)
-
-					# This code executes if the web server hangs or takes too long 
-					# to respond after the first update is performed => Possible cause can be too large a batch size
-					if attempts == 4
-						Validator::process_http_response(res,@verbose,'Files','HEAD')
-						abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
-							   " Try adjusting the batch size.")
-					end
-
-					if server_test_passed
-						puts "before update file"
-						res = update_files(files,false)
-						puts "after update file"
-						if res.kind_of? Net::HTTPSuccess
-							offset += limit
-							total_files_updated += res['X-Full-Results-Count'].to_i
-							print "[INFO] "
-							print "Successfully " if total_files_updated > 0
-							puts "Updated #{total_files_updated.inspect} files."
-							break
-						else
-							Validator::process_http_response(res,@verbose,'Files','PUT')
-							abort
-						end
-					else
-						time_lapse = 5 * attempts
-						time_lapse.times do |num|
-							print "\rWaiting for server to respond" + ("." * (num + 1))
-							sleep(1)
-						end
-					end
-				end	
+				offset += limit
 			end  
 		end
         
@@ -2714,10 +2735,10 @@ module OpenAsset
             builtin                     = nil
             total_file_count            = nil
             existing_keywords           = nil
-            batch_size                  = batch_size.to_i
+            batch_size                  = batch_size.to_i.abs
             iterations                  = 0
             offset                      = 0
-            limit                       = batch_size # For better readability in update loop
+            limit                       = batch_size # For better readability
             total_files_updated         = 0
             file_ids                    = nil
 			op                          = RestOptions.new
@@ -2895,49 +2916,13 @@ module OpenAsset
 					end
 				end
 
-				# Use another loop to control the number of times we retry the request in case it fails
-				# Perform the update => 3 tries MAX with 5,10,15  second waits between retries respectively
-				res = nil
-				attempts = 0
-				
-				loop do
-					puts "[INFO] Batch #{num} => Attemping file updates."
-					attempts += 1
+				puts "[INFO] Batch #{num} => Attempting to perform file updates."
+				# Update files
+				updated_obj_count = run_smart_update(files,total_files_updated)
 
-					#check if the server is responding (This is a HEAD request)
-					server_test_passed = get_count(Categories.new)
+				total_files_updated += updated_obj_count
 
-					# This code executes if the web server hangs or takes too long 
-					# to respond => Possible cause can be too large a batch size
-					if attempts == 4
-						Validator::process_http_response(server_test,@verbose,'Files','HEAD')
-						abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
-							   " Try adjusting the batch size.")
-					end
-
-					if server_test_passed
-
-						res = update_files(files)
-
-						if res.kind_of? Net::HTTPSuccess
-							offset += limit
-							total_files_updated += res['X-Full-Results-Count'].to_i
-							print "[INFO] "
-							print "Successfully " if total_files_updated > 0
-							puts "Updated #{total_files_updated.inspect} files."
-							break
-						else
-							Validator::process_http_response(res,@verbose,'Files','PUT')
-							abort
-						end
-					else
-						time_lapse = 5 * attempts
-						time_lapse.times do |num|
-							print "\rWaiting for server to respond" + ("." * (num + 1))
-							sleep(1)
-						end
-					end
-				end	
+				offset += limit
 			end 
 		end
         
@@ -2980,10 +2965,10 @@ module OpenAsset
 			existing_keywords           = nil
 			existing_keyword_categories = nil
 			total_file_count            = 0
-			total_files_updated         = 0
+			total_files_updated         = 0  # For better readability
 			offset                      = 0
 			iterations                  = 0
-			limit                       = batch_size.to_i
+			limit                       = batch_size.to_i.abs
 
 			cat_id_string               = ''
 			query_ids                   = ''
@@ -3241,50 +3226,13 @@ module OpenAsset
 					end
 				end
 
-				# Use another loop to control the number of times we retry the request in case it fails
-				#17. Perform the update => 3 tries MAX with 5,10,15  second waits between retries respectively
-				res = nil
-				attempts = 0
-				
 				puts "[INFO] Batch #{num} => Attempting to perform file updates."
-				loop do
+				# Update files
+				updated_obj_count = run_smart_update(files,total_files_updated)
 
-					attempts += 1
+				total_files_updated += updated_obj_count
 
-					#check if the server is responding (This is a HEAD request)
-					server_test_passed = get_count(Categories.new)
-
-					# This code executes if the web server hangs or takes too long 
-					# to respond after the first update is performed => Possible cause can be too large a batch size
-					if attempts == 4
-						Validator::process_http_response(res,@verbose,'Files','HEAD')
-						abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
-							   " Try adjusting the batch size.")
-					end
-
-					if server_test_passed
-						#puts "before update file"
-						res = update_files(files,false)
-						#puts "after update file"
-						if res.kind_of? Net::HTTPSuccess
-							offset += limit
-							total_files_updated += res['X-Full-Results-Count'].to_i - 1
-							print "[INFO] "
-							print "Successfully " if total_files_updated > 0
-							puts "Updated #{total_files_updated.inspect} files."
-							break
-						else
-							Validator::process_http_response(res,@verbose,'Files','PUT')
-							abort
-						end
-					else
-						time_lapse = 5 * attempts
-						time_lapse.times do |num|
-							print "\rWaiting for server to respond" + ("." * (num + 1))
-							sleep(1)
-						end
-					end
-				end	
+				offset += limit
 			end  
 		end
 
@@ -3305,7 +3253,7 @@ module OpenAsset
 			offset                         = 0
 			total_projects_updated         = 0
 			limit                          = batch_size
-			nested_field                   = Struct.new(:id, :values)
+			nested_field                   = Struct.new(:id,:values)
 
 			ALLOWED_FIELD_TYPES = %w[ singleLine multiLine ]
 
@@ -3439,6 +3387,8 @@ module OpenAsset
 
             project_ids = get_projects(op).map { |obj| obj.id.to_s }
 
+            abort("Error: No Projects found in OpenAsset!") if project_ids.length.zero?
+
             op.clear
 
             total_project_count = project_ids.length
@@ -3461,6 +3411,8 @@ module OpenAsset
 
 				projects = get_projects(op)
 
+				op.clear
+
 				projects.each do |project|
 
 					tmp_keyword_collection = []
@@ -3481,68 +3433,42 @@ module OpenAsset
 					# Check if there's already a value in the field
 					index = project.fields.find_index { |f_obj| f_obj.id.to_s == project_field_found.id.to_s }
 
-					# over
-					if index && project.fields[index].values.first != "0" &&
-					   project.fields[index].values.first != '' && insert_mode == 'append'
+					if index # There's data in the field
 
-						if project_field_found.field_display_type.to_s == 'singleLine'
+						if project.fields[index].values.first != "0" &&
+					       project.fields[index].values.first != '' && insert_mode == 'append'
 
-							project.fields[index].values.first = project.fiels[index].values.first + ' ' + field_string
+							if project_field_found.field_display_type.to_s == 'singleLine'
 
-						elsif project_field_found.field_display_type.to_s == 'multiLine'
+								project.fields[index].values.first = project.fields[index].values.first + ' ' + field_string
 
-							project.fields[index].values.first = project.fiels[index].values.first + "\n" + field_string
+							elsif project_field_found.field_display_type.to_s == 'multiLine'
+
+								project.fields[index].values.first = project.fields[index].values.first + "\n" + field_string
+
+							end
+
+						elsif  insert_mode == 'overwrite'
+
+							project.fields[index].values.first = field_string
 
 						end
 
-					elsif index && insert_mode == 'overwrite'
+					else # No data in the field
 
-						project.fields[index].values.first = field_string
+						project.fields << nested_field.new(project_field_found.id.to_s, [field_string])
 
 					end
 
-					# Update projects
-					loop do
-
-						attempts += 1
-
-						#check if the server is responding (This is a HEAD request)
-						server_test_passed = get_count(Categories.new)
-
-						# This code executes if the web server hangs or takes too long 
-						# to respond after the first update is performed => Possible cause can be too large a batch size
-						if attempts == 4
-							#Validator::process_http_response(res,@verbose,'Categories','HEAD')
-							abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
-								   " Try adjusting the batch size.")
-						end
-
-						if server_test_passed
-							#puts "before update file"
-							res = update_projects(projects,false)
-							#puts "after update file"
-							if res.kind_of? Net::HTTPSuccess
-								offset += limit
-								total_projects_updated += res['X-Full-Results-Count'].to_i
-								print "[INFO] "
-								print "Successfully " if total_projects_updated > 0
-								puts "Updated #{total_projects_updated.inspect} projects."
-								break
-							else
-								Validator::process_http_response(res,@verbose,'Projects','PUT')
-								abort
-							end
-						else
-							time_lapse = 5 * attempts
-							time_lapse.times do |num|
-								print "\rWaiting for server to respond" + ("." * (num + 1))
-								sleep(1)
-							end
-						end
-					end	
-
-					op.clear
 				end
+
+				# Update projects
+				updated_obj_count = run_smart_update(projects,total_projects_updated)
+
+				total_projects_updated += updated_obj_count
+
+				offset += limit
+
 			end            
 
 		end
