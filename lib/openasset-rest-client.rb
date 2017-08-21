@@ -2099,7 +2099,7 @@ module OpenAsset
 				#Now that we know the option is available, we can update the Files 
 				#NOUN we are currently working with using a PUT request
 				data = {:id => current_field.id, :values => [current_value]}
-				put(files_endpoint,data)
+				put(files_endpoint,data,false)
 
 			elsif current_field.field_display_type == "date"
 				#make sure we get the right date format
@@ -2122,7 +2122,7 @@ module OpenAsset
 
 				#Apply the date to our current Files resource
 				data = {:id => current_field.id, :values => [value.to_s]}
-				put(files_endpoint,data)
+				put(files_endpoint,data,false)
 
 
 			elsif NORMAL_FIELD_TYPES.include?(current_field.field_display_type)
@@ -2144,9 +2144,10 @@ module OpenAsset
 					
 					current_file.instance_variable_set('@'+field_name, value)
 					put(files_endpoint,current_file)
-				else									#For regular non-built in fields
+				else	#For regular non-built in fields
+
 					data = {:id => current_field.id, :values => [value.to_s]}
-					put(files_endpoint,data)
+					put(files_endpoint,data,false)
 					
 				end
 
@@ -2181,7 +2182,7 @@ module OpenAsset
 				#udatte current variable for verbose statement
 				current_value = bool_val
 				#Actually do the update
-				put(files_endpoint,current_file)
+				put(files_endpoint,current_file,false)
 			else
 				warn "Error: The field specified does not have a valid field_display_type." +
 					 "Value provided => #{field.field_display_type.inspect}"
@@ -2299,7 +2300,7 @@ module OpenAsset
 				#Now that we know the option is available, we can update the Projects 
 				#NOUN we are currently working with using a PUT request
 				data = {:id => current_field.id, :values => [value.to_s]}
-				put(projects_endpoint,data)
+				put(projects_endpoint,data,false)
 
 				if @verbose
 					puts "Adding value: \"#{value}\" to \"#{current_field.name}\" field" +
@@ -2329,7 +2330,7 @@ module OpenAsset
 
 				#Apply the date to our current Files resource
 				data = {:id => current_field.id, :values => [value.to_s]}
-				put(projects_endpoint,data) #Make the update
+				put(projects_endpoint,data,false) #Make the update
 
 				
 			elsif NORMAL_FIELD_TYPES.include?(current_field.field_display_type) #For regular fields
@@ -2354,7 +2355,7 @@ module OpenAsset
 
 				else														#For regular non-built in fields
 					data = {:id => current_field.id, :values => [value.to_s]}
-					put(projects_endpoint,data)
+					put(projects_endpoint,data,false)
 				end
 			elsif current_field.field_display_type == 'boolean'
 
@@ -2388,7 +2389,7 @@ module OpenAsset
 				current_value = bool_val
 
 				#Acutally perform the update request
-				put(projects_endpoint,current_project)
+				put(projects_endpoint,current_project,false)
 			else
 				warn "Error: The field specified does not have a valid field_display_type." +
 					 "Value provided => #{field.field_display_type.inspect}"
