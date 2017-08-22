@@ -39,9 +39,9 @@ module OpenAsset
 				if oa_uri_without_protocol =~ client_url #verify correct url format
 					client_url = "https://" + client_url #add the https protocol if one isn't provided
 				else
-					warn "Error: Invalid url! Expected http(s)://<subdomain>.openasset.com" + 
-						 "\nInstead got => #{uri}"
-					exit
+					error = "Error: Invalid url! Expected http(s)://<subdomain>.openasset.com" + 
+						 "\nInstead got => #{client_url.inspect}"
+					abort(error)
 				end
 			end
 			@authenticator = Authenticator::get_instance(client_url)
