@@ -2539,11 +2539,12 @@ module OpenAsset
 				op.add_option('id', ids)
 				
 				# Get current batch of files => body length used to track total files updated
+				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
 				files = get_files(op)
 
 				op.clear
 
-				puts "[INFO] Batch #{num} => Extracting keywords from \"#{source_field_found.name}\" field."
+				puts "[INFO] Batch #{num} of #{iterations} => Extracting keywords from \"#{source_field_found.name}\" field."
 				keywords_to_create = []
 				
 				# Iterate through the files and find the keywords that need to be created
@@ -2613,7 +2614,7 @@ module OpenAsset
 					payload = keywords_to_create.uniq { |item| [item.name, item.keyword_category_id] }
 					
 					# Create the keywords for the current batch and set the generate objects flag to true.
-				    puts "[INFO] Batch #{num} => creating keywords."
+				    puts "[INFO] Batch #{num} of #{iterations} => creating keywords."
 					new_keywords = create_keywords(payload, true)
 					# Append the returned keyword objects to the existing keywords array
 					if new_keywords
@@ -2627,7 +2628,7 @@ module OpenAsset
 
 				# Loop though the files again and tag them with the newly created keywords.
 				# This is faster than making individual requests
-				puts "[INFO] Batch #{num} => Tagging files with keywords."
+				puts "[INFO] Batch #{num} of #{iterations} => Tagging files with keywords."
 				files.each do | file |
 					#puts "In files tag before using instance_variable_get 2"
 					field_data = nil
@@ -2693,7 +2694,7 @@ module OpenAsset
 					end
 				end
 
-				puts "[INFO] Batch #{num} => Attempting to perform file updates."
+				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
 				# Update files
 				updated_obj_count = run_smart_update(files,total_files_updated)
 
@@ -2791,13 +2792,14 @@ module OpenAsset
 				op.add_option('id',ids)
 				op.add_option('limit','0')
 				# Get current batch of files
+				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
 				files = get_files(op)
 				#p files
 				op.clear
 
 				keywords_to_create = []
 				
-				puts "[INFO] Batch #{num} => Extracting keywords from #{source_field_found.name.inspect} field."
+				puts "[INFO] Batch #{num} of #{iterations} => Extracting keywords from #{source_field_found.name.inspect} field."
 
 				# Iterate through the files and find the keywords that need to be created
 				files.each do |file|
@@ -2844,7 +2846,7 @@ module OpenAsset
 		
 				end
 				#p keywords_to_create
-				puts "[INFO] Batch #{num} => Creating keywords."
+				puts "[INFO] Batch #{num} of #{iterations} => Creating keywords."
 
 				# Remove duplicate keywords => just in case
 				unless keywords_to_create.empty?
@@ -2863,7 +2865,7 @@ module OpenAsset
 					end
 				end
 
-				puts "[INFO] Batch #{num} => Tagging files."
+				puts "[INFO] Batch #{num} of #{iterations} => Tagging files."
 				# Loop though the files again and tag them with the newly created keywords.
 				files.each do | file |
 
@@ -2917,7 +2919,7 @@ module OpenAsset
 					end
 				end
 
-				puts "[INFO] Batch #{num} => Attempting to perform file updates."
+				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
 				# Update files
 				updated_obj_count = run_smart_update(files,total_files_updated)
 
@@ -3064,7 +3066,7 @@ module OpenAsset
 				op.add_option('limit','0')
 				
 				# Get current batch of files => body length of response used to track total files updated
-				puts "[INFO] Batch #{num} => Retrieving files."
+				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
 				files = get_files(op)
 
 				op.clear
@@ -3072,7 +3074,7 @@ module OpenAsset
 				#puts "File objects #{files.inspect}"
 				keywords_to_create = []
                 
-                puts "[INFO] Batch #{num} => Extracting Keywords from fields."
+                puts "[INFO] Batch #{num} of #{iterations} => Extracting Keywords from fields."
 				# Iterate through the files and find the keywords that need to be created
 				files.each do |file|
 					#puts "In files create keywords from field before using instance_variable_get 1"
@@ -3145,7 +3147,7 @@ module OpenAsset
 					payload = keywords_to_create.uniq { |item| [item.name, item.keyword_category_id] }
 					
 					# Create the keywords for the current batch and set the generate objects flag to true.
-					puts "[INFO] Batch #{num} => Creating Keywords."
+					puts "[INFO] Batch #{num} of #{iterations} => Creating Keywords."
 					new_keywords = create_keywords(payload, true)
 
 					# Append the returned keyword objects to the existing keywords array
@@ -3160,7 +3162,7 @@ module OpenAsset
 				
 				# Loop though the files again and tag them with the newly created keywords.
 				# This is faster than making individual requests
-				puts "[INFO] Batch #{num} => Tagging files."
+				puts "[INFO] Batch #{num} of #{iterations} => Tagging files."
 				files.each do | file |
 					#puts "In files tag before using instance_variable_get 2"
 					field_data      = nil
@@ -3227,7 +3229,7 @@ module OpenAsset
 					end
 				end
 
-				puts "[INFO] Batch #{num} => Attempting to perform file updates."
+				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
 				# Update files
 				updated_obj_count = run_smart_update(files,total_files_updated)
 
@@ -3403,6 +3405,8 @@ module OpenAsset
 
 			iterations.times do |num|
 
+				num += 1
+
 				start_index = offset
 				end_index   = offset + limit
 				ids         = project_ids[start_index...end_index].join(',')
@@ -3410,10 +3414,12 @@ module OpenAsset
 				op.add_option('limit','0')
 				op.add_option('id',ids)
 
+				puts "[INFO] Batch #{num} of #{iterations} => Retrieving projects."
 				projects = get_projects(op)
 
 				op.clear
 
+				puts "[INFO] Batch #{num} of #{iterations} => Updating field data."
 				projects.each do |project|
 
 					tmp_keyword_collection = []
@@ -3449,6 +3455,9 @@ module OpenAsset
 
 							end
 
+							puts "[INFO] Inserting #{field_string.inspect} into #{project_field_found.name.inspect}" +
+							     " field for project => #{project.code}."
+
 						elsif  insert_mode == 'overwrite'
 
 							project.fields[index].values.first = field_string
@@ -3464,6 +3473,7 @@ module OpenAsset
 				end
 
 				# Update projects
+				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform project updates."
 				updated_obj_count = run_smart_update(projects,total_projects_updated)
 
 				total_projects_updated += updated_obj_count
@@ -3474,7 +3484,180 @@ module OpenAsset
 
 		end
 
-		def move_file_keywords_to_field_by_album()
+		def move_file_keywords_to_field_by_album(album,
+												 keyword_category,
+												 target_field,
+												 field_separator,
+												 insert_mode=nil,
+												 batch_size=200)
+
+			# Validate input
+			args = process_field_to_keyword_move_args('albums',
+													   album,
+													   keyword_category,
+													   target_field,
+													   field_separator,
+		  											   batch_size)
+
+			
+			album_found                 = args.container
+			file_keyword_category_found = args.target_keyword_category
+			target_field_found          = args.source_field
+
+			builtin                     = nil
+			file_ids                    = nil
+			results                     = nil
+			keywords                    = []
+			files                       = []
+			total_file_count            = 0
+			total_files_updated         = 0  # For better readability
+			offset                      = 0
+			iterations                  = 0
+			limit                       = batch_size.to_i.abs
+			insert_mode                 = insert_mode.downcase
+			nested_field                = Struct.new(:id, :values)
+			op                          = RestOptions.new
+
+			# Valiate insert mode
+			unless insert_mode == 'append' || insert_mode == 'overwrite'
+				error = "Invalid insert mode value for fifth argument in #{__callee__}" +
+						"\n\tExpected \"append\" or \"overwrite\"" +
+						"\n\tInstead got => #{insert_mode.inspect}."
+				abort(error)
+			end
+			
+			# Check the source_field field type
+			builtin = (target_field_found.built_in == '1') ? true : false
+			
+			# Get file ids
+			file_ids = album_found.files.map { |obj| obj.id.to_s }
+			
+			# Get keywords
+			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_category_found.inspect}."
+			op.add_option('limit','0')
+			op.add_option('keyword_category_id',"#{file_keyword_category_found.id}")
+
+			keywords = get_keywords(op)
+
+			if keywords.empty?
+				error = "No keywords found in keyword category => #{file_keyword_category_found.name.inspect} " +
+				        "with id #{file_keyword_category_found.id.inspect}"
+				abort(error)
+			end
+
+			op.clear
+
+			puts "[INFO] Calculating batch size."
+			total_file_count = file_ids.length
+
+			if total_file_count.zero?
+				error = "No files found in album #{album_found.name.inspect} with id #{album_found.id.inspect}."
+				abort(error)
+			end
+
+			# Set up iterations loop
+			if total_file_count % batch_size == 0
+				iterations = total_file_count / batch_size
+			else
+				iterations = total_file_count / batch_size + 1 # To grab remaining
+			end
+
+			iterations.times do |num|
+
+				num += 1
+
+				# Get file batch
+				start_index = offset
+				end_index   = offset + limit
+				ids         = file_ids[start_index...end_index].join(',')
+
+				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
+				op.add_option('limit','0')
+				op.add_option('id',ids)
+
+				files = get_files(op)
+
+				# Loop through files, extract keywords and insert them into the field
+				files.each do |file|
+
+					field_data_to_insert = []
+
+					file.keywords.each do |keyword|
+
+						field_data_to_insert.push(keyword.name.strip)
+
+					end
+
+					if builtin # Builtin field
+
+						if insert_mode == 'append'
+
+							field_name = target_field_found.name.downcase.gsub(' ','_')
+							#puts "Field name: #{field_name}"
+							data = file.instance_variable_get("#{field_name}")
+
+							if data.nil? || data.to_s.strip == ''
+								data = field_data_to_insert.join(field_separator)
+							else
+								data = data.to_s.strip + field_separator + field_data_to_insert.join(field_separator)
+							end
+
+							file.instance_variable_set("@#{field_name}",data)
+
+						elsif insert_mode == 'overwrite'
+
+							field_name = target_field_found.name.downcase.gsub(' ','_')
+							#puts "Field name: #{field_name}"
+							data = field_data_to_insert.join(field_separator)
+
+							file.instance_variable_set("@#{field_name}",data)
+
+							puts "[INFO] Inserting #{data.inspect} into #{target_field_found.name.inspect} field" +
+							     "\n\tFor file => #{file.filename.inspect}."
+						end
+
+					else   # Custom field
+	
+						# Check if the field has data in it
+						field_index = file.fields.find_index { |obj| obj.id.to_s == target_field_found.id.to_s }
+
+						if field_index && insert_mode == 'append' # Add to existing data
+
+							data = file.fields[field_index].value
+
+							if data.nil? || data.to_s.strip == ''
+								data = field_data_to_insert.join(field_separator)
+								file.fields[field_index].value = data
+							else
+								data = data.to_s + field_separator + field_data_to_insert.join(field_separator)
+							end
+
+						elsif field_index && insert_mode == 'overwrite' # Overwrite existing data
+
+							data = field_data_to_insert.join(field_separator)
+							file.fields[field_index].value = data
+
+						else # No Data in field
+
+							data = field_data_to_insert.join(field_separator)
+							nested_field_obj = nested_field.new(target_field_found.id, [data])
+							file.fields.push(nested_field_obj)
+
+						end
+						
+					end
+						
+				end
+
+				# Perform file update
+				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
+				updated_obj_count = run_smart_update(files,total_files_updated)
+
+				total_files_updated += updated_obj_count
+
+				offset += limit
+
+			end
 			
 		end
 
