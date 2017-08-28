@@ -2400,16 +2400,17 @@ module OpenAsset
 			end
 		end
         
-        # Create file keywords BY ALBUM for ANY File field (built-in or custom) and tag associated files.
+        # Move file field data to keywords BY ALBUM for ANY File field (built-in or custom) and tag associated files.
 		#
 		# @param album [Albums Object, String album name, String id, Integer id] (Required)
 		# @param target_keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
-		# @param field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param source_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
+		# @param batch_size [Integer] (Default => 100)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_file_keywords_to_field_by_album(album_obj,keyword_cat_obj,fields_obj,';',250)
-		#          rest_client.move_file_field_data_to_keywords_by_album("myalbum","my_k_cat_name","file_field_name",';',250)
+		# @example rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album("myalbum","keyword_category_name","file_field_name",';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album("9","1","7",';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album(9,1,7,';',250)
 		def move_file_field_data_to_keywords_by_album(album=nil,
@@ -2703,18 +2704,19 @@ module OpenAsset
 			end  
 		end
         
-        # Create file keywords BY CATEGORY for ANY File field (built-in or custom) and tag associated files.
+        # Move file field data to keywords BY CATEGORY for ANY File field (built-in or custom) and tag associated files.
 		#
-		# @param album [Categories Object, String File category name, String id, Integer id] (Required)
+		# @param category [Categories Object, String File category name, String id, Integer id] (Required)
 		# @param target_keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
-		# @param field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param source_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
+		# @param batch_size [Integer] (Default => 100)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_file_field_data_to_keywords_by_album(file_category_obj,keyword_cat_obj,fields_obj,';',250)
-		#          rest_client.move_file_field_data_to_keywords_by_album("Projects","my_k_cat_name","file_field_name",';',250)
-		#          rest_client.move_file_field_data_to_keywords_by_album("2","1","7",';',250)
-		#          rest_client.move_file_field_data_to_keywords_by_album(2,1,7,';',250)
+		# @example rest_client.move_file_field_data_to_keywords_by_album(Categories object,KeywordCategories object,Fields object,';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album("Projects","keyword_category_name","file_field_name",';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album("9","1","7",';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album(9,1,7,';',250)
 		def move_file_field_data_to_keywords_by_category(category=nil,
 			                                            target_keyword_category=nil,
 			                                            source_field=nil,
@@ -2928,16 +2930,17 @@ module OpenAsset
 			end 
 		end
         
-        # Create file keywords BY PROJECT for ANY File field (built-in or custom) and tag associated files.
+        # Move file field data to keywords BY PROJECT for ANY File field (built-in or custom) and tag associated files.
 		#
-		# @param album [Projects Object, String project name, String id, Integer id] (Required)
+		# @param project [Projects object, project_name, String id, Integer id] (Required)
 		# @param target_keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
-		# @param field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param source_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
+		# @param batch_size [Integer] (Default => 100)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_file_field_data_to_keywords_by_album(projects_obj,keyword_cat_obj,fields_obj,';',250)
-		#          rest_client.move_file_field_data_to_keywords_by_album("MyProject","my_k_cat_name","file_field_name",';',250)
+		# @example rest_client.move_file_field_data_to_keywords_by_album(Projects object,KeywordCategories object,Fields object,';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album("MyProject","keyword category name","file field name",';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album("9","1","7",';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album(9,1,7,';',250)
 		def move_file_field_data_to_keywords_by_project(project=nil,
@@ -3236,6 +3239,18 @@ module OpenAsset
 			end  
 		end
 
+		# Move project field data to keywords for ANY Project field (built-in or custom).
+		#
+		# @param target_project_keyword_category [ProjectKeywordCategories Object, String keyword category name, String id, Integer id] (Required)
+		# @param project_field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param field_separator [String] (Required)
+		# @param batch_size [Integer] (Default => 100)
+		# @return [nil] nil.
+		#
+		# @example rest_client.move_project_field_data_to_keywords(ProjectKeywordCategories object,Fields object,';',250)
+		#          rest_client.move_project_field_data_to_keywords("project keyword category name","project field name",';',250)
+		#          rest_client.move_project_field_data_to_keywords("9","1","7",';',250)
+		#          rest_client.move_project_field_data_to_keywords(9,1,7,';',250)
 		def move_project_field_data_to_keywords(target_project_keyword_category=nil,
 	                                            project_field=nil,
 	                                            field_separator=nil,
@@ -3552,6 +3567,23 @@ module OpenAsset
 
 		end
 
+		# Move project keywords to field (built-in or custom) Singleline of Multiline project fields ONLY.
+		#
+		# @param target_project_keyword_category [ProjectKeywordCategories Object, Fields object, String id, Integer id] (Required)
+		# @param project_field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param field_separator [String] (Required)
+		# @param insert_mode [String] append or overwrite
+		# @param batch_size [Integer] (Default => 100)
+		# @return [nil] nil.
+		#
+		# @example rest_client.move_project_keywords_to_field(ProjectKeywordCategories object,Fields object,';','append',250)
+		#		   rest_client.move_project_keywords_to_field(ProjectKeywordCategories object,Fields object,';','overwrite',250)
+		#          rest_client.move_project_keywords_to_field("project keyword category name","project field name",';','append',250)
+		#          rest_client.move_project_keywords_to_field("project keyword category name","project field name",';','overwrite',250)
+		#          rest_client.move_project_keywords_to_field("9","1","7",';','append',250)
+		#          rest_client.move_project_keywords_to_field("9","1","7",';','overwrite',250)
+		#          rest_client.move_project_keywords_to_field(9,1,7,';','append',250)
+		#          rest_client.move_project_keywords_to_field(9,1,7,';','overwrite',250)
 		def move_project_keywords_to_field(target_project_keyword_category=nil,
                                            project_field=nil,
                                            field_separator=nil,
@@ -3798,6 +3830,24 @@ module OpenAsset
 
 		end
 
+		# Move file keywords to field (built-in or custom) BY ALBUM - Singleline of Multiline project fields ONLY.
+		#
+		# @param album [Albums object, String album name, String id, Integer id] (Required)]
+		# @param keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
+		# @param target_field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param field_separator [String] (Required)
+		# @param insert_mode [String] append or overwrite
+		# @param batch_size [Integer] (Default => 100)
+		# @return [nil] nil.
+		#
+		# @example rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','append',250)
+		#		   rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','overwrite',250)
+		#          rest_client.move_file_keywords_to_field_by_album("album name","keyword category name","project field name",';','append',250)
+		#          rest_client.move_file_keywords_to_field_by_album("album name","keyword category name","project field name",';','overwrite',250)
+		#          rest_client.move_file_keywords_to_field_by_album("9","1","7",';','append',250)
+		#          rest_client.move_file_keywords_to_field_by_album("9","1","7",';','overwrite',250)
+		#          rest_client.move_file_keywords_to_field_by_album(9,1,7,';','append',250)
+		#          rest_client.move_file_keywords_to_field_by_album(9,1,7,';','overwrite',250)
 		def move_file_keywords_to_field_by_album(album,
 												 keyword_category,
 												 target_field,
@@ -3979,6 +4029,24 @@ module OpenAsset
 			
 		end
 
+		# Move file keywords to field (built-in or custom) BY PROJECT - Singleline of Multiline project fields ONLY.
+		#
+		# @param project [Projects object, String project name, String id, Integer id] (Required)]
+		# @param keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
+		# @param target_field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param field_separator [String] (Required)
+		# @param insert_mode [String] append or overwrite
+		# @param batch_size [Integer] (Default => 100)
+		# @return [nil] nil.
+		#
+		# @example rest_client.move_file_keywords_to_field_by_project(Projects object,KeywordCategories object,Fields object,';','append',250)
+		#		   rest_client.move_file_keywords_to_field_by_project(Projects object,KeywordCategories object,Fields object,';','overwrite',250)
+		#          rest_client.move_file_keywords_to_field_by_project("project name","keyword category name","project field name",';','append',250)
+		#          rest_client.move_file_keywords_to_field_by_project("project name","keyword category name","project field name",';','overwrite',250)
+		#          rest_client.move_file_keywords_to_field_by_project("9","1","7",';','append',250)
+		#          rest_client.move_file_keywords_to_field_by_project("9","1","7",';','overwrite',250)
+		#          rest_client.move_file_keywords_to_field_by_project(9,1,7,';','append',250)
+		#          rest_client.move_file_keywords_to_field_by_project(9,1,7,';','overwrite',250)
 		def move_file_keywords_to_field_by_project(project,
 												   keyword_category,
 												   target_field,
@@ -4166,6 +4234,24 @@ module OpenAsset
 
 		end
 
+		# Move file keywords to field (built-in or custom) BY CATEGORY - Singleline of Multiline project fields ONLY.
+		#
+		# @param project [Projects object, String project name, String id, Integer id] (Required)]
+		# @param keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
+		# @param target_field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param field_separator [String] (Required)
+		# @param insert_mode [String] append or overwrite
+		# @param batch_size [Integer] (Default => 100)
+		# @return [nil] nil.
+		#
+		# @example rest_client.move_file_keywords_to_field_by_category(Categories object,KeywordCategories object,Fields object,';','append',250)
+		#		   rest_client.move_file_keywords_to_field_by_category(Categories object,ProjectKeywordCategories object,Fields object,';','overwrite',250)
+		#          rest_client.move_file_keywords_to_field_by_category("category name","keyword category name","project field name",';','append',250)
+		#          rest_client.move_file_keywords_to_field_by_category("category name","keyword category name","project field name",';','overwrite',250)
+		#          rest_client.move_file_keywords_to_field_by_category("9","1","7",';','append',250)
+		#          rest_client.move_file_keywords_to_field_by_category("9","1","7",';','overwrite',250)
+		#          rest_client.move_file_keywords_to_field_by_category(9,1,7,';','append',250)
+		#          rest_client.move_file_keywords_to_field_by_category(9,1,7,';','overwrite',250)
 		def move_file_keywords_to_field_by_category(category,
 													keyword_category,
 													target_field,
