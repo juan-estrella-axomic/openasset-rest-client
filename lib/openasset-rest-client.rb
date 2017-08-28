@@ -62,7 +62,7 @@ module OpenAsset
 			op = RestOptions.new
 
 			container_found             = nil
-			keyword_category_found = nil
+			keyword_category_found      = nil
 			source_field_found          = nil
 
 			if scope.downcase == 'albums'
@@ -264,7 +264,7 @@ module OpenAsset
 
 			unless rest_option_obj.is_a?(RestOptions) || rest_option_obj == nil
 				abort("Argument Error: Expected RestOptions Object or no argument for second argument in #{__callee__}." + 
-						"\n\tInstead got #{rest_option_obj.inspect}") 
+						"\n\tInstead got => #{rest_option_obj.inspect}") 
 			end
 
 			uri = URI.parse(@uri + '/' + resource + query)								   
@@ -275,8 +275,7 @@ module OpenAsset
 					request.add_field('X-SessionKey',@session)
 				else
 					@session = @authenticator.get_session
-					request.add_field('X-SessionKey',@session) #For when the token issue is sorted out
-					#request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
+					request.add_field('X-SessionKey',@session) 
 				end
 				http.request(request)
 			end
@@ -2409,11 +2408,11 @@ module OpenAsset
 		# @param field_separator [String] (Required)
 		# @return [nil] nil.
 		#
-		# @example rest_client.create_file_keywords_from_field_by_album(album_obj,keyword_cat_obj,fields_obj,';',250)
-		#          rest_client.create_file_keywords_from_field_by_album("myalbum","my_k_cat_name","file_field_name",';',250)
-		#          rest_client.create_file_keywords_from_field_by_album("9","1","7",';',250)
-		#          rest_client.create_file_keywords_from_field_by_album(9,1,7,';',250)
-		def create_file_keywords_from_field_by_album(album=nil,
+		# @example rest_client.move_file_keywords_to_field_by_album(album_obj,keyword_cat_obj,fields_obj,';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album("myalbum","my_k_cat_name","file_field_name",';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album("9","1","7",';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album(9,1,7,';',250)
+		def move_file_field_data_to_keywords_by_album(album=nil,
 			                                         target_keyword_category=nil,
 			                                         source_field=nil,
 			                                         field_separator=nil,
@@ -2712,11 +2711,11 @@ module OpenAsset
 		# @param field_separator [String] (Required)
 		# @return [nil] nil.
 		#
-		# @example rest_client.create_file_keywords_from_field_by_album(file_category_obj,keyword_cat_obj,fields_obj,';',250)
-		#          rest_client.create_file_keywords_from_field_by_album("Projects","my_k_cat_name","file_field_name",';',250)
-		#          rest_client.create_file_keywords_from_field_by_album("2","1","7",';',250)
-		#          rest_client.create_file_keywords_from_field_by_album(2,1,7,';',250)
-		def create_file_keywords_from_field_by_category(category=nil,
+		# @example rest_client.move_file_field_data_to_keywords_by_album(file_category_obj,keyword_cat_obj,fields_obj,';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album("Projects","my_k_cat_name","file_field_name",';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album("2","1","7",';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album(2,1,7,';',250)
+		def move_file_field_data_to_keywords_by_category(category=nil,
 			                                            target_keyword_category=nil,
 			                                            source_field=nil,
 			                                            field_separator=nil,
@@ -2937,18 +2936,15 @@ module OpenAsset
 		# @param field_separator [String] (Required)
 		# @return [nil] nil.
 		#
-		# @example rest_client.create_file_keywords_from_field_by_album(projects_obj,keyword_cat_obj,fields_obj,';',250)
-		#          rest_client.create_file_keywords_from_field_by_album("MyProject","my_k_cat_name","file_field_name",';',250)
-		#          rest_client.create_file_keywords_from_field_by_album("9","1","7",';',250)
-		#          rest_client.create_file_keywords_from_field_by_album(9,1,7,';',250)
-		def create_file_keywords_from_field_by_project(project=nil,
+		# @example rest_client.move_file_field_data_to_keywords_by_album(projects_obj,keyword_cat_obj,fields_obj,';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album("MyProject","my_k_cat_name","file_field_name",';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album("9","1","7",';',250)
+		#          rest_client.move_file_field_data_to_keywords_by_album(9,1,7,';',250)
+		def move_file_field_data_to_keywords_by_project(project=nil,
 			                                           target_keyword_category=nil,
 			                                           source_field=nil,
 			                                           field_separator=nil,
 			                                           batch_size=100)
-			
-			op = RestOptions.new
-
 			# Validate input:
 			args = process_field_to_keyword_move_args('projects',
 													   project,
@@ -2972,6 +2968,7 @@ module OpenAsset
 			offset                      = 0
 			iterations                  = 0
 			limit                       = batch_size.to_i.abs
+			op                          = RestOptions.new
 
 			cat_id_string               = ''
 			query_ids                   = ''
@@ -3239,6 +3236,322 @@ module OpenAsset
 			end  
 		end
 
+		def move_project_field_data_to_keywords(target_project_keyword_category=nil,
+	                                            project_field=nil,
+	                                            field_separator=nil,
+	                                            batch_size=100)
+
+			project_ids                    = nil
+			project_field_found            = nil
+			project_keyword_category_found = nil
+			projects                       = []
+			existing_project_keywords      = []
+			total_project_count            = 0
+			iterations                     = 0
+			offset                         = 0
+			total_projects_updated         = 0
+			batch_size                     = batch_size.to_i.abs
+			limit                          = batch_size
+			nested_proj_keyword            = Struct.new(:id)
+			op                             = RestOptions.new
+
+			ALLOWED_FIELD_TYPES = %w[ singleLine multiLine ]
+
+			
+
+			# Validate input:
+			
+			# Retrieve project keyword category
+			if target_project_keyword_category.is_a?(ProjectKeywordCategories) &&  # Object
+			!target_project_keyword_category.id.nil?
+
+			op.add_option('id',target_project_keyword_category.id)
+			project_keyword_category_found = get_project_keyword_categories(op).first
+
+			elsif target_project_keyword_category.is_a?(String) &&  # Id
+				!target_project_keyword_category.to_i.zero?
+
+				op.add_option('id',target_project_keyword_category)
+				project_keyword_category_found = get_project_keyword_categories(op).first
+
+			elsif target_project_keyword_category.is_a?(String) # Name
+
+				op.add_option('name',target_project_keyword_category)
+				project_keyword_category_found = get_project_keyword_categories(op)
+
+				unless project_keyword_category_found
+					abort("Error: Project keyword category with name #{project_field.inspect} not found in OpenAsset.")
+				end
+
+				if project_keyword_category_found.length > 1
+					error = "Error: Multiple Project keyword categories found with name #{project_field.inspect}." +
+							" Specify an id instead."
+					abort(error)
+				else
+					project_keyword_category_found = project_keyword_category_found.first
+				end
+
+			else
+				error = "Error: Expected one of the following: " +
+						"\n\t1. Valid project keyword category object." +
+						"\n\t2. Project keyword category id."
+						"\n\t3. Project keyword category name."
+						"\nfor first argument in #{__callee__} method." +
+						"\nInstead got #{target_project_keyword_category.inspect}."
+				abort(error)
+			end
+
+			# Make sure it's a project keyword catgory
+			unless project_keyword_category_found.is_a?(ProjectKeywordCategories)
+				error = "Error: Specified Project keyword category named #{project_keyword_category_found.name.inspect} with id " +
+						"#{project_keyword_category_found.id.inspect} is actually a #{project_keyword_category_found.class.inspect}."
+				abort(error)
+			end
+
+			op.clear
+
+			# Retrieve project field
+			if project_field.is_a?(Fields) && !project_field.id.nil?# Object
+
+				op.add_option('id',project_field.id)
+				project_field_found = get_fields(op).first
+
+				abort("Error: Field with id #{project_field.id.inspect} not found in OpenAsset.") unless project_field_found
+
+			elsif (project_field.is_a?(String) && !project_field.to_i.zero?) ||  # Id
+				(project_field.is_a?(Integer) && !project_field.zero?)
+
+				op.add_option('id',project_field)
+				project_field_found	= get_fields(op).first
+
+				abort("Error: Field with id #{project_field.inspect} not found in OpenAsset.") unless project_field_found
+
+			elsif project_field.is_a?(String) # Name
+
+				op.add_option('name',project_field)
+				project_field_found = get_fields(op)
+
+				unless project_field_found
+					abort("Error: Field with name #{project_field.inspect} not found in OpenAsset.")
+				end
+
+				if project_field_found.length > 1
+					error = "Error: Multiple fields found with name #{project_field.inspect}. Specify an id instead."
+					abort(error)
+				else
+					project_field_found = project_field_found.first
+				end
+			else 
+				error = "Error: Expected one of the following: " +
+						"\n\t1. Valid Fields object." +
+						"\n\t2. Field id."
+						"\n\t3. Field name."
+						"\nfor second argument in #{__callee__} method." +
+						"\nInstead got #{project_field.inspect}."
+				abort(error)
+			end
+
+			# Make sure it's a project field
+			unless project_field_found.field_type == 'project'
+				error = "Error: Specified field #{project_field_found.name.inspect} with id " +
+						"#{project_field_found.id.inspect} is not an image field"
+				abort(error)
+			end
+
+			if field_separator.nil?
+				abort("Error: Must specify field separator.")
+			end
+
+			unless ['append','overwrite'].include?(insert_mode.to_s)
+				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. Instead got #{insert_mode.inspect}")
+			end
+
+			abort('Invalid batch size. Specify a positive numeric value or use default value of 100') if batch_size.zero?
+
+			op.clear
+
+			# Get projects keywords
+			puts "[INFO] Retrieving project keywords."
+			op.add_option('limit','0')
+			op.add_option('project_keyword_category_id',project_keyword_category_found.id)
+
+			existing_project_keywords = get_project_keywords(op)
+
+			op.clear
+
+			op.add_option('limit','0')
+			op.add_option('displayFields','id')
+
+			project_ids = get_projects(op).map { |obj| obj.id.to_s }
+
+			abort("Error: No Projects found in OpenAsset!") if project_ids.length.zero?
+
+			op.clear
+
+			total_project_count = project_ids.length
+
+			# Set up iterations loop
+			puts "[INFO] Calculating batch size"
+			if total_project_count % batch_size == 0
+				iterations = total_project_count / batch_size
+			else
+				iterations = total_project_count / batch_size + 1 # To grab remaining
+			end
+
+			iterations.times do |num|
+
+				num += 1
+
+				start_index = offset
+				end_index   = offset + limit
+				ids         = project_ids[start_index...end_index].join(',')
+
+				op.add_option('limit','0')
+				op.add_option('id',ids)
+
+				puts "[INFO] Batch #{num} of #{iterations} => Retrieving projects."
+				projects = get_projects(op)
+
+				op.clear
+
+				abort("No projects found!") if projects.empty?
+
+				keywords_to_create = []
+				
+				puts "[INFO] Batch #{num} of #{iterations} => Extracting Keywords from field."
+				# Iterate through the projects and find the project keywords that need to be created
+				projects.each do |project|
+					#puts "In files create keywords from field before using instance_variable_get 1"
+					field_data      = nil
+					field_obj_found = nil
+
+					# Check if the field has any data in it
+					if builtin
+						field_name = source_field_found.name.downcase.gsub(' ','_')
+						#puts "Field name 1 : #{field_name}"
+						field_data = project.instance_variable_get("@#{field_name}")
+						field_data = field_data.strip
+						next if field_data.nil? || field_data == ''
+					else
+						field_obj_found = project.fields.find { |f| f.id == source_field_found.id }
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first.strip == ''
+							next
+						end
+						field_data = field_obj_found.values.first
+					end
+
+					# split the string using the specified separator and remove empty strings
+					project_keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
+
+					project_keywords_to_append.each do |val|
+
+						# Check if the value exists in existing keywords
+						keyword_index = existing_keywords.find_index do |k|
+
+							begin
+								# In case we get an invalid input string like "\xA9" => copyright binary representation
+								# The downcase method can choke on this depending on the platform
+								# It works in windows but chokes in linux and possibly mac OS
+								k.name.downcase == val.downcase 
+							rescue
+								k.name == val 
+							end
+
+						end
+
+						unless keyword_index
+							# Insert into keywords_to_create array
+							keywords_to_create.push(nested_proj_keyword.new(obj.id))
+						end
+						
+					end
+				end
+
+				# Remove entries with the same name then create new keywords
+				unless keywords_to_create.empty?
+
+					payload = keywords_to_create.uniq { |item| [item.name }
+					
+					# Create the project keywords for the current batch and set the generate objects flag to true.
+					puts "[INFO] Batch #{num} of #{iterations} => Creating Project Keywords."
+					new_keywords = create_keywords(payload, true)
+
+					# Append the returned project keyword objects to the existing keywords array
+					if new_keywords.is_a?(Array) && !new_keywords.empty? 	
+						new_keywords.each { |item| existing_project_keywords.push(item) }
+					else
+						abort("An error occured creating project keywords in #{__callee__}")
+					end
+					
+				end
+				
+				# Loop though the projects again and tag them with the newly created project keywords.
+				# This is faster than making individual requests
+				puts "[INFO] Batch #{num} of #{iterations} => Tagging Projects."
+				projects.each do |project|
+					
+					field_data      = nil
+					field_obj_found = nil
+
+					# Look for the field and check if the field has any data in it
+					if builtin
+						field_name = source_field_found.name.downcase.gsub(' ','_')
+						#puts "Field name: #{field_name}"
+						field_data = project.instance_variable_get("@#{field_name}")
+						field_data = field_data.strip
+						#puts "Field value: #{field_data}"
+						next if field_data.nil? || field_data == ''
+					else
+						field_obj_found = project.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
+						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first.strip == ''
+							next
+						end
+						field_data = field_obj_found.values.first
+					end
+
+					# Remove empty strings
+					keywords = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
+
+					# Loop through the keywords and tag the file
+					keywords.each do |value|
+						# Trim leading & trailing whitespace
+						value = value.strip
+						# Find the string in existing keywords
+						proj_keyword_obj = existing_keywords.find do |item| 
+							begin
+								item.name.downcase == value.downcase
+							rescue
+								item.name == value
+							end
+
+						end
+
+						if keyword_obj
+							# check if current file is already tagged
+							already_tagged = project.keywords.find { |item| item.to_s == keyword_obj.id.to_s }
+							# Tag the project
+							puts "Tagging project #{project.code.inspect} with => #{value.inspect}."
+							project.keywords.push(nested_proj_keyword.new(proj_keyword_obj.id)) unless already_tagged
+						else
+							abort("Fatal Error: Unable to retrieve previously created keyword! => #{value}")
+						end
+						
+					end
+						
+				end
+
+				# Update projects
+				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform project updates."
+				updated_obj_count = run_smart_update(projects,total_projects_updated)
+
+				total_projects_updated += updated_obj_count
+
+				offset += limit
+
+			end            
+
+		end
+
 		def move_project_keywords_to_field(target_project_keyword_category=nil,
                                            project_field=nil,
                                            field_separator=nil,
@@ -3385,6 +3698,8 @@ module OpenAsset
 
 			project_keywords = get_project_keywords(op)
 
+			op.clear
+
 			op.add_option('limit','0')
             op.add_option('displayFields','id')
 
@@ -3442,8 +3757,7 @@ module OpenAsset
 
 					if index # There's data in the field
 
-						if project.fields[index].values.first != "0" &&
-					       project.fields[index].values.first != '' && insert_mode == 'append'
+						if index && insert_mode == 'append'
 
 							if project_field_found.field_display_type.to_s == 'singleLine'
 
@@ -3506,15 +3820,14 @@ module OpenAsset
 
 			builtin                     = nil
 			file_ids                    = nil
-			results                     = nil
 			keywords                    = []
 			files                       = []
 			total_file_count            = 0
 			total_files_updated         = 0  # For better readability
 			offset                      = 0
 			iterations                  = 0
-			limit                       = batch_size.to_i.abs
-			insert_mode                 = insert_mode.downcase
+			limit                       = batch_size.to_i.abs 
+			insert_mode                 = insert_mode.downcase 
 			nested_field                = Struct.new(:id, :values)
 			op                          = RestOptions.new
 
@@ -3533,7 +3846,7 @@ module OpenAsset
 			file_ids = album_found.files.map { |obj| obj.id.to_s }
 			
 			# Get keywords
-			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_category_found.inspect}."
+			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_category_found.name.inspect}."
 			op.add_option('limit','0')
 			op.add_option('keyword_category_id',"#{file_keyword_category_found.id}")
 
@@ -3580,6 +3893,8 @@ module OpenAsset
 				# Loop through files, extract keywords and insert them into the field
 				files.each do |file|
 
+					next if file.keywords.empty?
+
 					field_data_to_insert = []
 
 					file.keywords.each do |keyword|
@@ -3603,6 +3918,9 @@ module OpenAsset
 							end
 
 							file.instance_variable_set("@#{field_name}",data)
+
+							puts "[INFO] Appending #{data.inspect} into #{target_field_found.name.inspect} field" +
+							"\n\tFor file => #{file.filename.inspect}."
 
 						elsif insert_mode == 'overwrite'
 
@@ -3661,11 +3979,378 @@ module OpenAsset
 			
 		end
 
-		def move_file_keywords_to_field_by_project()
+		def move_file_keywords_to_field_by_project(project,
+												   keyword_category,
+												   target_field,
+												   field_separator,
+												   insert_mode=nil,
+												   batch_size=200)
+			# Validate input
+			args = process_field_to_keyword_move_args('projects',
+													  project,
+													  keyword_category,
+													  target_field,
+													  field_separator,
+													  batch_size)
+
+			project_found               = args.container
+			file_keyword_category_found = args.target_keyword_category
+			target_field_found          = args.source_field
+
+			builtin                     = nil
+			file_ids                    = nil
+			keywords                    = []
+			files                       = []
+			total_file_count            = 0
+			total_files_updated         = 0  # For better readability
+			offset                      = 0
+			iterations                  = 0
+			limit                       = batch_size.to_i.abs
+			insert_mode                 = insert_mode.downcase
+			nested_field                = Struct.new(:id, :values)
+			op                          = RestOptions.new
+
+			# Valiate insert mode
+			unless insert_mode == 'append' || insert_mode == 'overwrite'
+				error = "Invalid insert mode value for fifth argument in #{__callee__}" +
+						"\n\tExpected \"append\" or \"overwrite\"" +
+						"\n\tInstead got => #{insert_mode.inspect}."
+				abort(error)
+			end
+
+			# Check the source_field field type
+			builtin = (target_field_found.built_in == '1') ? true : false
+
+			# Get keywords
+			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_category_found.name.inspect}."
+			op.add_option('limit','0')
+			op.add_option('keyword_category_id',"#{file_keyword_category_found.id}")
+
+			keywords = get_keywords(op)
+
+			if keywords.empty?
+				error = "No keywords found in keyword category => #{file_keyword_category_found.name.inspect} " +
+				        "with id #{file_keyword_category_found.id.inspect}"
+				abort(error)
+			end
+
+			op.clear
+			
+			# Get file ids
+			puts "[INFO] Retrieving file ids in project => #{project_found.name.inspect}."
+			op.add_option('limit','0')
+			op.add_option('displayFields','id')
+			op.add_option('project_id',"#{project_found.id}") # Returns files in specified project
+
+			files = get_files(op)
+
+			op.clear
+
+			if files.empty?
+				abort("Project #{project_found.name.inspect} with id #{project_found.id.inspect} is empty.")
+			end
+
+			# Extract file ids
+			file_ids = files.map { |obj| obj.id.to_s }
+
+			# Prep iterations loop
+			total_file_count = file_ids.length
+
+			puts "[INFO] Calculating batch size."
+			if total_file_count % batch_size == 0
+				iterations = total_file_count / batch_size
+			else
+				iterations = total_file_count / batch_size + 1
+			end
+
+			iterations.times do |num|
+
+				num += 1
+
+				start_index = offset
+				end_index   = limit
+				ids         = file_ids[start_index...end_index].join(',')
+
+				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
+				op.add_option('limit','0')
+				op.add_option('id',ids)
+
+				# Get current batch of files
+				files = get_files(op)
+
+				# Move the file keywords to specified field
+				files.each do |file|
+					
+					next if file.keywords.empty?
+
+					field_data_to_insert = []
+					
+					file.keywords.each do |keyword|
+
+						field_data_to_insert.push(keyword.name.strip)
+
+					end
+
+					if builtin # Builtin field
+
+						if insert_mode == 'append'
+
+							field_name = target_field_found.name.downcase.gsub(' ','_')
+							#puts "Field name: #{field_name}"
+							data = file.instance_variable_get("#{field_name}")
+
+							if data.nil? || data.to_s.strip == ''
+								data = field_data_to_insert.join(field_separator)
+							else
+								data = data.to_s.strip + field_separator + field_data_to_insert.join(field_separator)
+							end
+
+							file.instance_variable_set("@#{field_name}",data)
+
+							puts "[INFO] Appending #{data.inspect} into #{target_field_found.name.inspect} field" +
+							"\n\tFor file => #{file.filename.inspect}."
+
+						elsif insert_mode == 'overwrite'
+
+							field_name = target_field_found.name.downcase.gsub(' ','_')
+							#puts "Field name: #{field_name}"
+							data = field_data_to_insert.join(field_separator)
+
+							file.instance_variable_set("@#{field_name}",data)
+
+							puts "[INFO] Inserting #{data.inspect} into #{target_field_found.name.inspect} field" +
+									"\n\tFor file => #{file.filename.inspect}."
+						end
+
+					else   # Custom field
+	
+						# Check if the field has data in it
+						field_index = file.fields.find_index { |obj| obj.id.to_s == target_field_found.id.to_s }
+
+						if field_index && insert_mode == 'append' # Add to existing data
+
+							data = file.fields[field_index].value
+
+							if data.nil? || data.to_s.strip == ''
+								data = field_data_to_insert.join(field_separator)
+								file.fields[field_index].value = data
+							else
+								data = data.to_s + field_separator + field_data_to_insert.join(field_separator)
+							end
+
+						elsif field_index && insert_mode == 'overwrite' # Overwrite existing data
+
+							data = field_data_to_insert.join(field_separator)
+							file.fields[field_index].value = data
+
+						else # No Data in field
+
+							data = field_data_to_insert.join(field_separator)
+							nested_field_obj = nested_field.new(target_field_found.id, [data])
+							file.fields.push(nested_field_obj)
+
+						end
+						
+					end
+						
+				end
+
+				# Perform file update
+				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
+				updated_obj_count = run_smart_update(files,total_files_updated)
+
+				total_files_updated += updated_obj_count
+
+				offset += limit
+			end
 
 		end
 
-		def move_file_keywords_to_field_by_category()
+		def move_file_keywords_to_field_by_category(category,
+													keyword_category,
+													target_field,
+													field_separator,
+													insert_mode=nil,
+													batch_size=200)
+
+			# Validate input
+			args = process_field_to_keyword_move_args('categories',
+													  category,
+													  keyword_category,
+													  target_field,
+													  field_separator,
+													  batch_size)
+
+			category_found              = args.container
+			file_keyword_category_found = args.target_keyword_category
+			target_field_found          = args.source_field
+
+			builtin                     = nil
+			file_ids                    = nil
+			keywords                    = []
+			files                       = []
+			total_file_count            = 0
+			total_files_updated         = 0  # For better readability
+			offset                      = 0
+			iterations                  = 0
+			limit                       = batch_size.to_i.abs
+			insert_mode                 = insert_mode.downcase
+			nested_field                = Struct.new(:id, :values)
+			op                          = RestOptions.new
+
+			# Valiate insert mode
+			unless insert_mode == 'append' || insert_mode == 'overwrite'
+				error = "Invalid insert mode value for fifth argument in #{__callee__}" +
+						"\n\tExpected \"append\" or \"overwrite\"" +
+						"\n\tInstead got => #{insert_mode.inspect}."
+				abort(error)
+			end
+
+			# Check the source_field field type
+			builtin = (target_field_found.built_in == '1') ? true : false
+
+			# Get keywords
+			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_category_found.name.inspect}."
+			op.add_option('limit','0')
+			op.add_option('keyword_category_id',"#{file_keyword_category_found.id}")
+
+			keywords = get_keywords(op)
+
+			if keywords.empty?
+				error = "No keywords found in keyword category => #{file_keyword_category_found.name.inspect} " +
+				        "with id #{file_keyword_category_found.id.inspect}"
+				abort(error)
+			end
+
+			op.clear
+			
+			# Get file ids
+			puts "[INFO] Retrieving file ids in project => #{project_found.name.inspect}."
+			op.add_option('limit','0')
+			op.add_option('displayFields','id')
+			op.add_option('category_id',"#{category_found.id}") # Returns files in specified project
+
+			files = get_files(op)
+
+			op.clear
+
+			if files.empty?
+				abort("Category #{category_found.name.inspect} with id #{category_found.id.inspect} is empty.")
+			end
+
+			# Extract file ids
+			file_ids = files.map { |obj| obj.id.to_s }
+
+			# Prep iterations loop
+			total_file_count = file_ids.length
+
+			puts "[INFO] Calculating batch size."
+			if total_file_count % batch_size == 0
+				iterations = total_file_count / batch_size
+			else
+				iterations = total_file_count / batch_size + 1
+			end
+
+			iterations.times do |num|
+
+				num += 1
+
+				start_index = offset
+				end_index   = limit
+				ids         = file_ids[start_index...end_index].join(',')
+
+				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
+				op.add_option('limit','0')
+				op.add_option('id',ids)
+
+				# Get current batch of files
+				files = get_files(op)
+
+				# Move the file keywords to specified field
+				files.each do |file|
+					
+					next if file.keywords.empty?
+
+					field_data_to_insert = []
+					
+					file.keywords.each do |keyword|
+
+						field_data_to_insert.push(keyword.name.strip)
+
+					end
+
+					if builtin # Builtin field
+
+						if insert_mode == 'append'
+
+							field_name = target_field_found.name.downcase.gsub(' ','_')
+							#puts "Field name: #{field_name}"
+							data = file.instance_variable_get("#{field_name}")
+
+							if data.nil? || data.to_s.strip == ''
+								data = field_data_to_insert.join(field_separator)
+							else
+								data = data.to_s.strip + field_separator + field_data_to_insert.join(field_separator)
+							end
+
+							file.instance_variable_set("@#{field_name}",data)
+
+							puts "[INFO] Appending #{data.inspect} into #{target_field_found.name.inspect} field" +
+							"\n\tFor file => #{file.filename.inspect}."
+
+						elsif insert_mode == 'overwrite'
+
+							field_name = target_field_found.name.downcase.gsub(' ','_')
+							#puts "Field name: #{field_name}"
+							data = field_data_to_insert.join(field_separator)
+
+							file.instance_variable_set("@#{field_name}",data)
+
+							puts "[INFO] Inserting #{data.inspect} into #{target_field_found.name.inspect} field" +
+									"\n\tFor file => #{file.filename.inspect}."
+						end
+
+					else   # Custom field
+	
+						# Check if the field has data in it
+						field_index = file.fields.find_index { |obj| obj.id.to_s == target_field_found.id.to_s }
+
+						if field_index && insert_mode == 'append' # Add to existing data
+
+							data = file.fields[field_index].value
+
+							if data.nil? || data.to_s.strip == ''
+								data = field_data_to_insert.join(field_separator)
+								file.fields[field_index].value = data
+							else
+								data = data.to_s + field_separator + field_data_to_insert.join(field_separator)
+							end
+
+						elsif field_index && insert_mode == 'overwrite' # Overwrite existing data
+
+							data = field_data_to_insert.join(field_separator)
+							file.fields[field_index].value = data
+
+						else # No Data in field
+
+							data = field_data_to_insert.join(field_separator)
+							nested_field_obj = nested_field.new(target_field_found.id, [data])
+							file.fields.push(nested_field_obj)
+
+						end
+						
+					end
+						
+				end
+
+				# Perform file update
+				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
+				updated_obj_count = run_smart_update(files,total_files_updated)
+
+				total_files_updated += updated_obj_count
+
+				offset += limit
+			end
 			
 		end
 	end

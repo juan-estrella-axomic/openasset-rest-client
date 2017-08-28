@@ -79,7 +79,6 @@ class Authenticator
 		get_credentials()
 		uri = URI.parse(@token_endpoint)
 		token_creation_data = '{"name" : "ruby-integration"}'
-		token_hash = Hash.new
 
 		response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
 			request = Net::HTTP::Post.new(uri.request_uri,'Content-Type' => 'application/json') 
@@ -96,7 +95,7 @@ class Authenticator
 		elsif response.kind_of? Net::HTTPRedirection 
 			location = response['location']
 			warn "Warning: Redirected to #{location}"
-			return false
+			#return false
 		elsif response.kind_of? Net::HTTPUnauthorized 
 			warn "Error: #{response.message}: invalid credentials."
 			exit
