@@ -12,7 +12,7 @@ class ProjectKeywords
 					 "\n\tInstead got #{args.inspect} => Creating empty ProjectKeywords object."
 			else
 				#set grab the agruments and set up the json object
-				json_obj = {"name" => args[0].to_s, "project_category_id" => args[1].to_s}
+				json_obj = {"name" => args[0].to_s, "project_keyword_category_id" => args[1].to_s}
 			end
 		else
 			json_obj = Validator::validate_argument(args.first,'ProjectKeywords')
