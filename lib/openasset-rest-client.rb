@@ -294,7 +294,7 @@ module OpenAsset
 		# @!visibility private
 		def run_smart_update(payload,total_objects_updated)
 
-			scope    = payload.first.class.downcase
+			scope    = payload.first.class.to_s.downcase
 			res      = nil
 			attempts = 0
 
@@ -318,7 +318,7 @@ module OpenAsset
 					#puts "before update file"
 					if scope == 'files'
 						res = update_files(payload,false)
-				    elsif scope == 'Projects'
+				    elsif scope == 'projects'
 				    	res = update_projects(payload,false)
 				    else
 				    	abort("Error: Invalid update scope. Expected Files or Projects in payload.")
@@ -2130,9 +2130,9 @@ module OpenAsset
 				#name of the field object to access the corresponding built-in field attribute
 				#inside the Files object.
 				if current_field.built_in.to_s == "1"  #For built in fields
-					files_endpoint =  URI.parse(@uri + '/Files') #change endpoint bc field is builtin
+					files_endpoint =  URI.parse(@uri + '/Files') #change endpoint bc field is built_in
 					field_name = current_field.name.downcase.gsub(' ','_') #convert the current field's name
-																		   #into the associated files' builtin attribute name
+																		   #into the associated files' built_in attribute name
 					
 					#access built-in field
 					unless current_file.instance_variable_defined?('@'+field_name)
@@ -2339,7 +2339,7 @@ module OpenAsset
 				#inside the Projects object.
 				
 				if current_field.built_in.to_s == "1"  #For built in fields
-					projects_endpoint =  URI.parse(@uri + '/Projects') #change endpoint bc field is builtin
+					projects_endpoint =  URI.parse(@uri + '/Projects') #change endpoint bc field is built_in
 					field_name = current_field.name.downcase.gsub(' ','_')
 					
 					unless current_project.instance_variable_defined?('@'+field_name)
@@ -2432,7 +2432,7 @@ module OpenAsset
 			source_field_found          = args.source_field
 
 			total_file_count            = nil
-			builtin                     = nil
+			built_in                     = nil
 			file_ids                    = nil
 			file_category_ids           = nil
 			keyword_file_category_ids   = nil
@@ -2453,7 +2453,7 @@ module OpenAsset
 			total_file_count = album_found.files.length
 			
 			# Check the source_field field type
-			builtin = (source_field_found.built_in == '1') ? true : false
+			built_in = (source_field_found.built_in == '1') ? true : false
 
 			# Get all the categories associated with the files in the project then using the target_keyword_category,  
 			# create the file keyword category in all the system categories that don't have them
@@ -2554,7 +2554,7 @@ module OpenAsset
 					field_obj_found = nil
 
 					# Check if the field has any data in it
-					if builtin
+					if built_in
 						field_name = source_field_found.name.downcase.gsub(' ','_')
 						#puts "Field name 1 : #{field_name}"
 						field_data = file.instance_variable_get("@#{field_name}")
@@ -2634,7 +2634,7 @@ module OpenAsset
 					field_data = nil
 
 					# Look for the field and check if the field has any data in it
-					if builtin
+					if built_in
 						field_name = source_field_found.name.downcase.gsub(' ','_')
 						field_data = file.instance_variable_get("@#{field_name}")
 						field_data = field_data.strip
@@ -2735,7 +2735,7 @@ module OpenAsset
 			file_keyword_category_found = args.target_keyword_category
 			source_field_found          = args.source_field
 
-            builtin                     = nil
+            built_in                     = nil
             total_file_count            = nil
             existing_keywords           = nil
             batch_size                  = batch_size.to_i.abs
@@ -2764,7 +2764,7 @@ module OpenAsset
 			op.clear	
 
 			# Check field type
-			builtin = (source_field_found.built_in == '1') ? true : false
+			built_in = (source_field_found.built_in == '1') ? true : false
 
 			# Get all file keywords in the specified keyword category
 			op.add_option('keyword_category_id', file_keyword_category_found.id)
@@ -2808,7 +2808,7 @@ module OpenAsset
 					field_data = nil
 				
 					# Look for the field and check if it has any data in it
-					if builtin
+					if built_in
 						field_name = source_field_found.name.downcase.gsub(' ','_')
 						field_data = file.instance_variable_get("@#{field_name}")
 						field_data = field_data.strip
@@ -2873,7 +2873,7 @@ module OpenAsset
 					field_data = nil
 
 					#9. Look for the field and check if the field has any data in it
-					if builtin
+					if built_in
 						field_name = source_field_found.name.downcase.gsub(' ','_')
 						field_data = file.instance_variable_get("@#{field_name}")
 						field_data = field_data.strip
@@ -2960,7 +2960,7 @@ module OpenAsset
 			file_keyword_category_found = args.target_keyword_category
 			source_field_found          = args.source_field
 
-			builtin                     = nil
+			built_in                     = nil
 			file_category_ids           = nil
 			file_ids                    = nil
 			results                     = nil
@@ -2978,7 +2978,7 @@ module OpenAsset
 			keyword_file_category_ids   = ''
 			
 			# Check the source_field field type
-			builtin = (source_field_found.built_in == '1') ? true : false
+			built_in = (source_field_found.built_in == '1') ? true : false
 			
 			# Get all the categories associated with the files in the project then using the target_keyword_category,  
 			# create the file keyword category in all the system categories that don't have them
@@ -3082,7 +3082,7 @@ module OpenAsset
 					field_obj_found = nil
 
 					# Check if the field has any data in it
-					if builtin
+					if built_in
 						field_name = source_field_found.name.downcase.gsub(' ','_')
 						#puts "Field name 1 : #{field_name}"
 						field_data = file.instance_variable_get("@#{field_name}")
@@ -3169,7 +3169,7 @@ module OpenAsset
 					field_obj_found = nil
 
 					# Look for the field and check if the field has any data in it
-					if builtin
+					if built_in
 						field_name = source_field_found.name.downcase.gsub(' ','_')
 						#puts "Field name: #{field_name}"
 						field_data = file.instance_variable_get("@#{field_name}")
@@ -3249,8 +3249,8 @@ module OpenAsset
 		#
 		# @example rest_client.move_project_field_data_to_keywords(ProjectKeywordCategories object,Fields object,';',250)
 		#          rest_client.move_project_field_data_to_keywords("project keyword category name","project field name",';',250)
-		#          rest_client.move_project_field_data_to_keywords("9","1","7",';',250)
-		#          rest_client.move_project_field_data_to_keywords(9,1,7,';',250)
+		#          rest_client.move_project_field_data_to_keywords("9","17",';',250)
+		#          rest_client.move_project_field_data_to_keywords(9,17,';',250)
 		def move_project_field_data_to_keywords(target_project_keyword_category=nil,
 	                                            project_field=nil,
 	                                            field_separator=nil,
@@ -3258,6 +3258,7 @@ module OpenAsset
 
 			project_ids                    = nil
 			project_field_found            = nil
+			built_in                       = nil
 			project_keyword_category_found = nil
 			projects                       = []
 			existing_project_keywords      = []
@@ -3270,10 +3271,6 @@ module OpenAsset
 			nested_proj_keyword            = Struct.new(:id)
 			op                             = RestOptions.new
 
-			ALLOWED_FIELD_TYPES = %w[ singleLine multiLine ]
-
-			
-
 			# Validate input:
 			
 			# Retrieve project keyword category
@@ -3283,8 +3280,8 @@ module OpenAsset
 			op.add_option('id',target_project_keyword_category.id)
 			project_keyword_category_found = get_project_keyword_categories(op).first
 
-			elsif target_project_keyword_category.is_a?(String) &&  # Id
-				!target_project_keyword_category.to_i.zero?
+			elsif (target_project_keyword_category.is_a?(String) && target_project_keyword_category.to_i > 0) ||  # Id
+				  (target_project_keyword_category.is_a?(Integer) && !target_project_keyword_category.zero?)
 
 				op.add_option('id',target_project_keyword_category)
 				project_keyword_category_found = get_project_keyword_categories(op).first
@@ -3292,15 +3289,17 @@ module OpenAsset
 			elsif target_project_keyword_category.is_a?(String) # Name
 
 				op.add_option('name',target_project_keyword_category)
+				op.add_option('textMatching','exact')
 				project_keyword_category_found = get_project_keyword_categories(op)
 
 				unless project_keyword_category_found
-					abort("Error: Project keyword category with name #{project_field.inspect} not found in OpenAsset.")
+					abort("Error: Project keyword category with name #{target_project_keyword_category.inspect} not found in OpenAsset.")
 				end
 
 				if project_keyword_category_found.length > 1
-					error = "Error: Multiple Project keyword categories found with name #{project_field.inspect}." +
+					error = "Error: Multiple Project keyword categories found with search query #{op.get_options.inspect}." +
 							" Specify an id instead."
+							puts project_keyword_category_found
 					abort(error)
 				else
 					project_keyword_category_found = project_keyword_category_found.first
@@ -3309,8 +3308,8 @@ module OpenAsset
 			else
 				error = "Error: Expected one of the following: " +
 						"\n\t1. Valid project keyword category object." +
-						"\n\t2. Project keyword category id."
-						"\n\t3. Project keyword category name."
+						"\n\t2. Project keyword category id." +
+						"\n\t3. Project keyword category name." +
 						"\nfor first argument in #{__callee__} method." +
 						"\nInstead got #{target_project_keyword_category.inspect}."
 				abort(error)
@@ -3344,6 +3343,7 @@ module OpenAsset
 			elsif project_field.is_a?(String) # Name
 
 				op.add_option('name',project_field)
+				op.add_option('textMatching','exact')
 				project_field_found = get_fields(op)
 
 				unless project_field_found
@@ -3369,16 +3369,14 @@ module OpenAsset
 			# Make sure it's a project field
 			unless project_field_found.field_type == 'project'
 				error = "Error: Specified field #{project_field_found.name.inspect} with id " +
-						"#{project_field_found.id.inspect} is not an image field"
+						"#{project_field_found.id.inspect} is not a project field"
 				abort(error)
 			end
 
+			built_in = (project_field_found.built_in == '1') ? true : false 
+
 			if field_separator.nil?
 				abort("Error: Must specify field separator.")
-			end
-
-			unless ['append','overwrite'].include?(insert_mode.to_s)
-				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. Instead got #{insert_mode.inspect}")
 			end
 
 			abort('Invalid batch size. Specify a positive numeric value or use default value of 100') if batch_size.zero?
@@ -3391,7 +3389,7 @@ module OpenAsset
 			op.add_option('project_keyword_category_id',project_keyword_category_found.id)
 
 			existing_project_keywords = get_project_keywords(op)
-
+			
 			op.clear
 
 			op.add_option('limit','0')
@@ -3441,14 +3439,14 @@ module OpenAsset
 					field_obj_found = nil
 
 					# Check if the field has any data in it
-					if builtin
-						field_name = source_field_found.name.downcase.gsub(' ','_')
+					if built_in
+						field_name = project_field_found.name.downcase.gsub(' ','_')
 						#puts "Field name 1 : #{field_name}"
 						field_data = project.instance_variable_get("@#{field_name}")
 						field_data = field_data.strip
 						next if field_data.nil? || field_data == ''
 					else
-						field_obj_found = project.fields.find { |f| f.id == source_field_found.id }
+						field_obj_found = project.fields.find { |f| f.id == project_field_found.id }
 						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first.strip == ''
 							next
 						end
@@ -3459,9 +3457,10 @@ module OpenAsset
 					project_keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
 
 					project_keywords_to_append.each do |val|
-
+						
+						val = val.strip
 						# Check if the value exists in existing keywords
-						keyword_index = existing_keywords.find_index do |k|
+						keyword = existing_project_keywords.find do |k|
 
 							begin
 								# In case we get an invalid input string like "\xA9" => copyright binary representation
@@ -3474,9 +3473,9 @@ module OpenAsset
 
 						end
 
-						unless keyword_index
+						unless keyword
 							# Insert into keywords_to_create array
-							keywords_to_create.push(nested_proj_keyword.new(obj.id))
+							keywords_to_create.push(ProjectKeywords.new(val,project_keyword_category_found.id))
 						end
 						
 					end
@@ -3485,19 +3484,17 @@ module OpenAsset
 				# Remove entries with the same name then create new keywords
 				unless keywords_to_create.empty?
 
-					payload = keywords_to_create.uniq { |item| [item.name }
+					payload = keywords_to_create.uniq { |item| item.name }
 					
 					# Create the project keywords for the current batch and set the generate objects flag to true.
 					puts "[INFO] Batch #{num} of #{iterations} => Creating Project Keywords."
-					new_keywords = create_keywords(payload, true)
+					new_keywords = create_project_keywords(payload, true)
 
 					# Append the returned project keyword objects to the existing keywords array
-					if new_keywords.is_a?(Array) && !new_keywords.empty? 	
+					if new_keywords	
 						new_keywords.each { |item| existing_project_keywords.push(item) }
-					else
-						abort("An error occured creating project keywords in #{__callee__}")
 					end
-					
+				
 				end
 				
 				# Loop though the projects again and tag them with the newly created project keywords.
@@ -3509,15 +3506,15 @@ module OpenAsset
 					field_obj_found = nil
 
 					# Look for the field and check if the field has any data in it
-					if builtin
-						field_name = source_field_found.name.downcase.gsub(' ','_')
+					if built_in
+						field_name = project_field_found.name.downcase.gsub(' ','_')
 						#puts "Field name: #{field_name}"
 						field_data = project.instance_variable_get("@#{field_name}")
 						field_data = field_data.strip
 						#puts "Field value: #{field_data}"
 						next if field_data.nil? || field_data == ''
 					else
-						field_obj_found = project.fields.find { |f| f.id.to_s == source_field_found.id.to_s }
+						field_obj_found = project.fields.find { |f| f.id.to_s == project_field_found.id.to_s }
 						if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first.strip == ''
 							next
 						end
@@ -3532,7 +3529,7 @@ module OpenAsset
 						# Trim leading & trailing whitespace
 						value = value.strip
 						# Find the string in existing keywords
-						proj_keyword_obj = existing_keywords.find do |item| 
+						proj_keyword_obj = existing_project_keywords.find do |item| 
 							begin
 								item.name.downcase == value.downcase
 							rescue
@@ -3541,12 +3538,12 @@ module OpenAsset
 
 						end
 
-						if keyword_obj
+						if proj_keyword_obj
 							# check if current file is already tagged
-							already_tagged = project.keywords.find { |item| item.to_s == keyword_obj.id.to_s }
+							already_tagged = project.project_keywords.find { |item| item.id.to_s == proj_keyword_obj.id.to_s }
 							# Tag the project
 							puts "Tagging project #{project.code.inspect} with => #{value.inspect}."
-							project.keywords.push(nested_proj_keyword.new(proj_keyword_obj.id)) unless already_tagged
+							project.project_keywords.push(nested_proj_keyword.new(proj_keyword_obj.id)) unless already_tagged
 						else
 							abort("Fatal Error: Unable to retrieve previously created keyword! => #{value}")
 						end
@@ -3603,7 +3600,7 @@ module OpenAsset
 			limit                          = batch_size
 			nested_field                   = Struct.new(:id,:values)
 
-			ALLOWED_FIELD_TYPES = %w[ singleLine multiLine ]
+			allowed_field_types = %w[ singleLine multiLine ]
 
 		    op = RestOptions.new
 
@@ -3632,7 +3629,7 @@ module OpenAsset
 	        	end
 
 	        	if project_keyword_category_found.length > 1
-	        		error = "Error: Multiple Project keyword categories found with name #{project_field.inspect}." +
+	        		error = "Error: Multiple Project keyword categories found with search query #{op.get_options.inspect}." +
 	        		        " Specify an id instead."
 	        		abort(error)
 	        	else
@@ -3707,7 +3704,7 @@ module OpenAsset
 		    end
 
 		    # Make sure it's an allowed field type
-		    unless ALLOWED_FIELD_TYPES.include?(project_field_found.field_display_type.to_s)
+		    unless allowed_field_types.include?(project_field_found.field_display_type.to_s)
 		    	error = "Error: Only singleLine and multiLine fields permitted for this operation."
 		    	abort(error)
 		    end
@@ -3868,7 +3865,7 @@ module OpenAsset
 			file_keyword_category_found = args.target_keyword_category
 			target_field_found          = args.source_field
 
-			builtin                     = nil
+			built_in                     = nil
 			file_ids                    = nil
 			keywords                    = []
 			files                       = []
@@ -3890,7 +3887,7 @@ module OpenAsset
 			end
 			
 			# Check the source_field field type
-			builtin = (target_field_found.built_in == '1') ? true : false
+			built_in = (target_field_found.built_in == '1') ? true : false
 			
 			# Get file ids
 			file_ids = album_found.files.map { |obj| obj.id.to_s }
@@ -3953,7 +3950,7 @@ module OpenAsset
 
 					end
 
-					if builtin # Builtin field
+					if built_in # Builtin field
 
 						if insert_mode == 'append'
 
@@ -4065,7 +4062,7 @@ module OpenAsset
 			file_keyword_category_found = args.target_keyword_category
 			target_field_found          = args.source_field
 
-			builtin                     = nil
+			built_in                     = nil
 			file_ids                    = nil
 			keywords                    = []
 			files                       = []
@@ -4087,7 +4084,7 @@ module OpenAsset
 			end
 
 			# Check the source_field field type
-			builtin = (target_field_found.built_in == '1') ? true : false
+			built_in = (target_field_found.built_in == '1') ? true : false
 
 			# Get keywords
 			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_category_found.name.inspect}."
@@ -4159,7 +4156,7 @@ module OpenAsset
 
 					end
 
-					if builtin # Builtin field
+					if built_in # Builtin field
 
 						if insert_mode == 'append'
 
@@ -4271,7 +4268,7 @@ module OpenAsset
 			file_keyword_category_found = args.target_keyword_category
 			target_field_found          = args.source_field
 
-			builtin                     = nil
+			built_in                     = nil
 			file_ids                    = nil
 			keywords                    = []
 			files                       = []
@@ -4293,7 +4290,7 @@ module OpenAsset
 			end
 
 			# Check the source_field field type
-			builtin = (target_field_found.built_in == '1') ? true : false
+			built_in = (target_field_found.built_in == '1') ? true : false
 
 			# Get keywords
 			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_category_found.name.inspect}."
@@ -4365,7 +4362,7 @@ module OpenAsset
 
 					end
 
-					if builtin # Builtin field
+					if built_in # Builtin field
 
 						if insert_mode == 'append'
 
