@@ -2417,7 +2417,7 @@ module OpenAsset
 			                                         target_keyword_category=nil,
 			                                         source_field=nil,
 			                                         field_separator=nil,
-			                                         batch_size=100)
+			                                         batch_size=200)
 			
 			# Validate input:
 			args = process_field_to_keyword_move_args('albums',
@@ -2432,7 +2432,7 @@ module OpenAsset
 			source_field_found          = args.source_field
 
 			total_file_count            = nil
-			built_in                     = nil
+			built_in                    = nil
 			file_ids                    = nil
 			file_category_ids           = nil
 			keyword_file_category_ids   = nil
@@ -2721,7 +2721,7 @@ module OpenAsset
 			                                            target_keyword_category=nil,
 			                                            source_field=nil,
 			                                            field_separator=nil,
-			                                            batch_size=100)
+			                                            batch_size=200)
 		
 			# Validate input:
 			args = process_field_to_keyword_move_args('categories',
@@ -2947,7 +2947,7 @@ module OpenAsset
 			                                           target_keyword_category=nil,
 			                                           source_field=nil,
 			                                           field_separator=nil,
-			                                           batch_size=100)
+			                                           batch_size=200)
 			# Validate input:
 			args = process_field_to_keyword_move_args('projects',
 													   project,
@@ -3254,7 +3254,7 @@ module OpenAsset
 		def move_project_field_data_to_keywords(target_project_keyword_category=nil,
 	                                            project_field=nil,
 	                                            field_separator=nil,
-	                                            batch_size=100)
+	                                            batch_size=200)
 
 			project_ids                    = nil
 			project_field_found            = nil
@@ -3585,7 +3585,7 @@ module OpenAsset
                                            target_project_field=nil,
                                            field_separator=nil,
                                            insert_mode=nil,
-                                           batch_size=100)
+                                           batch_size=200)
 
 			project_ids                    = nil
 			projects                       = nil
@@ -4091,23 +4091,46 @@ module OpenAsset
 					else   # Custom field
 	
 						# Check if the field has data in it
-						field_index = file.fields.find_index { |obj| obj.id.to_s == target_field_found.id.to_s }
+						index = file.fields.find { |obj| obj.id.to_s == target_field_found.id.to_s }
 
-						if field_index && insert_mode == 'append' # Add to existing data
+						if index 
+							
+							if insert_mode == 'append' # Add to existing data
 
-							data = file.fields[field_index].value
+								if NORMAL_FIELD_TYPES.include?(field.field_display_type)
 
-							if data.nil? || data.to_s.strip == ''
+									data = file.fields[field_index].value.first
+									
+									if data.nil? || data.to_s.strip == ''
+										data = field_data_to_insert.join(field_separator)
+										file.fields[index].value = [data]
+									else
+										data = data.to_s + field_separator + field_data_to_insert.join(field_separator)
+										file.fields[index].value = [data]
+									end		
+
+								elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
+
+									field_data_to_insert.each do |keyword|
+
+										file_add_field_data(file,target_field_found,keyword.name)
+
+									end
+
+								else
+
+									error = "Error: Operation not allowed with field display type " +
+											"#{target_field_found.field_display_type.inspect}."
+									abort(error)
+
+								end
+							# TO DO: COMPLETE FROM HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+							elsif insert_mode == 'overwrite' # Overwrite existing data
+
 								data = field_data_to_insert.join(field_separator)
-								file.fields[field_index].value = data
-							else
-								data = data.to_s + field_separator + field_data_to_insert.join(field_separator)
+								file.fields[field_index].value = [data]
+
 							end
-
-						elsif field_index && insert_mode == 'overwrite' # Overwrite existing data
-
-							data = field_data_to_insert.join(field_separator)
-							file.fields[field_index].value = data
 
 						else # No Data in field
 
