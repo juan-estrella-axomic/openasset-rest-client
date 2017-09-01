@@ -2081,7 +2081,7 @@ module OpenAsset
 				lookup_string_endpoint = URI.parse(@uri + "/Fields/#{current_field.id}/FieldLookupStrings")
 
 				#Grab all the available FieldLookupStrings for the specified Fields resource
-				field_lookup_strings = get(lookup_string_endpoint)
+				field_lookup_strings = get(lookup_string_endpoint,nil)
 
 				#check if the value in the third argument is currently an available option for the field
 				lookup_string_exists = field_lookup_strings.find { |item| item.value == value }
@@ -2091,7 +2091,7 @@ module OpenAsset
 				#when making a PUT request on the FILES resource you are currently working on
 				unless lookup_string_exists
 					data = {:value => current_value}
-					response = post(lookup_string_endpoint,data)
+					response = post(lookup_string_endpoint,data,false)
 					return unless response.kind_of? Net::HTTPSuccess
 				end
 
@@ -2282,7 +2282,7 @@ module OpenAsset
 				lookup_string_endpoint = URI.parse(@uri + "/Fields/#{current_field.id}/FieldLookupStrings")
 
 				#Grab all the available FieldLookupStrings for the specified Fields resource
-				field_lookup_strings = get(lookup_string_endpoint)
+				field_lookup_strings = get(lookup_string_endpoint,nil)
 
 				#check if the value in the third argument is currently an available option for the field
 				lookup_string_exists = field_lookup_strings.find { |item| item.value == value }
@@ -2292,7 +2292,7 @@ module OpenAsset
 				#when making a PUT request on the PROJECTS resource you are currently working on
 				unless lookup_string_exists
 					data = {:value => value}
-					response = post(lookup_string_endpoint,data)
+					response = post(lookup_string_endpoint,data,false)
 					return unless response.kind_of? Net::HTTPSuccess
 				end
 
@@ -3581,70 +3581,70 @@ module OpenAsset
 		#          rest_client.move_project_keywords_to_field("9","1","7",';','overwrite',250)
 		#          rest_client.move_project_keywords_to_field(9,1,7,';','append',250)
 		#          rest_client.move_project_keywords_to_field(9,1,7,';','overwrite',250)
-		def move_project_keywords_to_field(target_project_keyword_category=nil,
-                                           project_field=nil,
+		def move_project_keywords_to_field(source_project_keyword_category=nil,
+                                           target_project_field=nil,
                                            field_separator=nil,
-                                           insert_mode='append',
+                                           insert_mode=nil,
                                            batch_size=100)
 
-			batch_size                     = batch_size.to_i.abs
 			project_ids                    = nil
 			projects                       = nil
 			project_field_found            = nil
 			project_keyword_category_found = nil
 			project_keywords               = nil
+			project_keyword_ids            = ''
 			total_project_count            = 0
 			iterations                     = 0
 			offset                         = 0
 			total_projects_updated         = 0
+			batch_size                     = batch_size.to_i.abs
 			limit                          = batch_size
 			nested_field                   = Struct.new(:id,:values)
-
-			allowed_field_types = %w[ singleLine multiLine ]
-
-		    op = RestOptions.new
+			op                             = RestOptions.new
 
 			# Validate input:
 		    
 		    # Retrieve project keyword category
-		    if target_project_keyword_category.is_a?(ProjectKeywordCategories) &&  # Object
-		       !target_project_keyword_category.id.nil?
+		    if source_project_keyword_category.is_a?(ProjectKeywordCategories) &&  # Object
+				!source_project_keyword_category.id.nil?
+	
+				op.add_option('id',source_project_keyword_category.id)
+				project_keyword_category_found = get_project_keyword_categories(op).first
+	
+			elsif (source_project_keyword_category.is_a?(String) && source_project_keyword_category.to_i > 0) ||  # Id
+					(source_project_keyword_category.is_a?(Integer) && !source_project_keyword_category.zero?)
 
-		       op.add_option('id',target_project_keyword_category.id)
-		       project_keyword_category_found = get_project_keyword_categories(op).first
+				op.add_option('id',source_project_keyword_category)
+				project_keyword_category_found = get_project_keyword_categories(op).first
 
-		    elsif target_project_keyword_category.is_a?(String) &&  # Id
-		    	  !target_project_keyword_category.to_i.zero?
+			elsif source_project_keyword_category.is_a?(String) # Name
 
-		    	op.add_option('id',target_project_keyword_category)
-		        project_keyword_category_found = get_project_keyword_categories(op).first
+				op.add_option('name',source_project_keyword_category)
+				op.add_option('textMatching','exact')
+				project_keyword_category_found = get_project_keyword_categories(op)
 
-		    elsif target_project_keyword_category.is_a?(String) # Name
+				unless project_keyword_category_found
+					abort("Error: Project keyword category with name #{target_project_keyword_category.inspect} not found in OpenAsset.")
+				end
 
-		    	op.add_option('name',target_project_keyword_category)
-		        project_keyword_category_found = get_project_keyword_categories(op)
+				if project_keyword_category_found.length > 1
+					error = "Error: Multiple Project keyword categories found with search query #{op.get_options.inspect}." +
+							" Specify an id instead."
+							puts project_keyword_category_found
+					abort(error)
+				else
+					project_keyword_category_found = project_keyword_category_found.first
+				end
 
-		        unless project_keyword_category_found
-	        		abort("Error: Project keyword category with name #{project_field.inspect} not found in OpenAsset.")
-	        	end
-
-	        	if project_keyword_category_found.length > 1
-	        		error = "Error: Multiple Project keyword categories found with search query #{op.get_options.inspect}." +
-	        		        " Specify an id instead."
-	        		abort(error)
-	        	else
-	        		project_keyword_category_found = project_keyword_category_found.first
-	        	end
-
-		    else
-		    	error = "Error: Expected one of the following: " +
-				        "\n\t1. Valid project keyword category object." +
-				        "\n\t2. Project keyword category id."
-				        "\n\t3. Project keyword category name."
-				        "\nfor first argument in #{__callee__} method." +
-				        "\nInstead got #{target_project_keyword_category.inspect}."
+			else
+				error = "Error: Expected one of the following: " +
+						"\n\t1. Valid project keyword category object." +
+						"\n\t2. Project keyword category id." +
+						"\n\t3. Project keyword category name." +
+						"\nfor first argument in #{__callee__} method." +
+						"\nInstead got #{target_project_keyword_category.inspect}."
 				abort(error)
-		    end
+			end
 
 		    # Make sure it's a project keyword catgory
 		    unless project_keyword_category_found.is_a?(ProjectKeywordCategories)
@@ -3656,32 +3656,33 @@ module OpenAsset
 		    op.clear
 
 		    # Retrieve project field
-		    if project_field.is_a?(Fields) && !project_field.id.nil?# Object
+		    if target_project_field.is_a?(Fields) && !target_project_field.id.nil?# Object
 
-			    op.add_option('id',project_field.id)
+			    op.add_option('id',target_project_field.id)
 			    project_field_found = get_fields(op).first
 
 			    abort("Error: Field with id #{project_field.id.inspect} not found in OpenAsset.") unless project_field_found
 
-            elsif (project_field.is_a?(String) && !project_field.to_i.zero?) ||  # Id
-            	  (project_field.is_a?(Integer) && !project_field.zero?)
+            elsif (target_project_field.is_a?(String) && !target_project_field.to_i.zero?) ||  # Id
+            	  (target_project_field.is_a?(Integer) && !target_project_field.zero?)
 
-	        	op.add_option('id',project_field)
+	        	op.add_option('id',target_project_field)
 	        	project_field_found	= get_fields(op).first
 
-	        	abort("Error: Field with id #{project_field.inspect} not found in OpenAsset.") unless project_field_found
+	        	abort("Error: Field with id #{target_project_field.inspect} not found in OpenAsset.") unless project_field_found
 
-	        elsif project_field.is_a?(String) # Name
+	        elsif target_project_field.is_a?(String) # Name
 
-	        	op.add_option('name',project_field)
+				op.add_option('name',target_project_field)
+				op.add_option('textMatching','exact')
 	        	project_field_found = get_fields(op)
 
 	        	unless project_field_found
-	        		abort("Error: Field with name #{project_field.inspect} not found in OpenAsset.")
+	        		abort("Error: Field with name #{target_project_field.inspect} not found in OpenAsset.")
 	        	end
 
 	        	if project_field_found.length > 1
-	        		error = "Error: Multiple fields found with name #{project_field.inspect}. Specify an id instead."
+	        		error = "Error: Multiple fields found with name #{target_project_field.inspect}. Specify an id instead."
 	        		abort(error)
 	        	else
 	        		project_field_found = project_field_found.first
@@ -3692,32 +3693,58 @@ module OpenAsset
 				        "\n\t2. Field id."
 				        "\n\t3. Field name."
 				        "\nfor second argument in #{__callee__} method." +
-				        "\nInstead got #{project_field.inspect}."
+				        "\nInstead got #{target_project_field.inspect}."
 				abort(error)
 		    end
 
 		    # Make sure it's a project field
 		    unless project_field_found.field_type == 'project'
 		    	error = "Error: Specified field #{project_field_found.name.inspect} with id " +
-		    	        "#{project_field_found.id.inspect} is not an image field"
+		    	        "#{project_field_found.id.inspect} is not a project field"
 		    	abort(error)
-		    end
+			end
+			
+			if RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
+				answer = nil
+				error  = "\nInvalid input. Please enter \"yes\" or \"no\".\n> "
+				message = "Warning: You are inserting keywords into a restricted field type. " +
+					      "\n\t Project keywords are sorted in alphabetical order. " +
+					      "\n\t All project keywords will be created as options but only the first one will be displayed in the field." +
+						  "\nContinue? (Yes/no)\n> "
+
+				print message
+
+				while answer != 'yes' && answer != 'no'
+
+					print error unless answer.nil?
+
+					answer = gets.chomp.to_s.downcase
+
+					abort("You entered #{answer.inspect}. Exiting.\n\n") if answer.downcase == 'no' || answer == 'n'
+
+					break if answer == 'yes' || answer == 'y'
+
+				end		  
+			
+			end
+
 
 		    # Make sure it's an allowed field type
-		    unless allowed_field_types.include?(project_field_found.field_display_type.to_s)
-		    	error = "Error: Only singleLine and multiLine fields permitted for this operation."
-		    	abort(error)
-		    end
+		    #unless allowed_field_types.include?(project_field_found.field_display_type.to_s)
+		    #	error = "Error: Only singleLine and multiLine fields permitted for this operation."
+		    #	abort(error)
+		    #end
 
 		    if field_separator.nil?
 		    	abort("Error: Must specify field separator.")
 		    end
 
 		    unless ['append','overwrite'].include?(insert_mode.to_s)
-		    	abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. Instead got #{overwrite.inspect}")
+				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
+				      "Instead got #{insert_mode.inspect}")
 		    end
 
-		    abort('Invalid batch size. Specify a positive numeric value or use default value of 100') unless !batch_size.zero?
+		    abort('Invalid batch size. Specify a positive numeric value or use default value of 100') if batch_size.zero?
 
 		    op.clear
 
@@ -3726,6 +3753,8 @@ module OpenAsset
 			op.add_option('project_keyword_category_id',project_keyword_category_found.id)
 
 			project_keywords = get_project_keywords(op)
+
+			project_keyword_ids = project_keywords.map { |pk| pk.id.to_s }
 
 			op.clear
 
@@ -3738,7 +3767,7 @@ module OpenAsset
 
             op.clear
 
-            total_project_count = project_ids.length
+			total_project_count = project_ids.length
 
             # Set up iterations loop
 			if total_project_count % batch_size == 0
@@ -3763,53 +3792,131 @@ module OpenAsset
 
 				op.clear
 
-				puts "[INFO] Batch #{num} of #{iterations} => Updating field data."
+				puts "[INFO] Batch #{num} of #{iterations} => Extacting project keywords."
 				projects.each do |project|
 
-					tmp_keyword_collection = []
+					#tmp_keyword_collection = []
 
-					project.project_keywords.each do |nested_keyword_obj|
+					tmp_keyword_collection = project.project_keywords.find_all do |nested_keyword_obj|
+
+						project_keyword_ids.include?(nested_keyword_obj.id.to_s)
 
 						# Match keyword id so we can retrieve its name
-						keyword_found = project_keywords.find { |obj| obj.id.to_s == nested_keyword_obj.id.to_s }
+						#keyword_found = project_keywords.find { |obj| obj.id.to_s == nested_keyword_obj.id.to_s }
 
-						if keyword_found
-							tmp_keyword_collection << keyword_found
-						end
+						#if keyword_found
+						#	tmp_keyword_collection << keyword_found
+						#end
 
-					end	
+					end
 
-					field_string = tmp_keyword_collection.map { |k_obj| k_obj.name.to_s }.join(field_separator)
+					next if tmp_keyword_collection.empty?
+
+					nested_pk_ids = tmp_keyword_collection.map { |nested_pk| nested_pk.id.to_s }
+
+					keyword_data = project_keywords.find_all do |pk_obj| 
+						
+						nested_pk_ids.include?(pk_obj.id.to_s) 
+					
+					end.sort do | k1, k2 | 
+						
+						k1.name.downcase <=> k2.name.downcase
+					
+					end.reverse
+
+					field_string = keyword_data.map(&:name).join(field_separator)
 
 					# Check if there's already a value in the field
 					index = project.fields.find_index { |f_obj| f_obj.id.to_s == project_field_found.id.to_s }
 
 					if index # There's data in the field
 
-						if index && insert_mode == 'append'
+						if insert_mode == 'append'
 
-							if project_field_found.field_display_type.to_s == 'singleLine'
+							if NORMAL_FIELD_TYPES.include?(project_field_found.field_display_type)
 
-								project.fields[index].values.first = project.fields[index].values.first + ' ' + field_string
+								project.fields[index].values = 
+									[project.fields[index].values.first + field_separator + field_string]
 
-							elsif project_field_found.field_display_type.to_s == 'multiLine'
+								puts "[INFO] Inserting #{field_string.inspect} into #{project_field_found.name.inspect}" +
+								     " field for project => #{project.code.inspect}."
+							
+							elsif RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
 
-								project.fields[index].values.first = project.fields[index].values.first + "\n" + field_string
+								keyword_data.each do |pk|
+
+									project_add_field_data(project,project_field_found,pk.name.to_s)
+
+									puts "[INFO] Inserting #{pk.name.inspect} into #{project_field_found.name.inspect}" +
+									     " field for project => #{project.code.inspect}."
+
+								end
+							
+							else
+
+								error = "Error: Operation not allowed with field display type " +
+										"#{project_field_found.field_display_type.inspect}."
+								abort(error)
 
 							end
 
-							puts "[INFO] Inserting #{field_string.inspect} into #{project_field_found.name.inspect}" +
-							     " field for project => #{project.code}."
-
 						elsif  insert_mode == 'overwrite'
 
-							project.fields[index].values.first = field_string
+							if NORMAL_FIELD_TYPES.include?(project_field_found.field_display_type)
+
+								project.fields[index].values = [field_string]
+
+								puts "[INFO] Inserting #{field_string.inspect} into #{project_field_found.name.inspect}" +
+								     " field for project => #{project.code.inspect}."
+							
+							elsif RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
+
+								keyword_data.each do |pk|
+									
+									project_add_field_data(project,project_field_found,pk.name.to_s)
+
+									puts "[INFO] Inserting #{pk.name.inspect} into #{project_field_found.name.inspect}" +
+									     " field for project => #{project.code.inspect}."
+
+								end
+							
+							else
+
+								error = "Error: Operation not allowed with field display type " +
+										"#{project_field_found.field_display_type.inspect}."
+								abort(error)
+
+							end
 
 						end
 
 					else # No data in the field
 
-						project.fields << nested_field.new(project_field_found.id.to_s, [field_string])
+						if NORMAL_FIELD_TYPES.include?(project_field_found.field_display_type)
+
+							project.fields << nested_field.new(project_field_found.id.to_s, [field_string])
+
+							puts "[INFO] Inserting #{field_string.inspect} into #{project_field_found.name.inspect}" +
+							     " field for project => #{project.code.inspect}."
+
+						elsif RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
+							
+							keyword_data.each do |pk|
+								
+								project_add_field_data(project,project_field_found,pk.name.to_s)
+
+								puts "[INFO] Inserting #{pk.name.inspect} into #{project_field_found.name.inspect}" +
+								     " field for project => #{project.code.inspect}."
+
+							end
+							
+						else
+
+							error = "Error: Operation not allowed with field display type " +
+									"#{project_field_found.field_display_type.inspect}."
+							abort(error)
+
+						end
 
 					end
 
