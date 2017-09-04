@@ -57,7 +57,8 @@ module OpenAsset
 			                                   target_keyword_category,
 			                                   source_field,
 			                                   field_separator,
-			                                   batch_size)
+											   batch_size,
+											   allow_mutiple_results=false)
 			                                   
 			op = RestOptions.new
 
@@ -172,8 +173,10 @@ module OpenAsset
 				keyword_category_found = get_keyword_categories(op)		
 				abort("Error: File Keyword Category name \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless keyword_category_found
 
-				if keyword_category_found.length > 1
+				if keyword_category_found.length > 1 && allow_mutiple_results == false
 					abort("Error: Multiple File keyword categories found with name => #{target_keyword_category.inspect}. Specify an id instead.")
+				elsif keyword_category_found.length > 1 && allow_mutiple_results == true
+					keyword_category_found = keyword_category_found
 				else
 					keyword_category_found = keyword_category_found.first
 				end
@@ -204,7 +207,7 @@ module OpenAsset
 				op.add_option('name',source_field)
 				op.add_option('textMatching','exact')
 				source_field_found = get_fields(op).first
-				abort("Error: Field named #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+				abort("Error: Field named #{source_field.inspect} not found in OpenAsset. Aborting") unless source_field_found
 
 			else
 
@@ -289,6 +292,163 @@ module OpenAsset
 			return unless response.kind_of?(Net::HTTPSuccess)
 
 			response['X-Full-Results-Count'].to_i
+		end
+
+		# @!visibility private
+		def move_keywords_to_fields(files,keywords,field,field_separator,mode)
+
+			# Check the source_field field type
+			built_in = (field.built_in == '1') ? true : false
+			
+			files.each do |file|
+				next if file.keywords.empty?
+		
+				nested_fk_ids = file.keywords.map { |nested_fk| nested_fk.id.to_s }
+		
+				# Retrieve the actual keyword objects associated with the nested ids
+				keyword_data = keywords.find_all do |fk_obj| 
+
+					nested_fk_ids.include?(fk_obj.id.to_s) 
+				
+				end.sort do | k1, k2 | 
+					
+					k1.name.downcase <=> k2.name.downcase
+				
+				end
+		
+				field_string = keyword_data.map(&:name).join(field_separator)
+				
+				if built_in
+
+					if mode == 'append'
+						
+						field_name = field.name.downcase.gsub(' ','_')
+						#puts "Field name: #{field_name}"
+						data = file.instance_variable_get("#{field_name}")
+
+						if data.nil? || data.to_s.strip == ''
+							data = field_string
+						else
+							data = data.to_s.strip + field_separator + field_string
+						end
+
+						file.instance_variable_set("@#{field_name}",data)
+
+						puts "[INFO] Appending #{data.inspect} into #{field.name.inspect} field" +
+						     "\n\tFor file => #{file.filename.inspect}."
+
+					elsif mode == 'overwrite'
+
+						field_name = field.name.downcase.gsub(' ','_')
+						#puts "Field name: #{field_name}"
+						data = field_string
+
+						file.instance_variable_set("@#{field_name}",data)
+
+						puts "[INFO] Inserting #{data.inspect} into #{field.name.inspect} field" +
+								"\n\tFor file => #{file.filename.inspect}."
+					end
+						
+				else # Custom field
+
+					# Check if there's already a value in the field
+					index = file.fields.find_index { |f_obj| f_obj.id.to_s == field.id.to_s }		
+			
+					if index # There's data in the field
+						
+						if mode == 'append'
+			
+							if NORMAL_FIELD_TYPES.include?(field.field_display_type)
+			
+								file.fields[index].values = 
+									[file.fields[index].values.first + field_separator + field_string]
+			
+								puts "[INFO] Appending #{field_string.inspect} into #{field.name.inspect}" +
+										" field for file => #{file.filename.inspect}."
+							
+							elsif RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
+			
+								keyword_data.reverse.each do |fk|
+			
+									file_add_field_data(file,field,fk.name.to_s)
+			
+									puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect}" +
+											" field for file => #{file.filename.inspect}."
+			
+								end
+							
+							else
+			
+								error = "Error: Keyword move operation not allowed to field display type " +
+										"#{field.field_display_type.inspect}."
+								abort(error)
+			
+							end
+			
+						elsif  mode == 'overwrite'
+			
+							if NORMAL_FIELD_TYPES.include?(field.field_display_type)
+			
+								file.fields[index].values = [field_string]
+			
+								puts "[INFO] Inserting #{field_string.inspect} into #{field.name.inspect}" +
+										" field for file => #{file.filename.inspect}."
+							
+							elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
+			
+								keyword_data.reverse.each do |fk|
+									
+									file_add_field_data(file,field,fk.name.to_s)
+			
+									puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect}" +
+											" field for file => #{file.filename.inspect}."
+			
+								end
+							
+							else
+			
+								error = "Error: Keyword move operation not allowed to field display type " +
+										"#{field.field_display_type.inspect}."
+								abort(error)
+			
+							end
+			
+						end
+			
+					else # No data in the field
+			
+						if NORMAL_FIELD_TYPES.include?(field.field_display_type)
+			
+							file.fields << nested_field.new(field.id.to_s, [field_string])
+			
+							puts "[INFO] Inserting #{field_string.inspect} into #{field.name.inspect}" +
+									" field for file => #{file.filename.inspect}."
+			
+						elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
+							
+							keyword_data.reverse.each do |fk|
+								
+								file_add_field_data(file,field,fk.name.to_s)
+			
+								puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect}" +
+										" field for file => #{file.filename.inspect}."
+			
+							end
+							
+						else
+			
+							error = "Error: Keyword move operation not allowed to field display type " +
+									"#{field.field_display_type.inspect}."
+							abort(error)
+			
+						end
+			
+					end
+			
+				end
+			end
+		
+			return files
 		end
 
 		# @!visibility private
@@ -2028,6 +2188,7 @@ module OpenAsset
 			current_file  = nil
 			current_field = nil
 			current_value = value.to_s.strip
+			nested_field  = Struct.new(:id,:values)
 
 			file_class  = file.class.to_s
 			field_class = field.class.to_s
@@ -2084,21 +2245,29 @@ module OpenAsset
 				field_lookup_strings = get(lookup_string_endpoint,nil)
 
 				#check if the value in the third argument is currently an available option for the field
-				lookup_string_exists = field_lookup_strings.find { |item| item.value == value }
+				lookup_string_exists = field_lookup_strings.find { |item| current_value.downcase == item.value.downcase }
 
-				#add the option to the restricted field first if it's not there, otherwise you get a 400 bad 
-				#request error saying that it couldn't find the string value for the restricted field specified 
-				#when making a PUT request on the FILES resource you are currently working on
+				# add the option to the restricted field first if it's not there, otherwise you get a 400 bad 
+				# request error saying that it couldn't find the string value for the restricted field specified 
+				# when making a PUT request on the FILES resource you are currently working on
 				unless lookup_string_exists
 					data = {:value => current_value}
 					response = post(lookup_string_endpoint,data,false)
-					return unless response.kind_of? Net::HTTPSuccess
+					unless response.kind_of?(Net::HTTPSuccess)
+						return
+					end
 				end
 
-				#Now that we know the option is available, we can update the Files 
-				#NOUN we are currently working with using a PUT request
-				data = {:id => current_field.id, :values => [current_value]}
-				put(files_endpoint,data,false)
+				# Now that we know the option is available, we can update the File we are currently working with
+				index = current_file.fields.find_index { |nested_field| nested_field.id.to_s == current_field.id.to_s }
+
+				if index
+					current_file.fields[index].values = [current_value]
+				else
+					current_file.fields << nested_field.new(current_field.id,[current_value])
+				end
+
+				update_files(current_file,false)
 
 			elsif current_field.field_display_type == "date"
 				#make sure we get the right date format
@@ -3754,7 +3923,7 @@ module OpenAsset
 
 			project_keywords = get_project_keywords(op)
 
-			project_keyword_ids = project_keywords.map { |pk| pk.id.to_s }
+			#project_keyword_ids = project_keywords.map { |pk| pk.id.to_s }
 
 			op.clear
 
@@ -3795,24 +3964,16 @@ module OpenAsset
 				puts "[INFO] Batch #{num} of #{iterations} => Extacting project keywords."
 				projects.each do |project|
 
-					#tmp_keyword_collection = []
+					next if project.project_keywords.empty?
 
-					tmp_keyword_collection = project.project_keywords.find_all do |nested_keyword_obj|
+					# Retrieve full pk objects matching ids found in nested resource array
+					#tmp_keyword_collection = project.project_keywords.find_all do |nested_keyword_obj|
 
-						project_keyword_ids.include?(nested_keyword_obj.id.to_s)
+					#	project_keyword_ids.include?(nested_keyword_obj.id.to_s)
 
-						# Match keyword id so we can retrieve its name
-						#keyword_found = project_keywords.find { |obj| obj.id.to_s == nested_keyword_obj.id.to_s }
+					#end
 
-						#if keyword_found
-						#	tmp_keyword_collection << keyword_found
-						#end
-
-					end
-
-					next if tmp_keyword_collection.empty?
-
-					nested_pk_ids = tmp_keyword_collection.map { |nested_pk| nested_pk.id.to_s }
+					nested_pk_ids = project.project_keywords.map { |nested_pk| nested_pk.id.to_s }
 
 					keyword_data = project_keywords.find_all do |pk_obj| 
 						
@@ -3822,7 +3983,7 @@ module OpenAsset
 						
 						k1.name.downcase <=> k2.name.downcase
 					
-					end.reverse
+					end
 
 					field_string = keyword_data.map(&:name).join(field_separator)
 
@@ -3838,12 +3999,12 @@ module OpenAsset
 								project.fields[index].values = 
 									[project.fields[index].values.first + field_separator + field_string]
 
-								puts "[INFO] Inserting #{field_string.inspect} into #{project_field_found.name.inspect}" +
+								puts "[INFO] Appending #{field_string.inspect} into #{project_field_found.name.inspect}" +
 								     " field for project => #{project.code.inspect}."
 							
 							elsif RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
 
-								keyword_data.each do |pk|
+								keyword_data.reverse.each do |pk|
 
 									project_add_field_data(project,project_field_found,pk.name.to_s)
 
@@ -3854,7 +4015,7 @@ module OpenAsset
 							
 							else
 
-								error = "Error: Operation not allowed with field display type " +
+								error = "Error: Project keyword move operation not allowed to field display type " +
 										"#{project_field_found.field_display_type.inspect}."
 								abort(error)
 
@@ -3882,7 +4043,7 @@ module OpenAsset
 							
 							else
 
-								error = "Error: Operation not allowed with field display type " +
+								error = "Error: Project keyword move operation not allowed to field display type " +
 										"#{project_field_found.field_display_type.inspect}."
 								abort(error)
 
@@ -3912,7 +4073,7 @@ module OpenAsset
 							
 						else
 
-							error = "Error: Operation not allowed with field display type " +
+							error = "Error: Project keyword move operation not allowed to field display type " +
 									"#{project_field_found.field_display_type.inspect}."
 							abort(error)
 
@@ -3937,15 +4098,15 @@ module OpenAsset
 		# Move file keywords to field (built-in or custom) BY ALBUM - Singleline of Multiline project fields ONLY.
 		#
 		# @param album [Albums object, String album name, String id, Integer id] (Required)]
-		# @param keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
+		# @param keyword_category [KeywordCategories Object, String keyword category name (PREFERRED INPUT), String id, Integer id] (Required)
 		# @param target_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
 		# @param insert_mode [String] append or overwrite
 		# @param batch_size [Integer] (Default => 100)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','append',250)
-		#		   rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','overwrite',250)
+		# @example rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','append',250) 
+		#		   rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','overwrite',250) 
 		#          rest_client.move_file_keywords_to_field_by_album("album name","keyword category name","project field name",';','append',250)
 		#          rest_client.move_file_keywords_to_field_by_album("album name","keyword category name","project field name",';','overwrite',250)
 		#          rest_client.move_file_keywords_to_field_by_album("9","1","7",';','append',250)
@@ -3965,25 +4126,32 @@ module OpenAsset
 													   keyword_category,
 													   target_field,
 													   field_separator,
-		  											   batch_size)
+													   batch_size,
+													   true)
 
 			
-			album_found                 = args.container
-			file_keyword_category_found = args.target_keyword_category
-			target_field_found          = args.source_field
+			
+			file_keyword_categories_found = 
+				(args.target_keyword_category.is_a?(Array)) ? args.target_keyword_category : [args.target_keyword_category]
 
-			built_in                     = nil
-			file_ids                    = nil
-			keywords                    = []
-			files                       = []
-			total_file_count            = 0
-			total_files_updated         = 0  # For better readability
-			offset                      = 0
-			iterations                  = 0
-			limit                       = batch_size.to_i.abs 
-			insert_mode                 = insert_mode.downcase 
-			nested_field                = Struct.new(:id, :values)
-			op                          = RestOptions.new
+			target_field_found            = args.source_field
+			album_found                   = args.container
+
+			built_in                      = nil
+			file_ids                      = nil
+			file_keyword_ids              = []
+			file_keyword_category_ids     = []
+			keywords                      = []
+			files                         = []
+			processed_files               = []
+			total_file_count              = 0
+			total_files_updated           = 0  # For better readability
+			offset                        = 0
+			iterations                    = 0
+			limit                         = batch_size.to_i.abs 
+			insert_mode                   = insert_mode.downcase 
+			nested_field                  = Struct.new(:id, :values)
+			op                            = RestOptions.new
 
 			# Valiate insert mode
 			unless insert_mode == 'append' || insert_mode == 'overwrite'
@@ -3993,16 +4161,17 @@ module OpenAsset
 				abort(error)
 			end
 			
-			# Check the source_field field type
-			built_in = (target_field_found.built_in == '1') ? true : false
 			
 			# Get file ids
 			file_ids = album_found.files.map { |obj| obj.id.to_s }
 			
 			# Get keywords
-			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_category_found.name.inspect}."
+			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_categories_found.first.name.inspect}."
+			
+			file_keyword_category_ids = file_keyword_categories_found.map(&:id)
+
 			op.add_option('limit','0')
-			op.add_option('keyword_category_id',"#{file_keyword_category_found.id}")
+			op.add_option('keyword_category_id',file_keyword_category_ids.join(','))
 
 			keywords = get_keywords(op)
 
@@ -4011,6 +4180,8 @@ module OpenAsset
 				        "with id #{file_keyword_category_found.id.inspect}"
 				abort(error)
 			end
+
+			file_keyword_ids = keywords.map(&:id)
 
 			op.clear
 
@@ -4044,109 +4215,12 @@ module OpenAsset
 
 				files = get_files(op)
 
-				# Loop through files, extract keywords and insert them into the field
-				files.each do |file|
-
-					next if file.keywords.empty?
-
-					field_data_to_insert = []
-
-					file.keywords.each do |keyword|
-
-						field_data_to_insert.push(keyword.name.strip)
-
-					end
-
-					if built_in # Builtin field
-
-						if insert_mode == 'append'
-
-							field_name = target_field_found.name.downcase.gsub(' ','_')
-							#puts "Field name: #{field_name}"
-							data = file.instance_variable_get("#{field_name}")
-
-							if data.nil? || data.to_s.strip == ''
-								data = field_data_to_insert.join(field_separator)
-							else
-								data = data.to_s.strip + field_separator + field_data_to_insert.join(field_separator)
-							end
-
-							file.instance_variable_set("@#{field_name}",data)
-
-							puts "[INFO] Appending #{data.inspect} into #{target_field_found.name.inspect} field" +
-							"\n\tFor file => #{file.filename.inspect}."
-
-						elsif insert_mode == 'overwrite'
-
-							field_name = target_field_found.name.downcase.gsub(' ','_')
-							#puts "Field name: #{field_name}"
-							data = field_data_to_insert.join(field_separator)
-
-							file.instance_variable_set("@#{field_name}",data)
-
-							puts "[INFO] Inserting #{data.inspect} into #{target_field_found.name.inspect} field" +
-							     "\n\tFor file => #{file.filename.inspect}."
-						end
-
-					else   # Custom field
-	
-						# Check if the field has data in it
-						index = file.fields.find { |obj| obj.id.to_s == target_field_found.id.to_s }
-
-						if index 
-							
-							if insert_mode == 'append' # Add to existing data
-
-								if NORMAL_FIELD_TYPES.include?(field.field_display_type)
-
-									data = file.fields[field_index].value.first
-									
-									if data.nil? || data.to_s.strip == ''
-										data = field_data_to_insert.join(field_separator)
-										file.fields[index].value = [data]
-									else
-										data = data.to_s + field_separator + field_data_to_insert.join(field_separator)
-										file.fields[index].value = [data]
-									end		
-
-								elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
-
-									field_data_to_insert.each do |keyword|
-
-										file_add_field_data(file,target_field_found,keyword.name)
-
-									end
-
-								else
-
-									error = "Error: Operation not allowed with field display type " +
-											"#{target_field_found.field_display_type.inspect}."
-									abort(error)
-
-								end
-							# TO DO: COMPLETE FROM HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-							elsif insert_mode == 'overwrite' # Overwrite existing data
-
-								data = field_data_to_insert.join(field_separator)
-								file.fields[field_index].value = [data]
-
-							end
-
-						else # No Data in field
-
-							data = field_data_to_insert.join(field_separator)
-							nested_field_obj = nested_field.new(target_field_found.id, [data])
-							file.fields.push(nested_field_obj)
-
-						end
-						
-					end
-						
-				end
+				# Move the keywords
+				processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
 
 				# Perform file update
 				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
-				updated_obj_count = run_smart_update(files,total_files_updated)
+				updated_obj_count = run_smart_update(processed_files,total_files_updated)
 
 				total_files_updated += updated_obj_count
 
@@ -4159,7 +4233,7 @@ module OpenAsset
 		# Move file keywords to field (built-in or custom) BY PROJECT - Singleline of Multiline project fields ONLY.
 		#
 		# @param project [Projects object, String project name, String id, Integer id] (Required)]
-		# @param keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
+		# @param keyword_category [KeywordCategories Object, String keyword category name (PREFERRED INPUT), String id, Integer id] (Required)
 		# @param target_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
 		# @param insert_mode [String] append or overwrite
@@ -4186,24 +4260,26 @@ module OpenAsset
 													  keyword_category,
 													  target_field,
 													  field_separator,
-													  batch_size)
+													  batch_size,
+													  true)
 
-			project_found               = args.container
-			file_keyword_category_found = args.target_keyword_category
-			target_field_found          = args.source_field
+			file_keyword_categories_found = 
+				(args.target_keyword_category.is_a?(Array)) ? args.target_keyword_category : [args.target_keyword_category]
+			project_found                 = args.container
+			target_field_found            = args.source_field
 
-			built_in                     = nil
-			file_ids                    = nil
-			keywords                    = []
-			files                       = []
-			total_file_count            = 0
-			total_files_updated         = 0  # For better readability
-			offset                      = 0
-			iterations                  = 0
-			limit                       = batch_size.to_i.abs
-			insert_mode                 = insert_mode.downcase
-			nested_field                = Struct.new(:id, :values)
-			op                          = RestOptions.new
+			built_in                      = nil
+			file_ids                      = nil
+			keywords                      = []
+			files                         = []
+			total_file_count              = 0
+			total_files_updated           = 0  # For better readability
+			offset                        = 0
+			iterations                    = 0
+			limit                         = batch_size.to_i.abs
+			insert_mode                   = insert_mode.downcase
+			nested_field                  = Struct.new(:id, :values)
+			op                            = RestOptions.new
 
 			# Valiate insert mode
 			unless insert_mode == 'append' || insert_mode == 'overwrite'
@@ -4217,7 +4293,7 @@ module OpenAsset
 			built_in = (target_field_found.built_in == '1') ? true : false
 
 			# Get keywords
-			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_category_found.name.inspect}."
+			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_categories_found.first.name.inspect}."
 			op.add_option('limit','0')
 			op.add_option('keyword_category_id',"#{file_keyword_category_found.id}")
 
