@@ -295,20 +295,40 @@ module OpenAsset
 		end
 
 		# @!visibility private
-		def move_keywords_to_fields(files,keywords,field,field_separator,mode)
+		def move_keywords_to_fields(objects,keywords,field,field_separator,mode)
+			
+			nested_field = Struct.new(:id,:values)
+			existing_field_lookup_strings = nil
+			object_type = objects.first.class.to_s.downcase.chop # Projects => project | Files => file
+
+			# Allows dynamic access to nested keywords for both files and projects
+			keyword_accessor = (objects.first.is_a?(Projects) ? '@project_' : '@') + 'keywords'
+
+			# Allows access to project or file names attributes dynamically
+			object_name = (objects.first.is_a?(Projects) ? '@name' : '@filename')
 
 			# Check the source_field field type
 			built_in = (field.built_in == '1') ? true : false
+
+			# Retrieve existing field lookup strings if the field is a restricted field type
+			if RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
+				op = RestOptions.new
+				op.add_option('limit','0')
+				existing_field_lookup_strings = get_field_lookup_strings(field,op)
+			end
+
+			require 'pp'
 			
-			files.each do |file|
-				next if file.keywords.empty?
+			objects.each do |object|
+
+				next if object.instance_variable_get("#{keyword_accessor}").empty?
 		
-				nested_fk_ids = file.keywords.map { |nested_fk| nested_fk.id.to_s }
+				nested_kwd_ids = object.instance_variable_get("#{keyword_accessor}").map { |kwd| kwd.id.to_s }
 		
 				# Retrieve the actual keyword objects associated with the nested ids
-				keyword_data = keywords.find_all do |fk_obj| 
+				keyword_data = keywords.find_all do |k_obj| 
 
-					nested_fk_ids.include?(fk_obj.id.to_s) 
+					nested_kwd_ids.include?(k_obj.id.to_s) 
 				
 				end.sort do | k1, k2 | 
 					
@@ -332,10 +352,10 @@ module OpenAsset
 							data = data.to_s.strip + field_separator + field_string
 						end
 
-						file.instance_variable_set("@#{field_name}",data)
+						object.instance_variable_set("@#{field_name}",data)
 
 						puts "[INFO] Appending #{data.inspect} into #{field.name.inspect} field" +
-						     "\n\tFor file => #{file.filename.inspect}."
+						     " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 
 					elsif mode == 'overwrite'
 
@@ -343,16 +363,16 @@ module OpenAsset
 						#puts "Field name: #{field_name}"
 						data = field_string
 
-						file.instance_variable_set("@#{field_name}",data)
+						object.instance_variable_set("@#{field_name}",data)
 
 						puts "[INFO] Inserting #{data.inspect} into #{field.name.inspect} field" +
-								"\n\tFor file => #{file.filename.inspect}."
+								" for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 					end
 						
 				else # Custom field
 
 					# Check if there's already a value in the field
-					index = file.fields.find_index { |f_obj| f_obj.id.to_s == field.id.to_s }		
+					index = object.fields.find_index { |f_obj| f_obj.id.to_s == field.id.to_s }		
 			
 					if index # There's data in the field
 						
@@ -360,26 +380,38 @@ module OpenAsset
 			
 							if NORMAL_FIELD_TYPES.include?(field.field_display_type)
 			
-								file.fields[index].values = 
-									[file.fields[index].values.first + field_separator + field_string]
+								object.fields[index].values = 
+									[object.fields[index].values.first + field_separator + field_string]
 			
-								puts "[INFO] Appending #{field_string.inspect} into #{field.name.inspect}" +
-										" field for file => #{file.filename.inspect}."
+								puts "[INFO] Appending #{field_string.inspect} into #{field.name.inspect} field" +
+										" for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 							
-							elsif RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
+							elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
 			
 								keyword_data.reverse.each do |fk|
+
+									fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }
+									
+									# Create the field lookup string if not found and add to existing
+									unless fls_found
+										data = {:value => fk.name}
+										fls_found = create_field_lookup_strings(field,data,true).first
+										existing_field_lookup_strings.push(fls_found)
+									end
+	
+									# Assign the value to the field
+									object.fields[index].values = [fls_found.value]
 			
-									file_add_field_data(file,field,fk.name.to_s)
+									#file_add_field_data(file,field,fk.name.to_s) # Easy but SLOW
 			
-									puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect}" +
-											" field for file => #{file.filename.inspect}."
+									puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
+										 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 			
 								end
 							
 							else
 			
-								error = "Error: Keyword move operation not allowed to field display type " +
+								error = "Error: #{object_type} keyword move operation not allowed to field display type " +
 										"#{field.field_display_type.inspect}."
 								abort(error)
 			
@@ -389,25 +421,51 @@ module OpenAsset
 			
 							if NORMAL_FIELD_TYPES.include?(field.field_display_type)
 			
-								file.fields[index].values = [field_string]
+								object.fields[index].values = [field_string]
 			
-								puts "[INFO] Inserting #{field_string.inspect} into #{field.name.inspect}" +
-										" field for file => #{file.filename.inspect}."
+								puts "[INFO] Inserting #{field_string.inspect} into #{field.name.inspect} field" +
+									 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 							
 							elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
 			
 								keyword_data.reverse.each do |fk|
+
+									fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }
 									
-									file_add_field_data(file,field,fk.name.to_s)
+									# Create the field lookup string if not found and add to existing
+									unless fls_found
+										data = {:value => fk.name}
+										fls_found = create_field_lookup_strings(field,data,true).first
+										existing_field_lookup_strings.push(fls_found)
+									end
+	
+									# Assign the value to the field
+									# object.fields[index].values = [fls_found.value]
+									
+									#file_add_field_data(file,field,fk.name.to_s) # Easy but SLOW
 			
-									puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect}" +
-											" field for file => #{file.filename.inspect}."
+									puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
+										 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 			
 								end
+
+								# Assign the value to the field
+								##########################################################
+								#														 #
+								# JUSTIIIIIIIIIIIIIINNNNNNNN!!!!!!! BUG!!!!!!!!!!!!!!!!! #													 #
+								#                                                        #
+								##########################################################
+								
+							    # Mutiple keyword moves are ignored by for projects -> WORKS ON FILES
+						
+								require 'pp'
+								pp 'Before =>',object.fields[index].values
+								object.fields[index].values = [keyword_data.last.name.to_s]
+								pp 'After => ',object.fields[index].values
 							
 							else
 			
-								error = "Error: Keyword move operation not allowed to field display type " +
+								error = "Error: #{object_type} keyword move operation not allowed to field display type " +
 										"#{field.field_display_type.inspect}."
 								abort(error)
 			
@@ -419,25 +477,37 @@ module OpenAsset
 			
 						if NORMAL_FIELD_TYPES.include?(field.field_display_type)
 			
-							file.fields << nested_field.new(field.id.to_s, [field_string])
+							object.fields << nested_field.new(field.id.to_s, [field_string])
 			
-							puts "[INFO] Inserting #{field_string.inspect} into #{field.name.inspect}" +
-									" field for file => #{file.filename.inspect}."
+							puts "[INFO] Inserting #{field_string.inspect} into #{field.name.inspect} field" +
+									" for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 			
 						elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
 							
-							keyword_data.reverse.each do |fk|
+							keyword_data.reverse.each do |fk|				
+
+								fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }
+
+								# Create the field lookup string if not found and add to existing
+								unless fls_found
+									data = {:value => fk.name}
+									fls_found = create_field_lookup_strings(field,data,true).first
+									existing_field_lookup_strings.push(fls_found)
+								end
+
+								# Insert the value to the field
+								object.fields << nested_field.new(field.id,[fls_found.value])
 								
-								file_add_field_data(file,field,fk.name.to_s)
+								#file_add_field_data(file,field,fk.name.to_s) # SLOWWWW
 			
-								puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect}" +
-										" field for file => #{file.filename.inspect}."
+								puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
+									 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 			
 							end
 							
 						else
 			
-							error = "Error: Keyword move operation not allowed to field display type " +
+							error = "Error: #{object_type} keyword move operation not allowed to field display type " +
 									"#{field.field_display_type.inspect}."
 							abort(error)
 			
@@ -446,9 +516,10 @@ module OpenAsset
 					end
 			
 				end
+
 			end
 		
-			return files
+			return objects
 		end
 
 		# @!visibility private
@@ -605,12 +676,6 @@ module OpenAsset
 				@session = response['X-SessionKey']
 			end
 
-			#puts "IN POST METHOD FOR #{resource} RESOURCE"
-			#puts "JSON #{json_body}"
-
-			#puts "RESPONSE #{response.code}"
-			#puts "MESSAGE #{response.message}"
-			#puts "BODY #{response.body}"
 			res = Validator::process_http_response(response,@verbose,resource,'POST')
 
 			return unless res.kind_of?(Net::HTTPSuccess)
@@ -2465,10 +2530,19 @@ module OpenAsset
 					return unless response.kind_of? Net::HTTPSuccess
 				end
 
-				#Now that we know the option is available, we can update the Projects 
-				#NOUN we are currently working with using a PUT request
-				data = {:id => current_field.id, :values => [value.to_s]}
-				put(projects_endpoint,data,false)
+				#Now that we know the option is available, we can update the Project
+				index = current_project.fields.find_index { |nested_field| nested_field.id.to_s == current_field.id.to_s }
+				
+				if index
+					current_project.fields[index].values = [value]
+				else
+					current_project.fields << nested_field.new(current_field.id,[value])
+				end
+
+				update_projects(current_project,false)
+
+				#data = {:id => current_field.id, :values => [value.to_s]}
+				#put(projects_endpoint,data,false)
 
 				if @verbose
 					puts "Adding value: \"#{value}\" to \"#{current_field.name}\" field" +
@@ -3768,7 +3842,6 @@ module OpenAsset
 			total_projects_updated         = 0
 			batch_size                     = batch_size.to_i.abs
 			limit                          = batch_size
-			nested_field                   = Struct.new(:id,:values)
 			op                             = RestOptions.new
 
 			# Validate input:
@@ -3897,13 +3970,6 @@ module OpenAsset
 			
 			end
 
-
-		    # Make sure it's an allowed field type
-		    #unless allowed_field_types.include?(project_field_found.field_display_type.to_s)
-		    #	error = "Error: Only singleLine and multiLine fields permitted for this operation."
-		    #	abort(error)
-		    #end
-
 		    if field_separator.nil?
 		    	abort("Error: Must specify field separator.")
 		    end
@@ -3923,10 +3989,9 @@ module OpenAsset
 
 			project_keywords = get_project_keywords(op)
 
-			#project_keyword_ids = project_keywords.map { |pk| pk.id.to_s }
-
 			op.clear
 
+			# Get projects
 			op.add_option('limit','0')
             op.add_option('displayFields','id')
 
@@ -3961,131 +4026,17 @@ module OpenAsset
 
 				op.clear
 
+				# Move project keywords to field
 				puts "[INFO] Batch #{num} of #{iterations} => Extacting project keywords."
-				projects.each do |project|
-
-					next if project.project_keywords.empty?
-
-					# Retrieve full pk objects matching ids found in nested resource array
-					#tmp_keyword_collection = project.project_keywords.find_all do |nested_keyword_obj|
-
-					#	project_keyword_ids.include?(nested_keyword_obj.id.to_s)
-
-					#end
-
-					nested_pk_ids = project.project_keywords.map { |nested_pk| nested_pk.id.to_s }
-
-					keyword_data = project_keywords.find_all do |pk_obj| 
-						
-						nested_pk_ids.include?(pk_obj.id.to_s) 
-					
-					end.sort do | k1, k2 | 
-						
-						k1.name.downcase <=> k2.name.downcase
-					
-					end
-
-					field_string = keyword_data.map(&:name).join(field_separator)
-
-					# Check if there's already a value in the field
-					index = project.fields.find_index { |f_obj| f_obj.id.to_s == project_field_found.id.to_s }
-
-					if index # There's data in the field
-
-						if insert_mode == 'append'
-
-							if NORMAL_FIELD_TYPES.include?(project_field_found.field_display_type)
-
-								project.fields[index].values = 
-									[project.fields[index].values.first + field_separator + field_string]
-
-								puts "[INFO] Appending #{field_string.inspect} into #{project_field_found.name.inspect}" +
-								     " field for project => #{project.code.inspect}."
-							
-							elsif RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
-
-								keyword_data.reverse.each do |pk|
-
-									project_add_field_data(project,project_field_found,pk.name.to_s)
-
-									puts "[INFO] Inserting #{pk.name.inspect} into #{project_field_found.name.inspect}" +
-									     " field for project => #{project.code.inspect}."
-
-								end
-							
-							else
-
-								error = "Error: Project keyword move operation not allowed to field display type " +
-										"#{project_field_found.field_display_type.inspect}."
-								abort(error)
-
-							end
-
-						elsif  insert_mode == 'overwrite'
-
-							if NORMAL_FIELD_TYPES.include?(project_field_found.field_display_type)
-
-								project.fields[index].values = [field_string]
-
-								puts "[INFO] Inserting #{field_string.inspect} into #{project_field_found.name.inspect}" +
-								     " field for project => #{project.code.inspect}."
-							
-							elsif RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
-
-								keyword_data.each do |pk|
-									
-									project_add_field_data(project,project_field_found,pk.name.to_s)
-
-									puts "[INFO] Inserting #{pk.name.inspect} into #{project_field_found.name.inspect}" +
-									     " field for project => #{project.code.inspect}."
-
-								end
-							
-							else
-
-								error = "Error: Project keyword move operation not allowed to field display type " +
-										"#{project_field_found.field_display_type.inspect}."
-								abort(error)
-
-							end
-
-						end
-
-					else # No data in the field
-
-						if NORMAL_FIELD_TYPES.include?(project_field_found.field_display_type)
-
-							project.fields << nested_field.new(project_field_found.id.to_s, [field_string])
-
-							puts "[INFO] Inserting #{field_string.inspect} into #{project_field_found.name.inspect}" +
-							     " field for project => #{project.code.inspect}."
-
-						elsif RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
-							
-							keyword_data.each do |pk|
-								
-								project_add_field_data(project,project_field_found,pk.name.to_s)
-
-								puts "[INFO] Inserting #{pk.name.inspect} into #{project_field_found.name.inspect}" +
-								     " field for project => #{project.code.inspect}."
-
-							end
-							
-						else
-
-							error = "Error: Project keyword move operation not allowed to field display type " +
-									"#{project_field_found.field_display_type.inspect}."
-							abort(error)
-
-						end
-
-					end
-
-				end
+				processed_projects = move_keywords_to_fields(projects,
+															 project_keywords,
+															 project_field_found,
+															 field_separator,
+															 insert_mode)
 
 				# Update projects
 				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform project updates."
-				updated_obj_count = run_smart_update(projects,total_projects_updated)
+				updated_obj_count = run_smart_update(processed_projects,total_projects_updated)
 
 				total_projects_updated += updated_obj_count
 
@@ -4150,7 +4101,6 @@ module OpenAsset
 			iterations                    = 0
 			limit                         = batch_size.to_i.abs 
 			insert_mode                   = insert_mode.downcase 
-			nested_field                  = Struct.new(:id, :values)
 			op                            = RestOptions.new
 
 			# Valiate insert mode
@@ -4350,81 +4300,7 @@ module OpenAsset
 				files = get_files(op)
 
 				# Move the file keywords to specified field
-				files.each do |file|
-					
-					next if file.keywords.empty?
-
-					field_data_to_insert = []
-					
-					file.keywords.each do |keyword|
-
-						field_data_to_insert.push(keyword.name.strip)
-
-					end
-
-					if built_in # Builtin field
-
-						if insert_mode == 'append'
-
-							field_name = target_field_found.name.downcase.gsub(' ','_')
-							#puts "Field name: #{field_name}"
-							data = file.instance_variable_get("#{field_name}")
-
-							if data.nil? || data.to_s.strip == ''
-								data = field_data_to_insert.join(field_separator)
-							else
-								data = data.to_s.strip + field_separator + field_data_to_insert.join(field_separator)
-							end
-
-							file.instance_variable_set("@#{field_name}",data)
-
-							puts "[INFO] Appending #{data.inspect} into #{target_field_found.name.inspect} field" +
-							"\n\tFor file => #{file.filename.inspect}."
-
-						elsif insert_mode == 'overwrite'
-
-							field_name = target_field_found.name.downcase.gsub(' ','_')
-							#puts "Field name: #{field_name}"
-							data = field_data_to_insert.join(field_separator)
-
-							file.instance_variable_set("@#{field_name}",data)
-
-							puts "[INFO] Inserting #{data.inspect} into #{target_field_found.name.inspect} field" +
-									"\n\tFor file => #{file.filename.inspect}."
-						end
-
-					else   # Custom field
-	
-						# Check if the field has data in it
-						field_index = file.fields.find_index { |obj| obj.id.to_s == target_field_found.id.to_s }
-
-						if field_index && insert_mode == 'append' # Add to existing data
-
-							data = file.fields[field_index].value
-
-							if data.nil? || data.to_s.strip == ''
-								data = field_data_to_insert.join(field_separator)
-								file.fields[field_index].value = data
-							else
-								data = data.to_s + field_separator + field_data_to_insert.join(field_separator)
-							end
-
-						elsif field_index && insert_mode == 'overwrite' # Overwrite existing data
-
-							data = field_data_to_insert.join(field_separator)
-							file.fields[field_index].value = data
-
-						else # No Data in field
-
-							data = field_data_to_insert.join(field_separator)
-							nested_field_obj = nested_field.new(target_field_found.id, [data])
-							file.fields.push(nested_field_obj)
-
-						end
-						
-					end
-						
-				end
+				
 
 				# Perform file update
 				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
