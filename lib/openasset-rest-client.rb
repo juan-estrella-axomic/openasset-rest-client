@@ -8,6 +8,7 @@ require_relative 'Validator.rb'
 
 require 'net/http'
 
+
 #Includes all the nouns in one shot
 Dir[File.join(File.dirname(__FILE__),'Nouns','*.rb')].each { |file| require_relative file }
 
@@ -388,7 +389,7 @@ module OpenAsset
 							
 							elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
 			
-								keyword_data.reverse.each do |fk|
+								keyword_data.each do |fk|
 
 									fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }
 									
@@ -398,9 +399,6 @@ module OpenAsset
 										fls_found = create_field_lookup_strings(field,data,true).first
 										existing_field_lookup_strings.push(fls_found)
 									end
-	
-									# Assign the value to the field
-									object.fields[index].values = [fls_found.value]
 			
 									#file_add_field_data(file,field,fk.name.to_s) # Easy but SLOW
 			
@@ -408,6 +406,9 @@ module OpenAsset
 										 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 			
 								end
+
+								# Assign the value to the field
+								object.fields[index].values = [keyword_data.first.name]		unless keyword_data.empty?
 							
 							else
 			
@@ -428,7 +429,7 @@ module OpenAsset
 							
 							elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
 			
-								keyword_data.reverse.each do |fk|
+								keyword_data.each do |fk|
 
 									fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }
 									
@@ -448,20 +449,8 @@ module OpenAsset
 										 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 			
 								end
-
-								# Assign the value to the field
-								##########################################################
-								#														 #
-								# JUSTIIIIIIIIIIIIIINNNNNNNN!!!!!!! BUG!!!!!!!!!!!!!!!!! #													 #
-								#                                                        #
-								##########################################################
-								
-							    # Mutiple keyword moves are ignored by for projects -> WORKS ON FILES
 						
-								require 'pp'
-								pp 'Before =>',object.fields[index].values
-								object.fields[index].values = [keyword_data.last.name.to_s]
-								pp 'After => ',object.fields[index].values
+								object.fields[index].values = [keyword_data.first.name] 	unless keyword_data.empty?
 							
 							else
 			
@@ -484,7 +473,7 @@ module OpenAsset
 			
 						elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
 							
-							keyword_data.reverse.each do |fk|				
+							keyword_data.each do |fk|				
 
 								fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }
 
@@ -494,9 +483,6 @@ module OpenAsset
 									fls_found = create_field_lookup_strings(field,data,true).first
 									existing_field_lookup_strings.push(fls_found)
 								end
-
-								# Insert the value to the field
-								object.fields << nested_field.new(field.id,[fls_found.value])
 								
 								#file_add_field_data(file,field,fk.name.to_s) # SLOWWWW
 			
@@ -504,6 +490,9 @@ module OpenAsset
 									 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 			
 							end
+							
+							# Insert the value to the field if there is one
+							object.fields << nested_field.new(field.id,[keyword_data.first.name]) unless keyword_data.empty?
 							
 						else
 			
@@ -701,6 +690,8 @@ module OpenAsset
 			unless json_body
 				return
 			end
+
+			require 'pp'
 			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Put.new(uri.request_uri)
 				if @session
@@ -711,9 +702,10 @@ module OpenAsset
 					#request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
 				end
 				request.body = json_body.to_json
+				#pp json_body
 				http.request(request)
 			end
-
+			#pp JSON.parse(response.body)
 			unless @session == response['X-SessionKey']
 				@session = response['X-SessionKey']
 			end
