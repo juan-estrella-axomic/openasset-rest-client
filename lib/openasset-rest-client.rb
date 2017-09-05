@@ -4092,16 +4092,43 @@ module OpenAsset
 			offset                        = 0
 			iterations                    = 0
 			limit                         = batch_size.to_i.abs 
-			insert_mode                   = insert_mode.downcase 
 			op                            = RestOptions.new
 
-			# Valiate insert mode
-			unless insert_mode == 'append' || insert_mode == 'overwrite'
-				error = "Invalid insert mode value for fifth argument in #{__callee__}" +
-						"\n\tExpected \"append\" or \"overwrite\"" +
-						"\n\tInstead got => #{insert_mode.inspect}."
-				abort(error)
+			# Validate insert mode, separator, and warn user of restricted field type
+			if RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
+				answer = nil
+				error  = "\nInvalid input. Please enter \"yes\" or \"no\".\n> "
+				message = "Warning: You are inserting keywords into a restricted field type. " +
+					      "\n\t Project keywords are sorted in alphabetical order. " +
+					      "\n\t All project keywords will be created as options but only the first one will be displayed in the field." +
+						  "\nContinue? (Yes/no)\n> "
+
+				print message
+
+				while answer != 'yes' && answer != 'no'
+
+					print error unless answer.nil?
+
+					answer = gets.chomp.to_s.downcase
+
+					abort("You entered #{answer.inspect}. Exiting.\n\n") if answer.downcase == 'no' || answer == 'n'
+
+					break if answer == 'yes' || answer == 'y'
+
+				end		  
+			
 			end
+
+		    if field_separator.nil?
+		    	abort("Error: Must specify field separator.")
+		    end
+
+		    unless ['append','overwrite'].include?(insert_mode.to_s)
+				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
+				      "Instead got #{insert_mode.inspect}")
+		    end
+
+		    abort('Invalid batch size. Specify a positive numeric value or use default value of 100') if batch_size.zero?
 			
 			
 			# Get file ids
@@ -4219,8 +4246,7 @@ module OpenAsset
 			offset                        = 0
 			iterations                    = 0
 			limit                         = batch_size.to_i.abs
-			insert_mode                   = insert_mode.downcase
-			nested_field                  = Struct.new(:id, :values)
+			insert_mode                   = insert_mode
 			op                            = RestOptions.new
 
 			# Valiate insert mode
@@ -4292,7 +4318,7 @@ module OpenAsset
 				files = get_files(op)
 
 				# Move the file keywords to specified field
-				
+				processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
 
 				# Perform file update
 				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
