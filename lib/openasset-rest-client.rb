@@ -1360,7 +1360,7 @@ module OpenAsset
 
 			if generate_objects
 				
-				generate_objects_from_json_response_body(response)
+				generate_objects_from_json_response_body(response,'Files')
 
 			else
 				# JSON Object
@@ -1461,7 +1461,7 @@ module OpenAsset
 
 			if generate_objects
 				
-				generate_objects_from_json_response_body(response)
+				generate_objects_from_json_response_body(response,'Files')
 
 			else
 				# JSON Object
@@ -4549,6 +4549,6 @@ module OpenAsset
 			
 		end
 	end
-	
+
 end
 
