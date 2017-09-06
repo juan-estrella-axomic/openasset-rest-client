@@ -9,7 +9,7 @@ class Albums
 	# @!parse attr_accessor :id, :locked, :my_album, :name, :private_image_count, :public_image_count
 	attr_accessor :id, :locked, :my_album, :name, :private_image_count, :public_image_count
 
-	# @!parse :share_with_all_users, :shared_album, :unapproved_image_count, :updated, :user_id, :files, :groups, :users
+	# @!parse attr_accessor :share_with_all_users, :shared_album, :unapproved_image_count, :updated, :user_id, :files, :groups, :users
 	attr_accessor :share_with_all_users, :shared_album, :unapproved_image_count, :updated, :user_id, :files, :groups, :users
 
 	# Creates an Albums object

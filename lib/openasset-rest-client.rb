@@ -13,6 +13,7 @@ require 'net/http'
 Dir[File.join(File.dirname(__FILE__),'Nouns','*.rb')].each { |file| require_relative file }
 
 module OpenAsset
+
 	class RestClient
 		
 		RESTRICTED_LIST_FIELD_TYPES   = %w[ suggestion fixedSuggestion option ]
@@ -771,7 +772,8 @@ module OpenAsset
 		#
 		# @return [nil] Does not return anything.
 		# 
-		# @example rest_client.kill_session()
+		# @example 
+		#		   rest_client.kill_session()
 		def kill_session
 			@authenticator.kill_session
 			@session = ''
@@ -781,7 +783,8 @@ module OpenAsset
 		#
 		# @return [nil] Does not return anything.
 		# 
-		# @example rest_client.get_session()
+		# @example 
+		#		   rest_client.get_session()
 		def get_session
 			@authenticator.get_session
 		end
@@ -790,7 +793,8 @@ module OpenAsset
 		#
 		# @return [nil] Does not return anything.
 		# 
-		# @example rest_client.renew_session()
+		# @example 
+		#          rest_client.renew_session()
 		def renew_session
 			@authenticator.kill_session
 			@authenticator.get_session
@@ -815,7 +819,7 @@ module OpenAsset
 		# @return [Array] Returns an array of AccessLevels objects.
 		#
 		# @example 
-		#          rest_client.get_access_levels
+		#          rest_client.get_access_levels()
 		#          rest_client.get_access_levels(rest_options_object)
 		def get_access_levels(query_obj=nil)
 			uri = URI.parse(@uri + "/AccessLevels")
@@ -1254,7 +1258,7 @@ module OpenAsset
 		# @return [Array] Returns an array of Files objects.
 		#
 		# @example 
-		#          rest_client.get_files()
+		#          rest_client.get_files
 		#          rest_client.get_files(rest_options_object)
 		def get_files(query_obj=nil)
 			uri = URI.parse(@uri + "/Files")
@@ -1269,7 +1273,8 @@ module OpenAsset
 		# @return [JSON Object] HTTP response JSON object. Returns Files objects array if generate_objects flag is set
 		#
 		# FOR PROJECT UPLOADS
-		# @example rest_client.upload_file('/path/to/file', category_obj, project_obj)
+		# @example 
+		#          rest_client.upload_file('/path/to/file', category_obj, project_obj)
 		#  		   rest_client.upload_file('/path/to/file','2','10')
 		# 		   rest_client.upload_file('/path/to/file', 2, 10)
 		#          rest_client.upload_file('/path/to/file', category_obj, project_obj, true)
@@ -1278,7 +1283,8 @@ module OpenAsset
 		#
 		#
 		# FOR REFERENCE UPLOADS
-		# @example rest_client.upload_file('/path/to/file', category_obj)
+		# @example 
+		#          rest_client.upload_file('/path/to/file', category_obj)
 		#          rest_client.upload_file('/path/to/file','2')
 		#          rest_client.upload_file('/path/to/file', 2,)
 		#          rest_client.upload_file('/path/to/file', category_obj, nil, true)
@@ -1365,11 +1371,18 @@ module OpenAsset
 
 		# Replace a file in OpenAsset.
 		#
-		# @param original_file_object [Single Files Object] (Required)
+		# @param original_file_object [Single Files Object] (Required) File Object in OA 
 		# @param replacement_file_path [String] (Required)
-		# @param retain_original_filename_in_oa [Boolean] (Optional)
-		# @param generate_objects [Boolean] Return an array of Files or JSON objects in response body (Default => false)
+		# @param retain_original_filename_in_oa [Boolean] (Optional, Default => false)
+		# @param generate_objects [Boolean] Return an array of Files or JSON objects in response body (Optional, Default => false)
 		# @return [JSON object or Files Object Array ]. Returns Files objects array if generate_objects flag is set
+		#
+		# @example
+		#          rest_client.replace_file(file_obj,'C:\Users\root\Pictures\new_img.jpg')
+		#          rest_client.replace_file(file_obj,'C:\Users\root\Pictures\new_img.jpg',true,true)
+		#          rest_client.replace_file(file_obj,'C:\Users\root\Pictures\new_img.jpg',false,false)
+		#          rest_client.replace_file(file_obj,'C:\Users\root\Pictures\new_img.jpg',false,true)
+		#          rest_client.replace_file(file_obj,'C:\Users\root\Pictures\new_img.jpg',true,false)
 		def replace_file(original_file_object=nil, replacement_file_path='', retain_original_filename_in_oa=false, generate_objects=false) 
 			file_object = (original_file_object.is_a?(Array)) ? original_file_object.first : original_file_object
 			uri = URI.parse(@uri + "/Files")
@@ -1464,9 +1477,15 @@ module OpenAsset
 		# 					Defaults to '1' => original image size id)
 		# @param download_location [String] (Default: Creates folder called Rest_Downloads in the current directory.)
 		# @return [nil].
+		#
+		# @example
+		#          rest_client.download_files(File_object)
+		#          rest_client.download_files(File_objects_array)
+		#          rest_client.download_files(File_object,'C:\Folder\Path\Specified')
+		#          rest_client.download_files(File_objects_array,'C:\Folder\Path\Specified')
 		def download_files(files=nil,image_size='1',download_location='./Rest_Downloads')
-			#Put single files objects in an array for easy downloading with 
-			#the Array class' DownloadHelper module
+			# Put single files objects in an array for easy downloading with 
+			# the Array class' DownloadHelper module
 			files = [files]  unless files.is_a?(Array)
 
 			files.download(image_size,download_location)
@@ -1517,8 +1536,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [JSON object] HTTP response JSON object.
 		#
-		# @example rest_client.get_groups()
-		# @example rest_client.get_groups(rest_options_object)
+		# @example 
+		#          rest_client.get_groups()
+		#          rest_client.get_groups(rest_options_object)
 		def get_groups(query_obj=nil)
 			uri = URI.parse(@uri + "/Groups")
 			results = get(uri,query_obj)
@@ -1535,8 +1555,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Keywords objects.
 		#
-		# @example rest_client.get_keywords()
-		# @example rest_client.get_keywords(rest_options_object)
+		# @example 
+		#          rest_client.get_keywords()
+		#          rest_client.get_keywords(rest_options_object)
 		def get_keywords(query_obj=nil)
 			uri = URI.parse(@uri + "/Keywords")
 			results = get(uri,query_obj)
@@ -1604,8 +1625,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of KeywordCategories objects.
 		#
-		# @example rest_client.get_keyword_categories()
-		# @example rest_client.get_keyword_categories(rest_options_object)
+		# @example 
+		#          rest_client.get_keyword_categories()
+		#          rest_client.get_keyword_categories(rest_options_object)
 		def get_keyword_categories(query_obj=nil)
 			uri = URI.parse(@uri + "/KeywordCategories")
 			results = get(uri,query_obj)
@@ -1673,8 +1695,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Photographers objects.
 		#
-		# @example rest_client.get_photographers()
-		# @example rest_client.get_photographers(rest_options_object)
+		# @example 
+		#          rest_client.get_photographers()
+		#          rest_client.get_photographers(rest_options_object)
 		def get_photographers(query_obj=nil)
 			uri = URI.parse(@uri + "/Photographers")
 			results = get(uri,query_obj)
@@ -1725,8 +1748,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Projects objects.
 		#
-		# @example rest_client.get_projects()
-		# @example rest_client.get_projects(rest_options_object)
+		# @example 
+		#          rest_client.get_projects()
+		#          rest_client.get_projects(rest_options_object)
 		def get_projects(query_obj=nil)
 			uri = URI.parse(@uri + "/Projects")
 			results = get(uri,query_obj)
@@ -1795,8 +1819,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of ProjectKeywords objects.
 		#
-		# @example rest_client.get_project_keywords()
-		# @example rest_client.get_project_keywords(rest_options_object)
+		# @example 
+		#          rest_client.get_project_keywords()
+		#          rest_client.get_project_keywords(rest_options_object)
 		def get_project_keywords(query_obj=nil)
 			uri = URI.parse(@uri + "/ProjectKeywords")
 			results = get(uri,query_obj)
@@ -1864,8 +1889,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of ProjectKeywordCategories objects.
 		#
-		# @example rest_client.get_project_keyword_categories()
-		# @example rest_client.get_project_keyword_categories(rest_options_object)
+		# @example 
+		#          rest_client.get_project_keyword_categories()
+		#          rest_client.get_project_keyword_categories(rest_options_object)
 		def get_project_keyword_categories(query_obj=nil)
 			uri = URI.parse(@uri + "/ProjectKeywordCategories")
 			results = get(uri,query_obj)
@@ -1933,8 +1959,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Searches objects.
 		#
-		# @example rest_client.get_searches()
-		# @example rest_client.get_searches(rest_options_object)
+		# @example 
+		#          rest_client.get_searches()
+		#          rest_client.get_searches(rest_options_object)
 		def get_searches(query_obj=nil)
 			uri = URI.parse(@uri + "/Searches")
 			results = get(uri,query_obj)
@@ -1985,8 +2012,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Sizes objects.
 		#
-		# @example rest_client.get_image_sizes()
-		# @example rest_client.get_image_sizes(rest_options_object)
+		# @example 
+		#          rest_client.get_image_sizes()
+		#          rest_client.get_image_sizes(rest_options_object)
 		def get_image_sizes(query_obj=nil)
 			uri = URI.parse(@uri + "/Sizes")
 			results = get(uri,query_obj)
@@ -2054,8 +2082,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of TextRewrites objects.
 		#
-		# @example rest_client.get_text_rewrites()
-		# @example rest_client.get_text_rewrites(rest_options_object)
+		# @example 
+		#          rest_client.get_text_rewrites()
+		#          rest_client.get_text_rewrites(rest_options_object)
 		def get_text_rewrites(query_obj=nil)
 			uri = URI.parse(@uri + "/TextRewrites")
 			results = get(uri,query_obj)
@@ -2072,8 +2101,9 @@ module OpenAsset
 		# @param query_obj[RestOptions Object] Specify query parameters string (Optional)
 		# @return [Array] Array of Users objects.
 		#
-		# @example rest_client.get_users()
-		# @example rest_client.get_users(rest_options_object)
+		# @example 
+		#          rest_client.get_users()
+		#          rest_client.get_users(rest_options_object)
 		def get_users(query_obj=nil)
 			uri = URI.parse(@uri + "/Users")
 			results = get(uri,query_obj)
@@ -2091,10 +2121,11 @@ module OpenAsset
 		# @param keywords [Single Keywords Object, Array of Keywords Objects] (Required)
 		# @return [JSON object] HTTP response JSON object.
 		#
-		# @example rest_client.file_add_keywords(files_object,keywords_object)
-		# @example rest_client.file_add_keywords(files_objects_array,keywords_objects_array)
-		# @example rest_client.file_add_keywords(files_object,keywords_objects_array)
-		# @example rest_client.file_add_keywords(files_objects_array,project_keywords_object)
+		# @example 
+		#          rest_client.file_add_keywords(files_object,keywords_object)
+		#          rest_client.file_add_keywords(files_objects_array,keywords_objects_array)
+		#          rest_client.file_add_keywords(files_object,keywords_objects_array)
+		#          rest_client.file_add_keywords(files_objects_array,project_keywords_object)
 		def file_add_keywords(files=nil,keywords=nil)
 		
 			#1.validate class types
@@ -2154,10 +2185,11 @@ module OpenAsset
 		# @param proj_keywords [Single ProjectKeywords Object, Array of ProjectKeywords Objects] (Required)
 		# @return [JSON object] HTTP response JSON object.
 		#
-		# @example rest_client.project_add_keywords(projects_object,project_keywords_object)
-		# @example rest_client.project_add_keywords(projects_objects_array,project_keywords_objects_array)
-		# @example rest_client.project_add_keywords(projects_object,project_keywords_objects_array)
-		# @example rest_client.project_add_keywords(projects_objects_array,project_keywords_object)
+		# @example 
+		#          rest_client.project_add_keywords(projects_object,project_keywords_object)
+		#          rest_client.project_add_keywords(projects_objects_array,project_keywords_objects_array)
+		#          rest_client.project_add_keywords(projects_object,project_keywords_objects_array)
+		#          rest_client.project_add_keywords(projects_objects_array,project_keywords_object)
 		def project_add_keywords(projects=nil,proj_keywords=nil)
 			
 			#1.validate class types
@@ -2223,7 +2255,8 @@ module OpenAsset
 		# @param value [String, Integer, Float] (Required)
 		# @return [JSON object] HTTP response JSON object.
 		#
-		# @example rest_client.file_add_field_data(files_object,fields_object,'data to be inserted')
+		# @example 
+		#          rest_client.file_add_field_data(files_object,fields_object,'data to be inserted')
 		def file_add_field_data(file=nil,field=nil,value=nil)
 
 			#validate class types
@@ -2432,7 +2465,8 @@ module OpenAsset
 		# @param value [String, Integer, Float] (Required)
 		# @return [JSON object] HTTP response JSON object.
 		#
-		# @example rest_client.project_add_field_data(projects_object,fields_object,'data to be inserted')
+		# @example 
+		#          rest_client.project_add_field_data(projects_object,fields_object,'data to be inserted')
 		def project_add_field_data(project=nil,field=nil,value=nil)
 
 			#validate class types
@@ -2647,10 +2681,11 @@ module OpenAsset
 		# @param target_keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
 		# @param source_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
-		# @param batch_size [Integer] (Default => 100)
+		# @param batch_size [Integer] (Default => 200)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';',250)
+		# @example 
+		#          rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album("myalbum","keyword_category_name","file_field_name",';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album("9","1","7",';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album(9,1,7,';',250)
@@ -2951,10 +2986,11 @@ module OpenAsset
 		# @param target_keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
 		# @param source_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
-		# @param batch_size [Integer] (Default => 100)
+		# @param batch_size [Integer] (Default => 200)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_file_field_data_to_keywords_by_album(Categories object,KeywordCategories object,Fields object,';',250)
+		# @example 
+		#          rest_client.move_file_field_data_to_keywords_by_album(Categories object,KeywordCategories object,Fields object,';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album("Projects","keyword_category_name","file_field_name",';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album("9","1","7",';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album(9,1,7,';',250)
@@ -3180,7 +3216,8 @@ module OpenAsset
 		# @param batch_size [Integer] (Default => 100)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_file_field_data_to_keywords_by_album(Projects object,KeywordCategories object,Fields object,';',250)
+		# @example 
+		#          rest_client.move_file_field_data_to_keywords_by_album(Projects object,KeywordCategories object,Fields object,';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album("MyProject","keyword category name","file field name",';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album("9","1","7",';',250)
 		#          rest_client.move_file_field_data_to_keywords_by_album(9,1,7,';',250)
@@ -3485,10 +3522,11 @@ module OpenAsset
 		# @param target_project_keyword_category [ProjectKeywordCategories Object, String keyword category name, String id, Integer id] (Required)
 		# @param project_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
-		# @param batch_size [Integer] (Default => 100)
+		# @param batch_size [Integer] (Default => 200)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_project_field_data_to_keywords(ProjectKeywordCategories object,Fields object,';',250)
+		# @example 
+		#          rest_client.move_project_field_data_to_keywords(ProjectKeywordCategories object,Fields object,';',250)
 		#          rest_client.move_project_field_data_to_keywords("project keyword category name","project field name",';',250)
 		#          rest_client.move_project_field_data_to_keywords("9","17",';',250)
 		#          rest_client.move_project_field_data_to_keywords(9,17,';',250)
@@ -3805,16 +3843,17 @@ module OpenAsset
 
 		end
 
-		# Move project keywords to field (built-in or custom) Singleline of Multiline project fields ONLY.
+		# Move project keywords to field (built-in or custom) Excludes Date and On/Off Switch field types.
 		#
-		# @param target_project_keyword_category [ProjectKeywordCategories Object, Fields object, String id, Integer id] (Required)
-		# @param project_field [Fields Object, String field name, String id, Integer id] (Required)
+		# @param source_project_keyword_category [ProjectKeywordCategories Object, Fields object, String id, Integer id] (Required)
+		# @param target_project_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
 		# @param insert_mode [String] append or overwrite
-		# @param batch_size [Integer] (Default => 100)
+		# @param batch_size [Integer] (Default => 200)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_project_keywords_to_field(ProjectKeywordCategories object,Fields object,';','append',250)
+		# @example 
+		#          rest_client.move_project_keywords_to_field(ProjectKeywordCategories object,Fields object,';','append',250)
 		#		   rest_client.move_project_keywords_to_field(ProjectKeywordCategories object,Fields object,';','overwrite',250)
 		#          rest_client.move_project_keywords_to_field("project keyword category name","project field name",';','append',250)
 		#          rest_client.move_project_keywords_to_field("project keyword category name","project field name",';','overwrite',250)
@@ -4044,17 +4083,18 @@ module OpenAsset
 
 		end
 
-		# Move file keywords to field (built-in or custom) BY ALBUM - Singleline of Multiline project fields ONLY.
+		# Move file keywords to field (built-in or custom) BY ALBUM - Excludes Date and On/Off Switch field types.
 		#
-		# @param album [Albums object, String album name, String id, Integer id] (Required)]
+		# @param album [Albums object, String album name, String id, Integer id] (Required)
 		# @param keyword_category [KeywordCategories Object, String keyword category name (PREFERRED INPUT), String id, Integer id] (Required)
 		# @param target_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
 		# @param insert_mode [String] append or overwrite
-		# @param batch_size [Integer] (Default => 100)
+		# @param batch_size [Integer] (Default => 200)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','append',250) 
+		# @example 
+		#          rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','append',250) 
 		#		   rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','overwrite',250) 
 		#          rest_client.move_file_keywords_to_field_by_album("album name","keyword category name","project field name",';','append',250)
 		#          rest_client.move_file_keywords_to_field_by_album("album name","keyword category name","project field name",';','overwrite',250)
@@ -4199,17 +4239,18 @@ module OpenAsset
 			
 		end
 
-		# Move file keywords to field (built-in or custom) BY PROJECT - Singleline of Multiline project fields ONLY.
+		# Move file keywords to field (built-in or custom) BY PROJECT - Excludes Date and On/Off Switch field types.
 		#
 		# @param project [Projects object, String project name, String id, Integer id] (Required)]
 		# @param keyword_category [KeywordCategories Object, String keyword category name (PREFERRED INPUT), String id, Integer id] (Required)
 		# @param target_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
 		# @param insert_mode [String] append or overwrite
-		# @param batch_size [Integer] (Default => 100)
+		# @param batch_size [Integer] (Default => 200)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_file_keywords_to_field_by_project(Projects object,KeywordCategories object,Fields object,';','append',250)
+		# @example 
+		#          rest_client.move_file_keywords_to_field_by_project(Projects object,KeywordCategories object,Fields object,';','append',250)
 		#		   rest_client.move_file_keywords_to_field_by_project(Projects object,KeywordCategories object,Fields object,';','overwrite',250)
 		#          rest_client.move_file_keywords_to_field_by_project("project name","keyword category name","project field name",';','append',250)
 		#          rest_client.move_file_keywords_to_field_by_project("project name","keyword category name","project field name",';','overwrite',250)
@@ -4354,17 +4395,18 @@ module OpenAsset
 
 		end
 
-		# Move file keywords to field (built-in or custom) BY CATEGORY - Singleline of Multiline project fields ONLY.
+		# Move file keywords to field (built-in or custom) BY CATEGORY - Excludes Date and On/Off Switch field types.
 		#
-		# @param project [Projects object, String project name, String id, Integer id] (Required)]
+		# @param category [Categories object, String category name, String id, Integer id] (Required)]
 		# @param keyword_category [KeywordCategories Object, String keyword category name, String id, Integer id] (Required)
 		# @param target_field [Fields Object, String field name, String id, Integer id] (Required)
 		# @param field_separator [String] (Required)
 		# @param insert_mode [String] append or overwrite
-		# @param batch_size [Integer] (Default => 100)
+		# @param batch_size [Integer] (Default => 200)
 		# @return [nil] nil.
 		#
-		# @example rest_client.move_file_keywords_to_field_by_category(Categories object,KeywordCategories object,Fields object,';','append',250)
+		# @example 
+		#          rest_client.move_file_keywords_to_field_by_category(Categories object,KeywordCategories object,Fields object,';','append',250)
 		#		   rest_client.move_file_keywords_to_field_by_category(Categories object,ProjectKeywordCategories object,Fields object,';','overwrite',250)
 		#          rest_client.move_file_keywords_to_field_by_category("category name","keyword category name","project field name",';','append',250)
 		#          rest_client.move_file_keywords_to_field_by_category("category name","keyword category name","project field name",';','overwrite',250)
@@ -4507,5 +4549,6 @@ module OpenAsset
 			
 		end
 	end
+	
 end
 

@@ -20,11 +20,16 @@ class Files
 
 	# Creates an Files object
 	#
-	# @param data [Hash, nil] Takes a JSON object/Hash or no argument 
+	# @param args [Hash, Argument list, nil] Takes a JSON object/Hash or no argument 
 	# @return [Files object]
 	#
 	# @example 
-	#         file = Files.new
+	#          file = Files.new
+	#          file = Files.new(cat_id,'imagename.jpg')
+	#          file = Files.new(cat_id,'imagename.jpg',proj_id)
+	#          file = Files.new(cat_id,'imagename.jpg',proj_id,album_id)
+	#          file = Files.new(cat_id,'imagename.jpg',proj_id,album_id,'img.jpg')
+	#          file = Files.new(cat_id,'imagename.jpg',proj_id,album_id,'img.jpg,'90')
 	def initialize(*args)
 		json_obj = nil
 
@@ -174,13 +179,13 @@ class Files
 
 	# Retrieves the file path for specified image size.
 	#
-	# @param seach_parameter [String, Integer] Takes image size id or postfix string like 'medium'
+	# @param search_parameter [String, Integer] Takes image size id or postfix string like 'medium'
 	#                              Defaults to id of 1 which provides path to original image size
 	# @return [String, false] Returns image download path or empty string when error is encountered.
 	#
 	# @example 
-	#         file_obj.get_image_size_file_path('1')
-	#		  file_obj.get_image_size_file_path('medium')
+	#          file_obj.get_image_size_file_path('1')
+	#		   file_obj.get_image_size_file_path('medium')
 	def get_image_size_file_path(search_parameter='1') #Always returns the original by default
 		if (search_parameter.is_a?(String) && search_parameter.to_i > 0) || search_parameter.is_a?(Integer)
 			#Look for the nested image size containing the id passed as the search_parameter

@@ -12,7 +12,7 @@ class Fields
 
 	# Creates an Fields object
 	#
-	# @param data [Hash, nil] Takes a JSON object/Hash or no argument 
+	# @param args [Hash, nil] Takes a JSON object/Hash or no argument 
 	# @return [Fields object]
 	#
 	# @example 
