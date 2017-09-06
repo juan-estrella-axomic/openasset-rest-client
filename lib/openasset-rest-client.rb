@@ -83,7 +83,7 @@ module OpenAsset
 					if container_found.length > 1
 						abort("Error: Multiple #{scope} found named #{container.inspect}. Specify an id instead.")
 					end
-					abort("Error: Album named #{container.inspect} not found in OpenAsset. Aborting") unless container_found
+					abort("Error: Album named #{container.inspect} not found in OpenAsset. Aborting") if container_found.empty?
 					container_found = container_found.first
 				else
 					abort("Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
@@ -92,7 +92,7 @@ module OpenAsset
 
 				# Get files in the album
 				unless container_found && !container_found.files.empty?
-					warn "Error: Album #{container_found.name} is empty"
+					warn "Error: Album #{container_found.name.inspect} is empty"
 					return
 				end
 
@@ -112,7 +112,7 @@ module OpenAsset
 					if container_found.length > 1
 						abort("Error: Multiple #{scope} found named #{container.inspect}. Specify an id instead.")
 					end
-					abort("Error: Project named #{container.inspect} not found in OpenAsset. Aborting") unless container_found
+					abort("Error: Project named #{container.inspect} not found in OpenAsset. Aborting") if container_found.empty?
 					container_found = container_found.first
 				else
 					abort("Argument Error: Expected a Projects object, Project name, or Project id for the first argument in #{__callee__}" +
@@ -125,9 +125,9 @@ module OpenAsset
 					op.add_option('id',container.id)
 					container_found = get_categories(op).first
 					abort("Error: Category id #{container.id} not found in OpenAsset. Aborting") unless container_found
-				elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
+				elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Category id
 					op.add_option('id',container)
-					container_found = get_projects(op).first
+					container_found = get_categories(op).first
 					abort("Error: Category id #{container.inspect} not found in OpenAsset. Aborting") unless container_found
 				elsif container.is_a?(String) 
 
@@ -138,7 +138,7 @@ module OpenAsset
 						abort("Error: Multiple #{scope} found named #{container.inspect}. Specify an id instead.")
 					end
 
-					abort("Error: Category named #{container.name.inspect} not found in OpenAsset. Aborting") unless container_found
+					abort("Error: Category named #{container.name.inspect} not found in OpenAsset. Aborting") if container_found.empty?
 					container_found = container_found.first
 
 				else
@@ -155,7 +155,7 @@ module OpenAsset
 				op.add_option('id',target_keyword_category.id)
 				keyword_category_found = get_keyword_categories(op).first
 
-				abort("Error: File Keyword Category id \"#{target_keyword_category.id}\" not found in OpenAsset. Aborting") unless keyword_category_found
+				abort("Error: FILE Keyword Category id \"#{target_keyword_category.id}\" not found in OpenAsset. Aborting") unless keyword_category_found
 
 			elsif (target_keyword_category.is_a?(String) && 
 				   target_keyword_category.to_i > 0) || 
@@ -164,22 +164,23 @@ module OpenAsset
 				op.add_option('id',target_keyword_category)
 				keyword_category_found = get_keyword_categories(op).first
 
-				abort("Error: File Keyword Category id \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless keyword_category_found
+				abort("Error: FILE Keyword Category id \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless keyword_category_found
 
 			elsif target_keyword_category.is_a?(String) # Keyword category name
 
 				op.add_option('name',target_keyword_category)
 				op.add_option('textMatching','exact')
 
-				keyword_category_found = get_keyword_categories(op)		
-				abort("Error: File Keyword Category name \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless keyword_category_found
+				results = get_keyword_categories(op)	
+				
+				abort("Error: FILE Keyword Category \"#{target_keyword_category}\" not found in OpenAsset. Aborting") if results.empty?
 
-				if keyword_category_found.length > 1 && allow_mutiple_results == false
+				if results.length > 1 && allow_mutiple_results == false
 					abort("Error: Multiple File keyword categories found with name => #{target_keyword_category.inspect}. Specify an id instead.")
-				elsif keyword_category_found.length > 1 && allow_mutiple_results == true
-					keyword_category_found = keyword_category_found
+				elsif results.length > 1 && allow_mutiple_results == true
+					keyword_category_found = results
 				else
-					keyword_category_found = keyword_category_found.first
+					keyword_category_found = results.first
 				end
 			
 			else
@@ -207,9 +208,14 @@ module OpenAsset
 
 				op.add_option('name',source_field)
 				op.add_option('textMatching','exact')
-				source_field_found = get_fields(op).first
-				abort("Error: Field named #{source_field.inspect} not found in OpenAsset. Aborting") unless source_field_found
+				results = get_fields(op)
+				
+				if results.length > 1
+					abort("Error: Multiple Fields found named #{source_field.inspect}. Specify an id instead.")
+				end
 
+				abort("Error: Field named #{source_field.inspect} not found in OpenAsset. Aborting") if results.empty?
+				source_field_found = results.first
 			else
 
 				abort("Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
@@ -220,7 +226,7 @@ module OpenAsset
 
 			op.clear
 
-			unless field_separator.is_a?(String)
+			unless field_separator.is_a?(String) && !field_separator.nil?
 				abort("Argument Error: Expected a string value for the fourth argument \"field_separator\"." +
 						"\n\tInstead got #{field_separator.class}.")
 			end
@@ -4094,13 +4100,13 @@ module OpenAsset
 			limit                         = batch_size.to_i.abs 
 			op                            = RestOptions.new
 
-			# Validate insert mode, separator, and warn user of restricted field type
-			if RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
+			# Validate insert mode and warn user of restricted field type
+			if RESTRICTED_LIST_FIELD_TYPES.include?(target_field_found.field_display_type)
 				answer = nil
 				error  = "\nInvalid input. Please enter \"yes\" or \"no\".\n> "
 				message = "Warning: You are inserting keywords into a restricted field type. " +
 					      "\n\t Project keywords are sorted in alphabetical order. " +
-					      "\n\t All project keywords will be created as options but only the first one will be displayed in the field." +
+					      "\n\t All file keywords will be created as options but only the first one will be displayed in the field." +
 						  "\nContinue? (Yes/no)\n> "
 
 				print message
@@ -4119,20 +4125,10 @@ module OpenAsset
 			
 			end
 
-		    if field_separator.nil?
-		    	abort("Error: Must specify field separator.")
-		    end
-
 		    unless ['append','overwrite'].include?(insert_mode.to_s)
 				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
 				      "Instead got #{insert_mode.inspect}")
 		    end
-
-		    abort('Invalid batch size. Specify a positive numeric value or use default value of 100') if batch_size.zero?
-			
-			
-			# Get file ids
-			file_ids = album_found.files.map { |obj| obj.id.to_s }
 			
 			# Get keywords
 			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_categories_found.first.name.inspect}."
@@ -4153,6 +4149,10 @@ module OpenAsset
 			file_keyword_ids = keywords.map(&:id)
 
 			op.clear
+
+			# Get file ids
+			puts "[INFO] Retrieving file ids in album #{album_found.name.inspect}."
+			file_ids = album_found.files.map { |obj| obj.id.to_s }
 
 			puts "[INFO] Calculating batch size."
 			total_file_count = file_ids.length
@@ -4237,6 +4237,7 @@ module OpenAsset
 			project_found                 = args.container
 			target_field_found            = args.source_field
 
+			file_keyword_category_ids     = nil
 			built_in                      = nil
 			file_ids                      = nil
 			keywords                      = []
@@ -4246,30 +4247,52 @@ module OpenAsset
 			offset                        = 0
 			iterations                    = 0
 			limit                         = batch_size.to_i.abs
-			insert_mode                   = insert_mode
 			op                            = RestOptions.new
 
-			# Valiate insert mode
-			unless insert_mode == 'append' || insert_mode == 'overwrite'
-				error = "Invalid insert mode value for fifth argument in #{__callee__}" +
-						"\n\tExpected \"append\" or \"overwrite\"" +
-						"\n\tInstead got => #{insert_mode.inspect}."
-				abort(error)
+			# Validate insert mode and warn user of restricted field type
+			if RESTRICTED_LIST_FIELD_TYPES.include?(target_field_found.field_display_type)
+				answer = nil
+				error  = "\nInvalid input. Please enter \"yes\" or \"no\".\n> "
+				message = "Warning: You are inserting keywords into a restricted field type. " +
+					      "\n\t Project keywords are sorted in alphabetical order. " +
+					      "\n\t All file keywords will be created as options but only the first one will be displayed in the field." +
+						  "\nContinue? (Yes/no)\n> "
+
+				print message
+
+				while answer != 'yes' && answer != 'no'
+
+					print error unless answer.nil?
+
+					answer = gets.chomp.to_s.downcase
+
+					abort("You entered #{answer.inspect}. Exiting.\n\n") if answer.downcase == 'no' || answer == 'n'
+
+					break if answer == 'yes' || answer == 'y'
+
+				end		  
+			
 			end
+
+		    unless ['append','overwrite'].include?(insert_mode.to_s)
+				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
+				      "Instead got #{insert_mode.inspect}")
+		    end
 
 			# Check the source_field field type
 			built_in = (target_field_found.built_in == '1') ? true : false
 
 			# Get keywords
 			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_categories_found.first.name.inspect}."
+
+			file_keyword_category_ids = file_keyword_categories_found.map(&:id).join(',')
 			op.add_option('limit','0')
-			op.add_option('keyword_category_id',"#{file_keyword_category_found.id}")
+			op.add_option('keyword_category_id',file_keyword_category_ids)
 
 			keywords = get_keywords(op)
 
 			if keywords.empty?
-				error = "No keywords found in keyword category => #{file_keyword_category_found.name.inspect} " +
-				        "with id #{file_keyword_category_found.id.inspect}"
+				error = "No keywords found in keyword category => #{file_keyword_categories_found.first.name.inspect}."	        
 				abort(error)
 			end
 
@@ -4362,13 +4385,14 @@ module OpenAsset
 													  keyword_category,
 													  target_field,
 													  field_separator,
-													  batch_size)
+													  batch_size,
+													  false)
 
 			category_found              = args.container
 			file_keyword_category_found = args.target_keyword_category
 			target_field_found          = args.source_field
 
-			built_in                     = nil
+			built_in                    = nil
 			file_ids                    = nil
 			keywords                    = []
 			files                       = []
@@ -4377,17 +4401,37 @@ module OpenAsset
 			offset                      = 0
 			iterations                  = 0
 			limit                       = batch_size.to_i.abs
-			insert_mode                 = insert_mode.downcase
-			nested_field                = Struct.new(:id, :values)
 			op                          = RestOptions.new
 
-			# Valiate insert mode
-			unless insert_mode == 'append' || insert_mode == 'overwrite'
-				error = "Invalid insert mode value for fifth argument in #{__callee__}" +
-						"\n\tExpected \"append\" or \"overwrite\"" +
-						"\n\tInstead got => #{insert_mode.inspect}."
-				abort(error)
+			# Validate insert mode and warn user of restricted field type
+			if RESTRICTED_LIST_FIELD_TYPES.include?(target_field_found.field_display_type)
+				answer = nil
+				error  = "\nInvalid input. Please enter \"yes\" or \"no\".\n> "
+				message = "Warning: You are inserting keywords into a restricted field type. " +
+					      "\n\t Project keywords are sorted in alphabetical order. " +
+					      "\n\t All file keywords will be created as options but only the first one will be displayed in the field." +
+						  "\nContinue? (Yes/no)\n> "
+
+				print message
+
+				while answer != 'yes' && answer != 'no'
+
+					print error unless answer.nil?
+
+					answer = gets.chomp.to_s.downcase
+
+					abort("You entered #{answer.inspect}. Exiting.\n\n") if answer.downcase == 'no' || answer == 'n'
+
+					break if answer == 'yes' || answer == 'y'
+
+				end		  
+			
 			end
+
+		    unless ['append','overwrite'].include?(insert_mode.to_s)
+				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
+				      "Instead got #{insert_mode.inspect}")
+		    end
 
 			# Check the source_field field type
 			built_in = (target_field_found.built_in == '1') ? true : false
@@ -4408,7 +4452,7 @@ module OpenAsset
 			op.clear
 			
 			# Get file ids
-			puts "[INFO] Retrieving file ids in project => #{project_found.name.inspect}."
+			puts "[INFO] Retrieving file ids in category => #{category_found.name.inspect}."
 			op.add_option('limit','0')
 			op.add_option('displayFields','id')
 			op.add_option('category_id',"#{category_found.id}") # Returns files in specified project
@@ -4450,81 +4494,7 @@ module OpenAsset
 				files = get_files(op)
 
 				# Move the file keywords to specified field
-				files.each do |file|
-					
-					next if file.keywords.empty?
-
-					field_data_to_insert = []
-					
-					file.keywords.each do |keyword|
-
-						field_data_to_insert.push(keyword.name.strip)
-
-					end
-
-					if built_in # Builtin field
-
-						if insert_mode == 'append'
-
-							field_name = target_field_found.name.downcase.gsub(' ','_')
-							#puts "Field name: #{field_name}"
-							data = file.instance_variable_get("#{field_name}")
-
-							if data.nil? || data.to_s.strip == ''
-								data = field_data_to_insert.join(field_separator)
-							else
-								data = data.to_s.strip + field_separator + field_data_to_insert.join(field_separator)
-							end
-
-							file.instance_variable_set("@#{field_name}",data)
-
-							puts "[INFO] Appending #{data.inspect} into #{target_field_found.name.inspect} field" +
-							"\n\tFor file => #{file.filename.inspect}."
-
-						elsif insert_mode == 'overwrite'
-
-							field_name = target_field_found.name.downcase.gsub(' ','_')
-							#puts "Field name: #{field_name}"
-							data = field_data_to_insert.join(field_separator)
-
-							file.instance_variable_set("@#{field_name}",data)
-
-							puts "[INFO] Inserting #{data.inspect} into #{target_field_found.name.inspect} field" +
-									"\n\tFor file => #{file.filename.inspect}."
-						end
-
-					else   # Custom field
-	
-						# Check if the field has data in it
-						field_index = file.fields.find_index { |obj| obj.id.to_s == target_field_found.id.to_s }
-
-						if field_index && insert_mode == 'append' # Add to existing data
-
-							data = file.fields[field_index].value
-
-							if data.nil? || data.to_s.strip == ''
-								data = field_data_to_insert.join(field_separator)
-								file.fields[field_index].value = data
-							else
-								data = data.to_s + field_separator + field_data_to_insert.join(field_separator)
-							end
-
-						elsif field_index && insert_mode == 'overwrite' # Overwrite existing data
-
-							data = field_data_to_insert.join(field_separator)
-							file.fields[field_index].value = data
-
-						else # No Data in field
-
-							data = field_data_to_insert.join(field_separator)
-							nested_field_obj = nested_field.new(target_field_found.id, [data])
-							file.fields.push(nested_field_obj)
-
-						end
-						
-					end
-						
-				end
+				processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
 
 				# Perform file update
 				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
