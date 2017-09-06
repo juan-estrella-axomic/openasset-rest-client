@@ -97,7 +97,7 @@ class Authenticator
 			warn "Warning: Redirected to #{location}"
 			#return false
 		elsif response.kind_of? Net::HTTPUnauthorized 
-			warn "Error: #{response.message}: invalid credentials.\n"
+			warn "Error: #{response.message}: invalid credentials.\n\n"
 			create_token()
 		elsif response.kind_of? Net::HTTPServerError 
 			warn "Error: #{response.message}: try again later."
