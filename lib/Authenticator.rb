@@ -47,7 +47,10 @@ class Authenticator
 	end
 
 	
-	def get_credentials
+	def get_credentials(attempts=0)
+
+		abort("Too many failed attempts.") if attempts == 3
+
 		u = ''
 		p = ''
 		while u == '' || p == ''
@@ -74,9 +77,9 @@ class Authenticator
 		end		
 	end
 
-	def create_token #Runs FIRST
+	def create_token(attempts=0) #Runs FIRST
 		
-		get_credentials()
+		get_credentials(attempts)
 		uri = URI.parse(@token_endpoint)
 		token_creation_data = '{"name" : "ruby-integration"}'
 
@@ -98,7 +101,7 @@ class Authenticator
 			#return false
 		elsif response.kind_of? Net::HTTPUnauthorized 
 			warn "Error: #{response.message}: invalid credentials.\n\n"
-			create_token()
+			create_token(attempts + 1)
 		elsif response.kind_of? Net::HTTPServerError 
 			warn "Error: #{response.message}: try again later."
 			exit
