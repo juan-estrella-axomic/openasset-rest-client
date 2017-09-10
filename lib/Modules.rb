@@ -135,6 +135,7 @@ module DownloadHelper
             puts "Creating Directory => #{download_location}."
             download_location = download_location + '_' + DateTime.now.strftime("%Y%m%d%H%M%S")
             FileUtils::mkdir_p download_location
+            FileUtils.chmod(0777, download_location, :verbose => false)
         end
 
         if self.empty?

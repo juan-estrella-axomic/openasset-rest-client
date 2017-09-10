@@ -1332,6 +1332,8 @@ module OpenAsset
 			boundary = (0...50).map { (65 + rand(26)).chr }.join #genererate a random str thats 50 char long
 			body = Array.new
 
+			puts "Uploading File: => {\"original_filename\":\"#{File.basename(file)}\",\"category_id\":\"#{category_id}\",\"project_id\":\"#{project_id}\"}"
+
 			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Post.new(uri.request_uri)
 				
