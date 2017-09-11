@@ -745,7 +745,7 @@ module OpenAsset
 				
 			end
 			
-			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+			response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
 				
 				#Account for 2048 character limit with GET requests
 				options_str_len = options.get_options.length
@@ -798,7 +798,7 @@ module OpenAsset
 				return false
 			end
 
-			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+			response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Post.new(uri.request_uri)
 				if @session
 					request.add_field('X-SessionKey',@session)
@@ -842,7 +842,7 @@ module OpenAsset
 			end
 
 			require 'pp'
-			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+			response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Put.new(uri.request_uri)
 				if @session
 					request.add_field('X-SessionKey',@session)
@@ -882,7 +882,7 @@ module OpenAsset
 			unless json_object
 				return
 			end
-			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+			response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Delete.new(uri.request_uri) #e.g. when called in keywords => /keywords/id
 				if @session
 					request.add_field('X-SessionKey',@session)
