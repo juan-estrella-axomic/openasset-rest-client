@@ -10,6 +10,7 @@ require 'base64'
 require 'mime/types'
 require 'fileutils'
 require 'io/console'
+require 'logger'
 require 'yaml'  #for storing data locally
 
 
