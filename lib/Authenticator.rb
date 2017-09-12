@@ -10,7 +10,6 @@ require 'base64'
 require 'mime/types'
 require 'fileutils'
 require 'io/console'
-require 'logger'
 require 'yaml'  #for storing data locally
 
 
@@ -82,7 +81,7 @@ class Authenticator
 		
 		get_credentials(attempts)
 		uri = URI.parse(@token_endpoint)
-		token_creation_data = '{"name" : "ruby-integration"}'
+		token_creation_data = '{"name" : "rest-client-r"}'
 
 		response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
 			request = Net::HTTP::Post.new(uri.request_uri,'Content-Type' => 'application/json') 

@@ -5,7 +5,7 @@ require_relative 'Authenticator.rb'
 require_relative 'RestOptions.rb'
 require_relative 'Helpers.rb'
 require_relative 'Validator.rb'
-require_relative 'Logger.rb'
+require_relative 'MyLogger.rb'
 
 require 'net/http'
 
