@@ -749,11 +749,11 @@ module OpenAsset
 				
 				#Account for 2048 character limit with GET requests
 				options_str_len = options.get_options.length
-				if options_str_len > 1024
+				if options_str_len > 2048
 					request = Net::HTTP::Post.new(uri.request_uri + options.get_options)
 					request.add_field('X-Http-Method-Override','GET')
 				else
-					request = Net::HTTP::Get.new(uri.request_uri + options.get_options)
+					request = Net::HTTP::Get.new(uri.request_uri + URI.escape(options.get_options))
 				end
 
 				if @session
@@ -762,7 +762,13 @@ module OpenAsset
 					@session = @authenticator.get_session
 					request.add_field('X-SessionKey',@session) 
 				end
-				http.request(request)
+				
+				begin
+					http.request(request)
+				rescue => e
+					puts "Error: #{e.inspect}"
+					abort
+				end
 			end
 
 			unless @session == response['X-SessionKey']
