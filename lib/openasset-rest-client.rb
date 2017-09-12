@@ -4538,6 +4538,7 @@ module OpenAsset
 				msg = "No files found in album #{album_found.name.inspect} with id #{album_found.id.inspect}."
 				logger.error(msg.red)
 				abort
+			end
 
 			# Set up iterations loop
 			if total_file_count % batch_size == 0
