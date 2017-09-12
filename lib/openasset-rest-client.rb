@@ -5,6 +5,7 @@ require_relative 'Authenticator.rb'
 require_relative 'RestOptions.rb'
 require_relative 'Helpers.rb'
 require_relative 'Validator.rb'
+require_relative 'Logger.rb'
 
 require 'net/http'
 
@@ -15,6 +16,9 @@ Dir[File.join(File.dirname(__FILE__),'Nouns','*.rb')].each { |file| require_rela
 module OpenAsset
 
 	class RestClient
+
+		# Provides a globally shared singleton logger 
+		include Logging
 		
 		RESTRICTED_LIST_FIELD_TYPES   = %w[ suggestion fixedSuggestion option ]
 		NORMAL_FIELD_TYPES 		      = %w[ singleLine multiLine ]
@@ -41,9 +45,10 @@ module OpenAsset
 				if oa_uri_without_protocol =~ client_url #verify correct url format
 					client_url = "https://" + client_url #add the https protocol if one isn't provided
 				else
-					error = "Error: Invalid url! Expected http(s)://<subdomain>.openasset.com" + 
-						 "\nInstead got => #{client_url.inspect}"
-					abort(error)
+					msg = "Error: Invalid url! Expected http(s)://<subdomain>.openasset.com" + 
+							"\nInstead got => #{client_url.inspect}"
+					logger.error(msg.red)
+					abort
 				end
 			end
 			@authenticator = Authenticator::get_instance(client_url)
@@ -73,27 +78,50 @@ module OpenAsset
 				if container.is_a?(Albums) # Object
 					op.add_option('id',container.id)
 					container_found = get_albums(op).first
-					abort("Error: Album id #{album.id} not found in OpenAsset. Aborting") unless container_found
+
+					unless container_found
+						msg = "Album id #{album.id} not found in OpenAsset. Aborting."
+						logger.error(msg.red)
+						abort
+					end
+
 				elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
 					op.add_option('id',container)
 					container_found = get_albums(op).first
-					abort("Error: Album id #{album.inspect} not found in OpenAsset. Aborting") unless container_found
+
+					unless container_found
+						msg = "Album id #{album.inspect} not found in OpenAsset. Aborting"
+						logger.error(msg.red)
+						abort
+					end
+
 				elsif container.is_a?(String) # Album name
 					op.add_option('name',container)
 					container_found = get_albums(op)
+
 					if container_found.length > 1
-						abort("Error: Multiple #{scope} found named #{container.inspect}. Specify an id instead.")
+						msg = "Multiple #{scope} found named #{container.inspect}. Specify an id instead."
+						logger.error(msg.red)
+						abort
 					end
-					abort("Error: Album named #{container.inspect} not found in OpenAsset. Aborting") if container_found.empty?
+
+					if container_found.empty?
+						msg = "Album named #{container.inspect} not found in OpenAsset. Aborting"
+						logger.error(msg.red)
+						abort
+					end
 					container_found = container_found.first
 				else
-					abort("Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
-							"\n\tIntead got #{container.inspect}")
+					msg = "Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
+						  "\n\tIntead got #{container.inspect}"
+					logger.error(msg.red)
+					abort
 				end
 
 				# Get files in the album
 				unless container_found && !container_found.files.empty?
-					warn "Error: Album #{container_found.name.inspect} is empty"
+					msg = "Album #{container_found.name.inspect} is empty"
+					logger.warn(msg.yellow)
 					return
 				end
 
@@ -102,22 +130,45 @@ module OpenAsset
 				if container.is_a?(Projects) # Object
 					op.add_option('id',container.id)
 					container_found = get_projects(op).first
-					abort("Error: Project id #{container.id} not found in OpenAsset. Aborting") unless container_found
+
+					unless container_found
+						msg = "Project id #{container.id} not found in OpenAsset. Aborting."
+						logger.error(msg.red)
+						abort
+					end
+
 				elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
 					op.add_option('id',container)
 					container_found = get_projects(op).first
-					abort("Error: Project id #{container} not found in OpenAsset. Aborting") unless container_found
+
+					unless container_found
+						msg = "Project id #{container} not found in OpenAsset. Aborting."
+						logger.error(msg.red)
+						abort
+					end
+					
 				elsif container.is_a?(String) # Album name
 					op.add_option('name',container)
 					container_found = get_projects(op)
+
 					if container_found.length > 1
-						abort("Error: Multiple #{scope} found named #{container.inspect}. Specify an id instead.")
+						msg = "Multiple #{scope} found named #{container.inspect}. Specify an id instead."
+						logger.error(msg.red)
+						abort
 					end
-					abort("Error: Project named #{container.inspect} not found in OpenAsset. Aborting") if container_found.empty?
+
+					if container_found.empty?
+						msg = "Project named #{container.inspect} not found in OpenAsset. Aborting."
+						logger.error(msg.red)
+						abort
+					end
+
 					container_found = container_found.first
 				else
-					abort("Argument Error: Expected a Projects object, Project name, or Project id for the first argument in #{__callee__}" +
-							"\n\tIntead got #{container.inspect}")
+					msg = "Argument Error: Expected a Projects object, Project name, or Project id for the first argument in #{__callee__}" +
+						  "\n\tIntead got #{container.inspect}"
+					logger.error(msg.red)
+					abort
 				end
 
 			elsif scope.downcase == 'categories'
@@ -125,26 +176,47 @@ module OpenAsset
 				if container.is_a?(Categories) # Object
 					op.add_option('id',container.id)
 					container_found = get_categories(op).first
-					abort("Error: Category id #{container.id} not found in OpenAsset. Aborting") unless container_found
+
+					unless container_found
+						msg = "Category id #{container.id} not found in OpenAsset. Aborting."
+						logger.error(msg.red)
+						abort
+					end
+
 				elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Category id
 					op.add_option('id',container)
 					container_found = get_categories(op).first
-					abort("Error: Category id #{container.inspect} not found in OpenAsset. Aborting") unless container_found
-				elsif container.is_a?(String) 
+
+					unless container_found
+						msg = "Category id #{container.inspect} not found in OpenAsset. Aborting."
+						logger.error(msg.red)
+						abort
+					end
+
+				elsif container.is_a?(String) # Category name
 
 					op.add_option('name',container)
 					container_found = get_categories(op)
 
 					if container_found.length > 1
-						abort("Error: Multiple #{scope} found named #{container.inspect}. Specify an id instead.")
+						msg = "Multiple #{scope} found named #{container.inspect}. Specify an id instead."
+						logger.error(msg.red)
+						abort
 					end
 
-					abort("Error: Category named #{container.name.inspect} not found in OpenAsset. Aborting") if container_found.empty?
+					if container_found.empty?
+						msg = "Category named #{container.inspect} not found in OpenAsset. Aborting."
+						logger.error(msg.red)
+						abort
+					end
+					
 					container_found = container_found.first
 
 				else
-					abort("Argument Error: Expected a Categories object, Category name, or Category id for the first argument in #{__callee__}" +
-							"\n\tIntead got #{container.inspect}")
+					msg = "Argument Error: Expected a Categories object, Category name, or Category id for the first argument in #{__callee__}" +
+					"\n\tIntead got #{container.inspect}"
+					logger.error(msg.red)
+					abort
 				end
 
 			end
@@ -156,7 +228,11 @@ module OpenAsset
 				op.add_option('id',target_keyword_category.id)
 				keyword_category_found = get_keyword_categories(op).first
 
-				abort("Error: FILE Keyword Category id \"#{target_keyword_category.id}\" not found in OpenAsset. Aborting") unless keyword_category_found
+				unless keyword_category_found
+					msg = "FILE Keyword Category id \"#{target_keyword_category.id}\" not found in OpenAsset. Aborting."
+					logger.error(msg.red)
+					abort
+				end
 
 			elsif (target_keyword_category.is_a?(String) && 
 				   target_keyword_category.to_i > 0) || 
@@ -165,7 +241,11 @@ module OpenAsset
 				op.add_option('id',target_keyword_category)
 				keyword_category_found = get_keyword_categories(op).first
 
-				abort("Error: FILE Keyword Category id \"#{target_keyword_category}\" not found in OpenAsset. Aborting") unless keyword_category_found
+				unless keyword_category_found
+					msg = "FILE Keyword Category id \"#{target_keyword_category}\" not found in OpenAsset. Aborting."
+					logger.error(msg.red)
+					abort
+				end
 
 			elsif target_keyword_category.is_a?(String) # Keyword category name
 
@@ -174,10 +254,16 @@ module OpenAsset
 
 				results = get_keyword_categories(op)	
 				
-				abort("Error: FILE Keyword Category \"#{target_keyword_category}\" not found in OpenAsset. Aborting") if results.empty?
+				if results.empty?
+					msg = "FILE Keyword Category \"#{target_keyword_category}\" not found in OpenAsset. Aborting."
+					logger.error(msg.red)
+					abort
+				end
 
 				if results.length > 1 && allow_mutiple_results == false
-					abort("Error: Multiple File keyword categories found with name => #{target_keyword_category.inspect}. Specify an id instead.")
+					msg = "Multiple File keyword categories found with name => #{target_keyword_category.inspect}. Specify an id instead."
+					logger.error(msg.red)
+					abort
 				elsif results.length > 1 && allow_mutiple_results == true
 					keyword_category_found = results
 				else
@@ -185,10 +271,11 @@ module OpenAsset
 				end
 			
 			else
-				error = "Argument Error: Expected \n\t1.) File keyword categories object\n\t2.) File keyword " +
-				        "category name\n\t3.) File keyword category id\nfor the second argument in #{__callee__}." +
-						"\n\tIntead got #{target_keyword_category.inspect}"
-				abort(error)
+				msg = "Argument Error: Expected \n\t1.) File keyword categories object\n\t2.) File keyword " +
+				      "category name\n\t3.) File keyword category id\nfor the second argument in #{__callee__}." +
+					  "\n\tIntead got #{target_keyword_category.inspect}"
+				logger.error(msg.red)
+				abort
 			end
 
 			op.clear
@@ -197,13 +284,23 @@ module OpenAsset
 
 				op.add_option('id',source_field.id)
 				source_field_found = get_fields(op).first
-				abort("Error: Field id #{source_field.id} not found in OpenAsset. Aborting") unless source_field_found
+
+				unless source_field_found
+					msg = "Field id #{source_field.id} not found in OpenAsset. Aborting."
+					logger.error(msg.red)
+					abort
+				end
 
 			elsif (source_field.is_a?(String) && source_field.to_i > 0) || source_field.is_a?(Integer) # Field id
 
 				op.add_option('id',source_field)
 				source_field_found = get_fields(op).first
-				abort("Error: Field id #{source_field} not found in OpenAsset. Aborting") unless source_field_found
+
+				unless source_field_found
+					msg = "Field id #{source_field} not found in OpenAsset. Aborting."
+					logger.error(msg.red)
+					abort
+				end
 
 			elsif source_field.is_a?(String) # Field name
 
@@ -212,29 +309,45 @@ module OpenAsset
 				results = get_fields(op)
 				
 				if results.length > 1
-					abort("Error: Multiple Fields found named #{source_field.inspect}. Specify an id instead.")
+					msg = "Multiple Fields found named #{source_field.inspect}. Specify an id instead."
+					logger.error(msg.red)
+					abort
 				end
 
-				abort("Error: Field named #{source_field.inspect} not found in OpenAsset. Aborting") if results.empty?
+				if results.empty?
+					msg = "Field named #{source_field.inspect} not found in OpenAsset. Aborting."
+					logger.error(msg.red)
+					abort
+				end
+
 				source_field_found = results.first
 			else
-
-				abort("Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
-						"\n\tIntead got #{source_field.inspect}")
+				msg = "Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
+					  "\n\tIntead got #{source_field.inspect}"
+				logger.error(msg.red)
+				abort
 			end
 
-			abort("Error: Field is not an image field. Aborting") unless source_field_found.field_type == 'image'
+			unless source_field_found.field_type == 'image'
+				msg = "Field #{source_field_found.name.inspect} with id #{source_field_found.id.inspect} is not an image field. Aborting."
+				logger.error(msg.red)
+				abort
+			end
 
 			op.clear
 
 			unless field_separator.is_a?(String) && !field_separator.nil?
-				abort("Argument Error: Expected a string value for the fourth argument \"field_separator\"." +
-						"\n\tInstead got #{field_separator.class}.")
+				msg = "Argument Error: Expected a string value for the fourth argument \"field_separator\"." +
+					  "\n\tInstead got #{field_separator.inspect}."
+				logger.error(msg.red)
+				abort
 			end
 
 			unless batch_size.to_i > 0
-				abort("Argument Error: Expected a non zero numeric value for the fifth argument \"batch size\" in #{__callee__}." +
-						"\n\tInstead got #{batch_size.inspect}.")
+				msg = "Argument Error: Expected a non zero numeric value for the fifth argument \"batch size\" in #{__callee__}." +
+					  "\n\tInstead got #{batch_size.inspect}."
+				logger.error(msg.red)
+				abort
 			end
 
 			args = Struct.new(:container, :source_field, :target_keyword_category)
@@ -269,13 +382,19 @@ module OpenAsset
 		def get_count(object=nil,rest_option_obj=nil) #can be used to get count of other resources in the future
 			resource = (object) ? object.class.to_s : object
 			query    = (rest_option_obj) ? rest_option_obj.get_options : ''
+
 			unless Validator::NOUNS.include?(resource)
-				abort("Argument Error: Expected Nouns Object for first argument in #{__callee__}. Instead got #{resource}") 
+				msg = "Argument Error: Expected Nouns Object for first argument in #{__callee__}." +
+					  "\n\tInstead got => #{object.inspect}"
+				logger.error(msg.red)
+				abort
 			end
 
 			unless rest_option_obj.is_a?(RestOptions) || rest_option_obj == nil
-				abort("Argument Error: Expected RestOptions Object or no argument for second argument in #{__callee__}." + 
-						"\n\tInstead got => #{rest_option_obj.inspect}") 
+				msg = "Argument Error: Expected RestOptions Object or no argument for second argument in #{__callee__}." + 
+					  "\n\tInstead got => #{rest_option_obj.inspect}"
+				logger.error(msg.red)
+				abort
 			end
 
 			uri = URI.parse(@uri + '/' + resource + query)								   
@@ -307,7 +426,7 @@ module OpenAsset
 			
 			nested_field = Struct.new(:id,:values)
 			existing_field_lookup_strings = nil
-			object_type = objects.first.class.to_s.downcase.chop # Projects => project | Files => file
+			object_type = objects.first.class.to_s.chop # Projects => Project | Files => File
 
 			# Allows dynamic access to nested keywords for both files and projects
 			keyword_accessor = (objects.first.is_a?(Projects) ? '@project_' : '@') + 'keywords'
@@ -324,8 +443,6 @@ module OpenAsset
 				op.add_option('limit','0')
 				existing_field_lookup_strings = get_field_lookup_strings(field,op)
 			end
-
-			require 'pp'
 			
 			objects.each do |object|
 
@@ -362,8 +479,10 @@ module OpenAsset
 
 						object.instance_variable_set("@#{field_name}",data)
 
-						puts "[INFO] Appending #{data.inspect} into #{field.name.inspect} field" +
-						     " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+						msg = "Appending #{data.inspect} into #{field.name.inspect} field" +
+							  " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+
+						logger.info(msg.green)
 
 					elsif mode == 'overwrite'
 
@@ -373,8 +492,11 @@ module OpenAsset
 
 						object.instance_variable_set("@#{field_name}",data)
 
-						puts "[INFO] Inserting #{data.inspect} into #{field.name.inspect} field" +
-								" for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+						msg = "Inserting #{data.inspect} into #{field.name.inspect} field" +
+							  " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+						
+						logger.info(msg.green)
+
 					end
 						
 				else # Custom field
@@ -391,8 +513,10 @@ module OpenAsset
 								object.fields[index].values = 
 									[object.fields[index].values.first + field_separator + field_string]
 			
-								puts "[INFO] Appending #{field_string.inspect} into #{field.name.inspect} field" +
-										" for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+								msg = "Appending #{field_string.inspect} into #{field.name.inspect} field" +
+									  " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+
+								logger.info(msg.green)
 							
 							elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
 			
@@ -409,8 +533,10 @@ module OpenAsset
 			
 									#file_add_field_data(file,field,fk.name.to_s) # Easy but SLOW
 			
-									puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
-										 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+									msg = "Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
+										  " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+
+									logger.info(msg.green)
 			
 								end
 
@@ -419,9 +545,10 @@ module OpenAsset
 							
 							else
 			
-								error = "Error: #{object_type} keyword move operation not allowed to field display type " +
-										"#{field.field_display_type.inspect}."
-								abort(error)
+								msg = "#{object_type} keyword move operation not allowed to field display type " +
+									  "#{field.field_display_type.inspect}."
+								logger.error(msg.red)
+								abort
 			
 							end
 			
@@ -431,8 +558,10 @@ module OpenAsset
 			
 								object.fields[index].values = [field_string]
 			
-								puts "[INFO] Inserting #{field_string.inspect} into #{field.name.inspect} field" +
-									 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+								msg "Inserting #{field_string.inspect} into #{field.name.inspect} field" +
+									" for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+
+								logger.info(msg.green)
 							
 							elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
 			
@@ -452,8 +581,10 @@ module OpenAsset
 									
 									#file_add_field_data(file,field,fk.name.to_s) # Easy but SLOW
 			
-									puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
-										 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+									msg = "Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
+										  " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+
+									logger.info(msg.green)
 			
 								end
 						
@@ -461,9 +592,10 @@ module OpenAsset
 							
 							else
 			
-								error = "Error: #{object_type} keyword move operation not allowed to field display type " +
-										"#{field.field_display_type.inspect}."
-								abort(error)
+								msg = "#{object_type} keyword move operation not allowed to field display type " +
+									  "#{field.field_display_type.inspect}."
+								logger.error(msg.red)
+								abort
 			
 							end
 			
@@ -475,8 +607,10 @@ module OpenAsset
 			
 							object.fields << nested_field.new(field.id.to_s, [field_string])
 			
-							puts "[INFO] Inserting #{field_string.inspect} into #{field.name.inspect} field" +
-									" for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+							msg = "Inserting #{field_string.inspect} into #{field.name.inspect} field" +
+								  " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+
+							logger.info(msg.green)
 			
 						elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
 							
@@ -493,8 +627,10 @@ module OpenAsset
 								
 								#file_add_field_data(file,field,fk.name.to_s) # SLOWWWW
 			
-								puts "[INFO] Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
-									 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+								msg = "Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
+									  " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+
+								logger.info(msg.green)
 			
 							end
 							
@@ -503,9 +639,10 @@ module OpenAsset
 							
 						else
 			
-							error = "Error: #{object_type} keyword move operation not allowed to field display type " +
-									"#{field.field_display_type.inspect}."
-							abort(error)
+							msg = "#{object_type} keyword move operation not allowed to field display type " +
+								  "#{field.field_display_type.inspect}."
+							logger.error(msg.red)
+							abort
 			
 						end
 			
@@ -537,8 +674,10 @@ module OpenAsset
 				# to respond after the first update is performed => Possible cause can be too large a batch size
 				if attempts == 4
 					Validator::process_http_response(res,@verbose,scope.capitalize,'HEAD')
-					abort("Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
-						   " Try adjusting the batch size.")
+					msg = "Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
+						  " Try adjusting the batch size."
+					logger.error(msg.red)
+					abort
 				end
 
 				if server_test_passed
@@ -547,16 +686,19 @@ module OpenAsset
 						res = update_files(payload,false)
 				    elsif scope == 'projects'
 				    	res = update_projects(payload,false)
-				    else
-				    	abort("Error: Invalid update scope. Expected Files or Projects in payload.")
+					else
+						msg = "Invalid update scope. Expected Files or Projects in payload. Instead got => #{scope}"
+						logger.error(msg.red)
+				    	abort
 				    end
 						
 					#puts "after update file"
 					if res.kind_of? Net::HTTPSuccess
 						total_objects_updated = res['X-Full-Results-Count'].to_i + total_objects_updated
-						print "[INFO] "
-						print "Successfully " if total_objects_updated > 0
-						puts "Updated #{total_objects_updated.inspect} #{scope}."
+						msg = ""
+						msg += "Successfully " if total_objects_updated > 0
+						msg += "Updated #{total_objects_updated.inspect} #{scope}."
+						logger.info(msg.green)
 						break
 					else
 						Validator::process_http_response(res,@verbose,scope.capitalize,'PUT')
@@ -603,7 +745,7 @@ module OpenAsset
 				
 			end
 			
-			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+			response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
 				
 				#Account for 2048 character limit with GET requests
 				options_str_len = options.get_options.length
@@ -651,11 +793,12 @@ module OpenAsset
 			json_body = Validator::validate_and_process_request_data(data)
 
 			unless json_body
-				puts "Error: Undefined json_body Error in POST request."
+				msg = "No data in json_body in POST request."
+				logger.error(msg.red)
 				return false
 			end
 
-			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+			response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Post.new(uri.request_uri)
 				if @session
 					request.add_field('X-SessionKey',@session)
@@ -699,7 +842,7 @@ module OpenAsset
 			end
 
 			require 'pp'
-			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+			response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Put.new(uri.request_uri)
 				if @session
 					request.add_field('X-SessionKey',@session)
@@ -739,7 +882,7 @@ module OpenAsset
 			unless json_object
 				return
 			end
-			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+			response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Delete.new(uri.request_uri) #e.g. when called in keywords => /keywords/id
 				if @session
 					request.add_field('X-SessionKey',@session)
@@ -1293,21 +1436,24 @@ module OpenAsset
 		def upload_file(file=nil, category=nil, project=nil, generate_objects=false) 
 		
 			unless File.exists?(file.to_s)
-				puts "Error: The file provided does not exist -\"#{file}\"...Bailing out."
+				msg = "The file #{file.inspect} does not exist...Bailing out."
+				logger.error(msg.red)
 				return false
 			end
 
 			unless category.is_a?(Categories) || category.to_i > 0
-				puts "Argument Error for upload_files method: Invalid category id passed to second argument.\n" +
-				     "Acceptable arguments: Category object, a non-zero numeric String or Integer, " +
-				     "or no argument.\nInstead got #{category.class}...Bailing out."
+				msg = "Argument Error for upload_files method: Invalid category id passed to second argument.\n" +
+				      "Acceptable arguments: Category object, a non-zero numeric String or Integer, " +
+					  "or no argument.\nInstead got #{category.class}...Bailing out."
+				logger.error(msg.red)
 				return false
 			end
 
 			unless project.is_a?(Projects) || project.to_i > 0 || project.nil?
-				puts "Argument Error for upload_files method: Invalid project id passed to third argument.\n" +
-				     "Acceptable arguments: Projects object, a non-zero numeric String or Integer, " +
-				     "or no argument.\nInstead got a(n) #{project.class} with value => #{project.inspect}...Bailing out."
+				msg = "Argument Error for upload_files method: Invalid project id passed to third argument.\n" +
+				      "Acceptable arguments: Projects object, a non-zero numeric String or Integer, " +
+					  "or no argument.\nInstead got a(n) #{project.class} with value => #{project.inspect}...Bailing out."
+					  logger.error(msg.red)	
 				return false
 			end
 
@@ -1332,7 +1478,8 @@ module OpenAsset
 			boundary = (0...50).map { (65 + rand(26)).chr }.join #genererate a random str thats 50 char long
 			body = Array.new
 
-			puts "Uploading File: => {\"original_filename\":\"#{File.basename(file)}\",\"category_id\":\"#{category_id}\",\"project_id\":\"#{project_id}\"}"
+			msg = "Uploading File: => {\"original_filename\":\"#{File.basename(file)}\",\"category_id\":\"#{category_id}\",\"project_id\":\"#{project_id}\"}"
+			logger.info(msg.white)
 
 			response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Post.new(uri.request_uri)
@@ -1385,7 +1532,11 @@ module OpenAsset
 		#          rest_client.replace_file(file_obj,'C:\Users\root\Pictures\new_img.jpg',false,false)
 		#          rest_client.replace_file(file_obj,'C:\Users\root\Pictures\new_img.jpg',false,true)
 		#          rest_client.replace_file(file_obj,'C:\Users\root\Pictures\new_img.jpg',true,false)
-		def replace_file(original_file_object=nil, replacement_file_path='', retain_original_filename_in_oa=false, generate_objects=false) 
+		def replace_file(original_file_object=nil, 
+						 replacement_file_path='', 
+						 retain_original_filename_in_oa=false, 
+						 generate_objects=false) 
+
 			file_object = (original_file_object.is_a?(Array)) ? original_file_object.first : original_file_object
 			uri = URI.parse(@uri + "/Files")
 			id = file_object.id.to_s
@@ -1393,36 +1544,42 @@ module OpenAsset
 
 			# raise an Error if something other than an file object is passed in. Check the class
 			unless file_object.is_a?(Files) 
-				puts "ARGUMENT ERROR: First argument => Invalid object type! Expected File object" +
-				     " and got #{file_obj.class} object instead. Aborting update." 
-				return false
+				msg = "Argument Error: First argument => Invalid object type! Expected File object" +
+					  " and got #{file_obj.class} object instead. Aborting update."
+				logger.error(msg.red)
+				return
 			end
 			
 			if File.directory?(replacement_file_path)
-				puts "ARGUMENT ERROR: Second argument => Expected a file! " +
-					 "#{replacement_file_path} is a directory! Aborting update."
+				msg = "Argument Error: Second argument => Expected a file! " +
+					  "#{replacement_file_path} is a directory! Aborting update."
+				logger.error(msg.red)
+				return
 			end
 
 
 			#check if the replacement file exists
 			unless File.exists?(replacement_file_path) && File.file?(replacement_file_path)
-				puts "ERROR: The file #{replacement_file_path} does not exist. Aborting update."
-				return false
+				msg = "The file #{replacement_file_path} does not exist. Aborting update."
+				logger.error(msg.red)
+				return
 			end
 
 			#verify that both files have the same file extentions otherwise you will
 			#get a 400 Bad Request Error
 			if File.extname(file_object.original_filename) != File.extname(replacement_file_path)
-				puts "ERROR: File extensions must match! Aborting update\n\t" + 
-					 "Original file extension => #{File.extname(file_object.original_filename)}\n\t" +
-					 "Replacement file extension => #{File.extname(replacement_file_path)}"
-				return false
+				msg = "File extensions must match! Aborting update\n\t" + 
+					  "Original file extension => #{File.extname(file_object.original_filename)}\n\t" +
+					  "Replacement file extension => #{File.extname(replacement_file_path)}"
+				logger.error(msg.red)
+				return
 			end
 
 			#verify that the original file id is provided
-			unless id != "0"
-				puts "ERROR: Invalid target file id! Aborting update."
-				return false
+			unless id.to_s != "0"
+				msg = "Invalid target file id! Aborting update."
+				logger.error(msg.red)
+				return
 			end
 
 			#change in format
@@ -1431,8 +1588,9 @@ module OpenAsset
 	
 					original_filename = File.basename(file_object.original_filename)
 				else
-					warn "ERROR: No original filename detected in Files object. Aborting update."
-					return false
+					msg = "No original filename detected in Files object. Aborting update."
+					logger.error(msg.red)
+					return
 				end
 			else
 				original_filename = File.basename(replacement_file_path)
@@ -2421,9 +2579,10 @@ module OpenAsset
 
 				#validate value
 				unless ALLOWED_BOOLEAN_FIELD_OPTIONS.include?(value.to_s.strip)
-					puts "ERROR: Invalid value #{value.inspect} for \"On/Off Switch\" field type.\n" +
+					msg = "Invalid value #{value.inspect} for \"On/Off Switch\" field type.\n" +
 						  "Acceptable Values => #{ALLOWED_BOOLEAN_FIELD_OPTIONS.inspect}"
-					return false
+					logger.error(msg.red)
+					return
 				end
 				
 				
@@ -2450,13 +2609,16 @@ module OpenAsset
 				#Actually do the update
 				put(files_endpoint,current_file,false)
 			else
-				warn "Error: The field specified does not have a valid field_display_type." +
-					 "Value provided => #{field.field_display_type.inspect}"
+				msg = "The field specified does not have a valid field_display_type." +
+					  "Value provided => #{field.field_display_type.inspect}"
+				logger.error(msg.red)
+				return
 			end
 
 			if @verbose
-				puts "Setting value: \"#{current_value}\" to \"#{current_field.name}\" field " +
-					 "for file => #{current_file.filename}"
+				msg = "Setting value: \"#{current_value}\" to \"#{current_field.name}\" field " +
+					  "for file => #{current_file.filename}"
+				logger.info(msg.green)
 			end
 		end
 
@@ -2579,8 +2741,9 @@ module OpenAsset
 				#put(projects_endpoint,data,false)
 
 				if @verbose
-					puts "Adding value: \"#{value}\" to \"#{current_field.name}\" field" +
-						 "for project => #{current_project.code} - #{current_project.name}"
+					msg = "Adding value: \"#{value}\" to \"#{current_field.name}\" field" +
+						  "for project => #{current_project.code} - #{current_project.name}"
+					logger.info(msg.green)
 				end
 
 
@@ -2589,7 +2752,8 @@ module OpenAsset
 				#Accepts mm-dd-yyyy, mm-dd-yy, mm/dd/yyyy, mm/dd/yy
 				date_regex = Regexp::new('((\d{2}-\d{2}-(\d{4}|\d{2}))|(\d{2}\/\d{2}\/(\d{4}|\d{2})))')
 				unless (value =~ date_regex) == 0
-					warn "ERROR: Invalid date format. Expected => \"mm-dd-yyyy\" or \"mm-dd-yy\""
+					msg = "Invalid date format. Expected => \"mm-dd-yyyy\" or \"mm-dd-yy\""
+					logger.error(msg.red)
 					return
 				end
 
@@ -2637,9 +2801,10 @@ module OpenAsset
 
 				#validate value
 				unless ALLOWED_BOOLEAN_FIELD_OPTIONS.include?(value.to_s.strip)
-					puts "Error: Invalid value #{value.inspect} for \"On/Off Switch\" field type.\n" +
+					msg = "Error: Invalid value #{value.inspect} for \"On/Off Switch\" field type.\n" +
 						  "Acceptable Values => #{ALLOWED_BOOLEAN_FIELD_OPTIONS.inspect}"
-					return false
+					logger.error(msg.red)
+					return
 				end
 				
 				#Interpret input
@@ -2672,8 +2837,9 @@ module OpenAsset
 			end
 
 			if @verbose
-				puts "Setting value: \"#{current_value}\" to \"#{current_field.name}\" field " +
-					 "for project => #{current_project.code} - #{current_project.name}"
+				msg = "Setting value: \"#{current_value}\" to \"#{current_field.name}\" field " +
+					  "for project => #{current_project.code} - #{current_project.name}"
+				logger.info(msg.green)
 			end
 		end
         
@@ -2764,22 +2930,31 @@ module OpenAsset
 
 			# Make sure the keyword category is in all associated categories
 			# Now loop throught the file categories, create the needed keyword categories for referencing below
-			puts "Creating keyword categories."
+			msg = "Creating keyword categories."
+			logger.info(msg.green)
+
 			file_category_ids.each do |file_cat_id|
 				
 				# Look for the category id in existing keyword categories to check 
 				# if the file category already has a keyword category with that name
 				unless keyword_file_category_ids.include?(file_cat_id.to_s)
-					puts "[INFO] Actually creating keyword categories..."
+					msg = "Actually creating keyword categories..."
+					logger.info(msg.green)
 
 					obj = KeywordCategories.new(file_keyword_category_found.name, file_cat_id)
 					kwd_cat_obj = create_keyword_categories(obj, true).first
 					
-					abort("Error creating keyword category in #{__callee__}") unless kwd_cat_obj
+					unless kwd_cat_obj
+						msg = "Error creating keyword category in #{__callee__}"
+						logger.error(msg.red)
+						abort
+					end
+					
 					existing_keyword_categories.push(kwd_cat_obj)
 					
 				else
-					puts "Keyword category in category #{file_cat_id} already exists"
+					msg = "Keyword category in category #{file_cat_id} already exists"
+					logger.warn(msg.yellow)
 				end
 
 			end
@@ -2791,13 +2966,17 @@ module OpenAsset
 			op.add_option('keyword_category_id', query_ids)
 			op.add_option('limit', '0')
 
-			puts "Getting existing keywords"
+			msg = "Getting existing keywords"
+			logger.info(msg.green)
+
 			existing_keywords = get_keywords(op)
 
 			op.clear
 			
 			# Calculate number of requests needed based on specified batch_size
-			puts "[INFO] Setting batch size."
+			msg = "Setting batch size."
+			logger.info(msg.green)
+
 			if total_file_count % batch_size == 0
 				iterations = total_file_count / batch_size
 			else
@@ -2817,12 +2996,16 @@ module OpenAsset
 				op.add_option('id', ids)
 				
 				# Get current batch of files => body length used to track total files updated
-				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
+				msg = "Batch #{num} of #{iterations} => Retrieving files."
+				logger.info(msg.green)
+
 				files = get_files(op)
 
 				op.clear
 
-				puts "[INFO] Batch #{num} of #{iterations} => Extracting keywords from \"#{source_field_found.name}\" field."
+				msg = "Batch #{num} of #{iterations} => Extracting keywords from \"#{source_field_found.name}\" field."
+				logger.info(msg)
+
 				keywords_to_create = []
 				
 				# Iterate through the files and find the keywords that need to be created
@@ -2892,21 +3075,27 @@ module OpenAsset
 					payload = keywords_to_create.uniq { |item| [item.name, item.keyword_category_id] }
 					
 					# Create the keywords for the current batch and set the generate objects flag to true.
-				    puts "[INFO] Batch #{num} of #{iterations} => creating keywords."
+					msg = "Batch #{num} of #{iterations} => creating keywords."
+					logger.info(msg.green)
+
 					new_keywords = create_keywords(payload, true)
 					# Append the returned keyword objects to the existing keywords array
 					if new_keywords
 						if new_keywords.is_a?(Array) && !new_keywords.empty? 	
 							new_keywords.each { |item| existing_keywords.push(item) }
 						else
-							abort("An error occured creating keywords in #{__callee__}")
+							msg = "An error occured creating keywords in #{__callee__}"
+							logger.error(msg.red)
+							abort
 						end
 					end
 				end
 
 				# Loop though the files again and tag them with the newly created keywords.
 				# This is faster than making individual requests
-				puts "[INFO] Batch #{num} of #{iterations} => Tagging files with keywords."
+				msg = "Batch #{num} of #{iterations} => Tagging files with keywords."
+				logger.info(msg.green)
+
 				files.each do | file |
 					#puts "In files tag before using instance_variable_get 2"
 					field_data = nil
@@ -2937,7 +3126,9 @@ module OpenAsset
 						end
 
 						unless associated_kwd_cat
-							abort("Associated keyword category retrieval failed in #{__callee__}") 
+							msg = "Associated keyword category retrieval failed in #{__callee__}"
+							logger.fatal(msg.red)
+							abort
 						end
 
 						# Loop through the keywords and tag the file
@@ -2960,11 +3151,15 @@ module OpenAsset
 								already_tagged = file.keywords.find { |item| item.id.to_s == keyword_obj.id.to_s }
 								# Tag the file
 								unless already_tagged
-									puts "[INFO] Tagging #{file.filename.inspect} => #{keyword_obj.name}"
+									msg = "Tagging #{file.filename.inspect} => #{keyword_obj.name}"
+									logger.info(msg.green)
+
 									file.keywords.push(NestedKeywordItems.new(keyword_obj.id))
 								end 
 							else
-								abort("Fatal Error: Unable to retrieve previously created keyword! => #{value}")
+								msg = "Unable to retrieve previously created keyword! => #{value}"
+								logger.fatal(msg.red)
+								abort
 							end
 							
 						end
@@ -2972,7 +3167,9 @@ module OpenAsset
 					end
 				end
 
-				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
+				msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
+				logger.info(msg.white)
+
 				# Update files
 				updated_obj_count = run_smart_update(files,total_files_updated)
 
@@ -3026,9 +3223,10 @@ module OpenAsset
 			op                          = RestOptions.new
 
 			if file_keyword_category_found.category_id != category_found.id
-				error = "Error: Specified keyword category #{file_keyword_category_found.name.inspect} " +
-				        "with id #{file_keyword_category_found.id.inspect} not found in #{category_found.name.inspect}."
-				abort(error)
+				msg = "Specified keyword category #{file_keyword_category_found.name.inspect} " +
+					  "with id #{file_keyword_category_found.id.inspect} not found in #{category_found.name.inspect}."
+				logger.error(msg.red)
+				abort
 			end
 
 			# Get ids and total file count for the category
@@ -3038,7 +3236,8 @@ module OpenAsset
 			file_ids = get_files(op).map { |obj| obj.id.to_s  }
 			total_file_count = file_ids.length
 
-			puts "Total file count => #{total_file_count}"
+			msg = "Total file count => #{total_file_count}"
+			logger.info(msg.green)
 
 			op.clear	
 
@@ -3072,14 +3271,17 @@ module OpenAsset
 				op.add_option('id',ids)
 				op.add_option('limit','0')
 				# Get current batch of files
-				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
+				msg = "[INFO] Batch #{num} of #{iterations} => Retrieving files."
+				logger.info(msg.green)
+
 				files = get_files(op)
-				#p files
+				
 				op.clear
 
 				keywords_to_create = []
 				
-				puts "[INFO] Batch #{num} of #{iterations} => Extracting keywords from #{source_field_found.name.inspect} field."
+				msg = "Batch #{num} of #{iterations} => Extracting keywords from #{source_field_found.name.inspect} field."
+				logger.info(msg.green)
 
 				# Iterate through the files and find the keywords that need to be created
 				files.each do |file|
@@ -3125,8 +3327,9 @@ module OpenAsset
 					end
 		
 				end
-				#p keywords_to_create
-				puts "[INFO] Batch #{num} of #{iterations} => Creating keywords."
+				
+				msg = "Batch #{num} of #{iterations} => Creating keywords."
+				logger.info(msg.green)
 
 				# Remove duplicate keywords => just in case
 				unless keywords_to_create.empty?
@@ -3140,12 +3343,16 @@ module OpenAsset
 						if new_keywords.is_a?(Array) && !new_keywords.empty?
 							new_keywords.each { |item| existing_keywords.push(item) }
 						else
-							abort("An error occured creating keywords in #{__callee__}")
+							msg = "An error occured creating keywords in #{__callee__}"
+							logger.error(msg.red)
+							abort
 						end
 					end
 				end
 
-				puts "[INFO] Batch #{num} of #{iterations} => Tagging files."
+				msg = "Batch #{num} of #{iterations} => Tagging files."
+				logger.info(msg.green)
+
 				# Loop though the files again and tag them with the newly created keywords.
 				files.each do | file |
 
@@ -3189,17 +3396,22 @@ module OpenAsset
 								already_tagged = file.keywords.find { |item| item.id.to_s == keyword_obj.id.to_s }
 								# Tag the file
 								unless already_tagged
-									puts "[INFO] Tagging file #{file.filename.inspect} => #{keyword_obj.name.inspect}"
+									msg = "Tagging file #{file.filename.inspect} => #{keyword_obj.name.inspect}"
+									logger.info(msg.green)
 									file.keywords.push(NestedKeywordItems.new(keyword_obj.id))
 							    end
 							else
-								abort("Fatal Error: Unable to retrieve previously created keyword!")
+								msg = "Unable to retrieve previously created keyword in #{__callee__}"
+								logger.fatal(msg.red)
+								abort
 							end		
 						end	
 					end
 				end
 
-				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
+				msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
+				logger.info(msg.white)
+
 				# Update files
 				updated_obj_count = run_smart_update(files,total_files_updated)
 
@@ -3268,7 +3480,9 @@ module OpenAsset
 			op.add_option('project_id',project_found.id)
 			op.add_option('displayFields','id,category_id')
 
-			puts "[INFO] Retrieving files and file categories associated with project."
+			msg = "Retrieving files and file categories associated with project."
+			logger.info(msg.green)
+
 			# Get category ids and file ids  
 		    results           = get_files(op)
 			file_category_ids = results.map { |obj| obj.category_id  }.uniq
@@ -3277,7 +3491,8 @@ module OpenAsset
 
 			op.clear
             
-            puts "[INFO] Total file count => #{total_file_count}"
+			msg = "Total file count => #{total_file_count}"
+			logger.info(msg.green)
 
 			# Get the keyword categories associated with the files in the project
 			cat_id_string = file_category_ids.join(',')
@@ -3294,7 +3509,9 @@ module OpenAsset
 
 			#puts keyword_file_category_ids
 			
-			puts "[INFO] Detecting needed keyword categories."
+			msg = "Detecting needed keyword categories."
+			logger.info(msg.green)
+
 			file_category_ids.each do |file_cat_id|
 							
 				# Look for the category id in existing keyword categories to check 
@@ -3302,11 +3519,17 @@ module OpenAsset
 				unless keyword_file_category_ids.include?(file_cat_id.to_s)
 					obj = KeywordCategories.new(file_keyword_category_found.name, file_cat_id)
 					kwd_cat_obj = create_keyword_categories(obj, true).first
-					#puts "Keyword Categories: #{keyword_categories}"
-					abort("Error creating keyword category in #{__callee__}") unless kwd_cat_obj
+					
+					unless kwd_cat_obj
+						msg = "Keyword category creation failed in #{__callee__} method."
+						logger.error(msg.red)
+						abort
+					end
+
 					existing_keyword_categories.push(kwd_cat_obj)
 				else
-					puts "Keyword category in category #{file_cat_id} already exists"
+					msg = "Keyword category in category #{file_cat_id} already exists."
+					logger.warn(msg.yellow)
 				end
 
 			end
@@ -3317,13 +3540,16 @@ module OpenAsset
 			op.add_option('keyword_category_id', query_ids)
 			op.add_option('limit', '0')
 
-			puts "[INFO] Retrieving existing keywords"
+			msg = "Retrieving existing keywords"
+			logger.info(msg.green)
+
 			existing_keywords = get_keywords(op)
 
 			op.clear
 			
 			# Get the file count and calculate number of requests needed based on specified batch_size
-			puts "[INFO] Calulating batch size."
+			msg = "Calulating batch size."
+			logger.info(msg.green)
 
 			if total_file_count % batch_size == 0
 				iterations = total_file_count / batch_size
@@ -3346,7 +3572,9 @@ module OpenAsset
 				op.add_option('limit','0')
 				
 				# Get current batch of files => body length of response used to track total files updated
-				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
+				msg = "Batch #{num} of #{iterations} => Retrieving files."
+				logger.info(msg.green)
+
 				files = get_files(op)
 
 				op.clear
@@ -3354,7 +3582,9 @@ module OpenAsset
 				#puts "File objects #{files.inspect}"
 				keywords_to_create = []
                 
-                puts "[INFO] Batch #{num} of #{iterations} => Extracting Keywords from fields."
+				msg = "Batch #{num} of #{iterations} => Extracting Keywords from fields."
+				logger.info(msg.green)
+
 				# Iterate through the files and find the keywords that need to be created
 				files.each do |file|
 					#puts "In files create keywords from field before using instance_variable_get 1"
@@ -3382,8 +3612,11 @@ module OpenAsset
 						obj.category_id.to_s == file.category_id.to_s 
 					end
 
-					abort("Fatal Error: Unable to retrieve associated keyword category.") unless associated_kwd_cat
-			
+					unless associated_kwd_cat
+						msg = "Unable to retrieve associated keyword category!"
+						logger.fatal(msg.red)
+						abort
+					end
 
 					# split the string using the specified separator and remove empty strings
 					keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
@@ -3435,14 +3668,18 @@ module OpenAsset
 						if new_keywords.is_a?(Array) && !new_keywords.empty? 	
 							new_keywords.each { |item| existing_keywords.push(item) }
 						else
-							abort("An error occured creating keywords in #{__callee__}")
+							msg = "An error occured creating keywords in #{__callee__}"
+							logger.error(msg.red)
+							abort
 						end
 					end
 				end
 				
 				# Loop though the files again and tag them with the newly created keywords.
 				# This is faster than making individual requests
-				puts "[INFO] Batch #{num} of #{iterations} => Tagging files."
+				msg = "Batch #{num} of #{iterations} => Tagging files."
+				logger.info(msg.green)
+
 				files.each do | file |
 					#puts "In files tag before using instance_variable_get 2"
 					field_data      = nil
@@ -3477,7 +3714,9 @@ module OpenAsset
 						end
 
 						unless associated_kwd_cat
-							abort("Associated keyword category retrieval failed in #{__callee__}") 
+							msg = "Existing keyword category retrieval failure in #{__callee__}"
+							logger.fatal(msg.red)
+							abort
 						end
 
 						# Loop through the keywords and tag the file
@@ -3501,7 +3740,9 @@ module OpenAsset
 								# Tag the file
 								file.keywords.push(NestedKeywordItems.new(keyword_obj.id)) unless already_tagged
 							else
-								abort("Fatal Error: Unable to retrieve previously created keyword! => #{value}")
+								msg = "Unable to retrieve previously created keyword! => #{value}"
+								logger.fatal(msg.red)
+								abort
 							end
 							
 						end
@@ -3509,7 +3750,9 @@ module OpenAsset
 					end
 				end
 
-				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
+				msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
+				logger.info(msg.white)
+
 				# Update files
 				updated_obj_count = run_smart_update(files,total_files_updated)
 
@@ -3574,33 +3817,37 @@ module OpenAsset
 				project_keyword_category_found = get_project_keyword_categories(op)
 
 				unless project_keyword_category_found
-					abort("Error: Project keyword category with name #{target_project_keyword_category.inspect} not found in OpenAsset.")
+					msg = "Project keyword category with name #{target_project_keyword_category.inspect} not found in OpenAsset."
+					logger.error(msg.red)
+					abort
 				end
 
 				if project_keyword_category_found.length > 1
-					error = "Error: Multiple Project keyword categories found with search query #{op.get_options.inspect}." +
-							" Specify an id instead."
-							puts project_keyword_category_found
-					abort(error)
+					msg = "Error: Multiple Project keyword categories found with search query #{op.get_options.inspect}." +
+						  " Specify an id instead."
+					logger.error(msg.red)
+					abort
 				else
 					project_keyword_category_found = project_keyword_category_found.first
 				end
 
 			else
-				error = "Error: Expected one of the following: " +
-						"\n\t1. Valid project keyword category object." +
-						"\n\t2. Project keyword category id." +
-						"\n\t3. Project keyword category name." +
-						"\nfor first argument in #{__callee__} method." +
-						"\nInstead got #{target_project_keyword_category.inspect}."
-				abort(error)
+				msg = "Argument Error: Expected one of the following: " +
+					  "\n\t1. Valid project keyword category object." +
+					  "\n\t2. Project keyword category id." +
+					  "\n\t3. Project keyword category name." +
+					  "\nfor first argument in #{__callee__} method." +
+					  "\nInstead got #{target_project_keyword_category.inspect}."
+				logger.error(msg.red)
+				abort
 			end
 
 			# Make sure it's a project keyword catgory
 			unless project_keyword_category_found.is_a?(ProjectKeywordCategories)
-				error = "Error: Specified Project keyword category named #{project_keyword_category_found.name.inspect} with id " +
-						"#{project_keyword_category_found.id.inspect} is actually a #{project_keyword_category_found.class.inspect}."
-				abort(error)
+				msg = "Error: Specified Project keyword category named #{project_keyword_category_found.name.inspect} with id " +
+					  "#{project_keyword_category_found.id.inspect} is actually a #{project_keyword_category_found.class.inspect}."
+				logger.error(msg.red)
+				abort
 			end
 
 			op.clear
@@ -3611,7 +3858,11 @@ module OpenAsset
 				op.add_option('id',project_field.id)
 				project_field_found = get_fields(op).first
 
-				abort("Error: Field with id #{project_field.id.inspect} not found in OpenAsset.") unless project_field_found
+				unless project_field_found
+					msg = "Field with id #{project_field.id.inspect} not found in OpenAsset."
+					logger.error(msg.red)
+					abort
+				end
 
 			elsif (project_field.is_a?(String) && !project_field.to_i.zero?) ||  # Id
 				(project_field.is_a?(Integer) && !project_field.zero?)
@@ -3619,7 +3870,11 @@ module OpenAsset
 				op.add_option('id',project_field)
 				project_field_found	= get_fields(op).first
 
-				abort("Error: Field with id #{project_field.inspect} not found in OpenAsset.") unless project_field_found
+				unless project_field_found
+					msg = "Field with id #{project_field.inspect} not found in OpenAsset."
+					logger.error(msg.red)
+					abort
+				end
 
 			elsif project_field.is_a?(String) # Name
 
@@ -3628,44 +3883,57 @@ module OpenAsset
 				project_field_found = get_fields(op)
 
 				unless project_field_found
-					abort("Error: Field with name #{project_field.inspect} not found in OpenAsset.")
+					msg = "Field with name #{project_field.inspect} not found in OpenAsset."
+					logger.error(msg.red)
+					abort
 				end
 
 				if project_field_found.length > 1
-					error = "Error: Multiple fields found with name #{project_field.inspect}. Specify an id instead."
-					abort(error)
+					msg = "Error: Multiple fields found with name #{project_field.inspect}. Specify an id instead."
+					logger.error(msg.red)
+					abort
 				else
 					project_field_found = project_field_found.first
 				end
 			else 
-				error = "Error: Expected one of the following: " +
-						"\n\t1. Valid Fields object." +
-						"\n\t2. Field id."
-						"\n\t3. Field name."
-						"\nfor second argument in #{__callee__} method." +
-						"\nInstead got #{project_field.inspect}."
-				abort(error)
+				msg = "Error: Expected one of the following: " +
+					  "\n\t1. Valid Fields object." +
+					  "\n\t2. Field id."
+					  "\n\t3. Field name."
+					  "\nfor second argument in #{__callee__} method." +
+					  "\nInstead got #{project_field.inspect}."
+				logger.error(msg.red)
+				abort
 			end
 
 			# Make sure it's a project field
 			unless project_field_found.field_type == 'project'
-				error = "Error: Specified field #{project_field_found.name.inspect} with id " +
-						"#{project_field_found.id.inspect} is not a project field"
-				abort(error)
+				msg = "Error: Specified field #{project_field_found.name.inspect} with id " +
+					  "#{project_field_found.id.inspect} is not a project field"
+				logger.error(msg.red)
+				abort
 			end
 
 			built_in = (project_field_found.built_in == '1') ? true : false 
 
 			if field_separator.nil?
-				abort("Error: Must specify field separator.")
+				msg = "You Must specify field separator."
+				logger.error(msg.red)
+				abort
 			end
 
-			abort('Invalid batch size. Specify a positive numeric value or use default value of 100') if batch_size.zero?
+			if batch_size.zero?
+				msg = "Invalid batch size. Specify a positive numeric value or use default value of 200."
+				logger.error(msg.red)
+				abort
+			end
 
 			op.clear
 
 			# Get projects keywords
-			puts "[INFO] Retrieving project keywords."
+			msg = "Retrieving project keywords."
+			logger.info(msg.green)
+
 			op.add_option('limit','0')
 			op.add_option('project_keyword_category_id',project_keyword_category_found.id)
 
@@ -3678,14 +3946,20 @@ module OpenAsset
 
 			project_ids = get_projects(op).map { |obj| obj.id.to_s }
 
-			abort("Error: No Projects found in OpenAsset!") if project_ids.length.zero?
+			if project_ids.length.zero?
+				msg = "No Projects found in OpenAsset!"
+				logger.error(msg.red)
+				abort
+			end
 
 			op.clear
 
 			total_project_count = project_ids.length
 
 			# Set up iterations loop
-			puts "[INFO] Calculating batch size"
+			msg = "Calculating batch size"
+			logger.info(msg.green)
+
 			if total_project_count % batch_size == 0
 				iterations = total_project_count / batch_size
 			else
@@ -3703,16 +3977,24 @@ module OpenAsset
 				op.add_option('limit','0')
 				op.add_option('id',ids)
 
-				puts "[INFO] Batch #{num} of #{iterations} => Retrieving projects."
+				msg = "Batch #{num} of #{iterations} => Retrieving projects."
+				logger.info(msg.green)
+
 				projects = get_projects(op)
 
 				op.clear
 
-				abort("No projects found!") if projects.empty?
+				if projects.empty?
+					msg = "Project retrieval failure in #{__callee__} method."
+					logger.fatal(msg.red)
+					abort
+				end
 
 				keywords_to_create = []
 				
-				puts "[INFO] Batch #{num} of #{iterations} => Extracting Keywords from field."
+				msg = "Batch #{num} of #{iterations} => Extracting Keywords from field."
+				logger.info(msg.green)
+
 				# Iterate through the projects and find the project keywords that need to be created
 				projects.each do |project|
 					#puts "In files create keywords from field before using instance_variable_get 1"
@@ -3768,7 +4050,9 @@ module OpenAsset
 					payload = keywords_to_create.uniq { |item| item.name }
 					
 					# Create the project keywords for the current batch and set the generate objects flag to true.
-					puts "[INFO] Batch #{num} of #{iterations} => Creating Project Keywords."
+					msg = "Batch #{num} of #{iterations} => Creating Project Keywords."
+					logger.info(msg.green)
+
 					new_keywords = create_project_keywords(payload, true)
 
 					# Append the returned project keyword objects to the existing keywords array
@@ -3780,7 +4064,9 @@ module OpenAsset
 				
 				# Loop though the projects again and tag them with the newly created project keywords.
 				# This is faster than making individual requests
-				puts "[INFO] Batch #{num} of #{iterations} => Tagging Projects."
+				msg = "Batch #{num} of #{iterations} => Tagging Projects."
+				logger.info(msg.green)
+
 				projects.each do |project|
 					
 					field_data      = nil
@@ -3823,10 +4109,14 @@ module OpenAsset
 							# check if current file is already tagged
 							already_tagged = project.project_keywords.find { |item| item.id.to_s == proj_keyword_obj.id.to_s }
 							# Tag the project
-							puts "Tagging project #{project.code.inspect} with => #{value.inspect}."
+							msg = "Tagging project #{project.code.inspect} with => #{value.inspect}."
+							logger.info(msg.green)
+
 							project.project_keywords.push(nested_proj_keyword.new(proj_keyword_obj.id)) unless already_tagged
 						else
-							abort("Fatal Error: Unable to retrieve previously created keyword! => #{value}")
+							msg = "Unable to retrieve previously created keyword! => #{value}"
+							logger.fatal(msg.red)
+							abort
 						end
 						
 					end
@@ -3834,7 +4124,9 @@ module OpenAsset
 				end
 
 				# Update projects
-				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform project updates."
+				msg = "Batch #{num} of #{iterations} => Attempting to perform project updates."
+				logger.info(msg.green)
+
 				updated_obj_count = run_smart_update(projects,total_projects_updated)
 
 				total_projects_updated += updated_obj_count
@@ -3905,33 +4197,37 @@ module OpenAsset
 				project_keyword_category_found = get_project_keyword_categories(op)
 
 				unless project_keyword_category_found
-					abort("Error: Project keyword category with name #{target_project_keyword_category.inspect} not found in OpenAsset.")
+					msg = "Project keyword category with name #{target_project_keyword_category.inspect} not found in OpenAsset."
+					logger.error(msg.red)
+					abort
 				end
 
 				if project_keyword_category_found.length > 1
-					error = "Error: Multiple Project keyword categories found with search query #{op.get_options.inspect}." +
-							" Specify an id instead."
-							puts project_keyword_category_found
-					abort(error)
+					msg = "Multiple Project keyword categories found with search query #{op.get_options.inspect}." +
+						  " Specify an id instead."
+					logger.error(msg.red)	
+					abort
 				else
 					project_keyword_category_found = project_keyword_category_found.first
 				end
 
 			else
-				error = "Error: Expected one of the following: " +
-						"\n\t1. Valid project keyword category object." +
-						"\n\t2. Project keyword category id." +
-						"\n\t3. Project keyword category name." +
-						"\nfor first argument in #{__callee__} method." +
-						"\nInstead got #{target_project_keyword_category.inspect}."
-				abort(error)
+				msg = "Argument Error: Expected one of the following: " +
+					  "\n\t1. Valid project keyword category object." +
+					  "\n\t2. Project keyword category id." +
+					  "\n\t3. Project keyword category name." +
+					  "\nfor first argument in #{__callee__} method." +
+					  "\nInstead got #{target_project_keyword_category.inspect}."
+				logger.error(msg.red)
+				abort
 			end
 
 		    # Make sure it's a project keyword catgory
 		    unless project_keyword_category_found.is_a?(ProjectKeywordCategories)
-		    	error = "Error: Specified Project keyword category named #{project_keyword_category_found.name.inspect} with id " +
-		    	        "#{project_keyword_category_found.id.inspect} is actually a #{project_keyword_category_found.class.inspect}."
-		    	abort(error)
+		    	msg = "Error: Specified Project keyword category named #{project_keyword_category_found.name.inspect} with id " +
+					  "#{project_keyword_category_found.id.inspect} is actually a #{project_keyword_category_found.class.inspect}."
+				logger.error(msg.red)
+		    	abort
 		    end
 
 		    op.clear
@@ -3942,7 +4238,11 @@ module OpenAsset
 			    op.add_option('id',target_project_field.id)
 			    project_field_found = get_fields(op).first
 
-			    abort("Error: Field with id #{project_field.id.inspect} not found in OpenAsset.") unless project_field_found
+				unless project_field_found
+					msg = "Field with id #{project_field.id.inspect} not found in OpenAsset."
+					logger.error(msg.red)
+			    	abort
+				end
 
             elsif (target_project_field.is_a?(String) && !target_project_field.to_i.zero?) ||  # Id
             	  (target_project_field.is_a?(Integer) && !target_project_field.zero?)
@@ -3950,7 +4250,11 @@ module OpenAsset
 	        	op.add_option('id',target_project_field)
 	        	project_field_found	= get_fields(op).first
 
-	        	abort("Error: Field with id #{target_project_field.inspect} not found in OpenAsset.") unless project_field_found
+				unless project_field_found
+					msg = "Field with id #{target_project_field.inspect} not found in OpenAsset."
+					logger.error(msg.red)
+	        		abort
+				end
 
 	        elsif target_project_field.is_a?(String) # Name
 
@@ -3958,31 +4262,36 @@ module OpenAsset
 				op.add_option('textMatching','exact')
 	        	project_field_found = get_fields(op)
 
-	        	unless project_field_found
-	        		abort("Error: Field with name #{target_project_field.inspect} not found in OpenAsset.")
+				unless project_field_found
+					msg = "Field with name #{target_project_field.inspect} not found in OpenAsset."
+					logger.error(msg.red)
+	        		abort
 	        	end
 
 	        	if project_field_found.length > 1
-	        		error = "Error: Multiple fields found with name #{target_project_field.inspect}. Specify an id instead."
-	        		abort(error)
+					msg = "Multiple fields found with name #{target_project_field.inspect}. Specify an id instead."
+					logger.error(msg.red)
+	        		abort
 	        	else
 	        		project_field_found = project_field_found.first
 	        	end
 	        else 
-	        	error = "Error: Expected one of the following: " +
-				        "\n\t1. Valid Fields object." +
-				        "\n\t2. Field id."
-				        "\n\t3. Field name."
-				        "\nfor second argument in #{__callee__} method." +
-				        "\nInstead got #{target_project_field.inspect}."
-				abort(error)
+	        	msg = "Error: Expected one of the following: " +
+				      "\n\t1. Valid Fields object." +
+				      "\n\t2. Field id."
+				      "\n\t3. Field name."
+				      "\nfor second argument in #{__callee__} method." +
+					  "\nInstead got #{target_project_field.inspect}."
+				logger.error(msg.red)
+				abort
 		    end
 
 		    # Make sure it's a project field
 		    unless project_field_found.field_type == 'project'
-		    	error = "Error: Specified field #{project_field_found.name.inspect} with id " +
-		    	        "#{project_field_found.id.inspect} is not a project field"
-		    	abort(error)
+		    	msg = "Error: Specified field #{project_field_found.name.inspect} with id " +
+					  "#{project_field_found.id.inspect} is not a project field."
+				logger.error(msg.red)
+		    	abort
 			end
 			
 			if RESTRICTED_LIST_FIELD_TYPES.include?(project_field_found.field_display_type)
@@ -3993,7 +4302,7 @@ module OpenAsset
 					      "\n\t All project keywords will be created as options but only the first one will be displayed in the field." +
 						  "\nContinue? (Yes/no)\n> "
 
-				print message
+				print message.yellow
 
 				while answer != 'yes' && answer != 'no'
 
@@ -4009,16 +4318,24 @@ module OpenAsset
 			
 			end
 
-		    if field_separator.nil?
-		    	abort("Error: Must specify field separator.")
+			if field_separator.nil?
+				msg = "You must specify a field separator."
+				logger.error(msg)
+		    	abort
 		    end
 
-		    unless ['append','overwrite'].include?(insert_mode.to_s)
-				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
-				      "Instead got #{insert_mode.inspect}")
+			unless ['append','overwrite'].include?(insert_mode.to_s)
+				msg = "Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
+					  "Instead got #{insert_mode.inspect}"
+				logger.error(msg.red)
+				abort
 		    end
 
-		    abort('Invalid batch size. Specify a positive numeric value or use default value of 100') if batch_size.zero?
+			if batch_size.zero?
+				msg = "Invalid batch size. Specify a positive numeric value or use default value of 200."
+				logger.error(msg.red)
+		    	abort
+			end
 
 		    op.clear
 
@@ -4036,7 +4353,11 @@ module OpenAsset
 
             project_ids = get_projects(op).map { |obj| obj.id.to_s }
 
-            abort("Error: No Projects found in OpenAsset!") if project_ids.length.zero?
+			if project_ids.length.zero?
+				msg = "No Projects found in OpenAsset!"
+				logger.error(msg.red)
+            	abort
+			end
 
             op.clear
 
@@ -4060,13 +4381,17 @@ module OpenAsset
 				op.add_option('limit','0')
 				op.add_option('id',ids)
 
-				puts "[INFO] Batch #{num} of #{iterations} => Retrieving projects."
+				msg = "Batch #{num} of #{iterations} => Retrieving projects."
+				logger.info(msg.green)
+
 				projects = get_projects(op)
 
 				op.clear
 
 				# Move project keywords to field
-				puts "[INFO] Batch #{num} of #{iterations} => Extacting project keywords."
+				msg = "Batch #{num} of #{iterations} => Extacting project keywords."
+				logger.info(msg.green)
+
 				processed_projects = move_keywords_to_fields(projects,
 															 project_keywords,
 															 project_field_found,
@@ -4074,7 +4399,9 @@ module OpenAsset
 															 insert_mode)
 
 				# Update projects
-				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform project updates."
+				msg = "Batch #{num} of #{iterations} => Attempting to perform project updates."
+				logger.info(msg.green)
+
 				updated_obj_count = run_smart_update(processed_projects,total_projects_updated)
 
 				total_projects_updated += updated_obj_count
@@ -4167,13 +4494,16 @@ module OpenAsset
 			
 			end
 
-		    unless ['append','overwrite'].include?(insert_mode.to_s)
-				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
-				      "Instead got #{insert_mode.inspect}")
+			unless ['append','overwrite'].include?(insert_mode.to_s)
+				msg = "Argument Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
+					  "Instead got #{insert_mode.inspect}"
+				logger.error(msg.red)
+				abort
 		    end
 			
 			# Get keywords
-			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_categories_found.first.name.inspect}."
+			msg = "Retrieving keywords for keyword category => #{file_keyword_categories_found.first.name.inspect}."
+			logger.info(msg.green)
 			
 			file_keyword_category_ids = file_keyword_categories_found.map(&:id)
 
@@ -4183,9 +4513,10 @@ module OpenAsset
 			keywords = get_keywords(op)
 
 			if keywords.empty?
-				error = "No keywords found in keyword category => #{file_keyword_category_found.name.inspect} " +
-				        "with id #{file_keyword_category_found.id.inspect}"
-				abort(error)
+				msg = "No keywords found in keyword category => #{file_keyword_category_found.name.inspect} " +
+					  "with id #{file_keyword_category_found.id.inspect}"
+				logger.error(msg.red)
+				abort
 			end
 
 			file_keyword_ids = keywords.map(&:id)
@@ -4193,15 +4524,20 @@ module OpenAsset
 			op.clear
 
 			# Get file ids
-			puts "[INFO] Retrieving file ids in album #{album_found.name.inspect}."
+			msg = "Retrieving file ids in album #{album_found.name.inspect}."
+			logger.info(msg.green)
+
 			file_ids = album_found.files.map { |obj| obj.id.to_s }
 
-			puts "[INFO] Calculating batch size."
+			msg = "Calculating batch size."
+			logger.info(msg.green)
+
 			total_file_count = file_ids.length
 
 			if total_file_count.zero?
-				error = "No files found in album #{album_found.name.inspect} with id #{album_found.id.inspect}."
-				abort(error)
+				msg = "No files found in album #{album_found.name.inspect} with id #{album_found.id.inspect}."
+				logger.error(msg.red)
+				abort
 			end
 
 			# Set up iterations loop
@@ -4220,7 +4556,9 @@ module OpenAsset
 				end_index   = offset + limit
 				ids         = file_ids[start_index...end_index].join(',')
 
-				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
+				msg = "Batch #{num} of #{iterations} => Retrieving files."
+				logger.info(msg.green)
+
 				op.add_option('limit','0')
 				op.add_option('id',ids)
 
@@ -4230,7 +4568,9 @@ module OpenAsset
 				processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
 
 				# Perform file update
-				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
+				msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
+				logger.info(msg.white)
+
 				updated_obj_count = run_smart_update(processed_files,total_files_updated)
 
 				total_files_updated += updated_obj_count
@@ -4317,16 +4657,19 @@ module OpenAsset
 			
 			end
 
-		    unless ['append','overwrite'].include?(insert_mode.to_s)
-				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
-				      "Instead got #{insert_mode.inspect}")
+			unless ['append','overwrite'].include?(insert_mode.to_s)
+				msg = "Argument Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
+					  "Instead got #{insert_mode.inspect}"
+				logger.error(msg.red)
+				abort
 		    end
 
 			# Check the source_field field type
 			built_in = (target_field_found.built_in == '1') ? true : false
 
 			# Get keywords
-			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_categories_found.first.name.inspect}."
+			msg = "Retrieving keywords for keyword category => #{file_keyword_categories_found.first.name.inspect}."
+			logger.info(msg.green)
 
 			file_keyword_category_ids = file_keyword_categories_found.map(&:id).join(',')
 			op.add_option('limit','0')
@@ -4335,14 +4678,17 @@ module OpenAsset
 			keywords = get_keywords(op)
 
 			if keywords.empty?
-				error = "No keywords found in keyword category => #{file_keyword_categories_found.first.name.inspect}."	        
-				abort(error)
+				msg = "No keywords found in keyword category => #{file_keyword_categories_found.first.name.inspect}."
+				logger.error(msg.red)	        
+				abort
 			end
 
 			op.clear
 			
 			# Get file ids
-			puts "[INFO] Retrieving file ids in project => #{project_found.name.inspect}."
+			msg = "Retrieving file ids in project => #{project_found.name.inspect}."
+			logger.info(msg.green)
+			
 			op.add_option('limit','0')
 			op.add_option('displayFields','id')
 			op.add_option('project_id',"#{project_found.id}") # Returns files in specified project
@@ -4352,7 +4698,9 @@ module OpenAsset
 			op.clear
 
 			if files.empty?
-				abort("Project #{project_found.name.inspect} with id #{project_found.id.inspect} is empty.")
+				msg = "Project #{project_found.name.inspect} with id #{project_found.id.inspect} is empty."
+				logger.error(msg.red)
+				abort
 			end
 
 			# Extract file ids
@@ -4361,7 +4709,9 @@ module OpenAsset
 			# Prep iterations loop
 			total_file_count = file_ids.length
 
-			puts "[INFO] Calculating batch size."
+			msg = "Calculating batch size."
+			logger.info(msg.green)
+
 			if total_file_count % batch_size == 0
 				iterations = total_file_count / batch_size
 			else
@@ -4376,7 +4726,9 @@ module OpenAsset
 				end_index   = limit
 				ids         = file_ids[start_index...end_index].join(',')
 
-				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
+				msg = "Batch #{num} of #{iterations} => Retrieving files."
+				logger.info(msg.green)
+
 				op.add_option('limit','0')
 				op.add_option('id',ids)
 
@@ -4387,7 +4739,9 @@ module OpenAsset
 				processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
 
 				# Perform file update
-				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
+				msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
+				logger.info(msg.white)
+
 				updated_obj_count = run_smart_update(files,total_files_updated)
 
 				total_files_updated += updated_obj_count
@@ -4472,31 +4826,38 @@ module OpenAsset
 			
 			end
 
-		    unless ['append','overwrite'].include?(insert_mode.to_s)
-				abort("Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
-				      "Instead got #{insert_mode.inspect}")
+			unless ['append','overwrite'].include?(insert_mode.to_s)
+				msg = "Argument Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
+					  "Instead got #{insert_mode.inspect}"
+				logger.error(msg.red)
+				abort
 		    end
 
 			# Check the source_field field type
 			built_in = (target_field_found.built_in == '1') ? true : false
 
 			# Get keywords
-			puts "[INFO] Retrieving keywords for keyword category => #{file_keyword_category_found.name.inspect}."
+			msg = "Retrieving keywords for keyword category => #{file_keyword_category_found.name.inspect}."
+			logger.info(msg.green)
+
 			op.add_option('limit','0')
 			op.add_option('keyword_category_id',"#{file_keyword_category_found.id}")
 
 			keywords = get_keywords(op)
 
 			if keywords.empty?
-				error = "No keywords found in keyword category => #{file_keyword_category_found.name.inspect} " +
-				        "with id #{file_keyword_category_found.id.inspect}"
-				abort(error)
+				msg = "No keywords found in keyword category => #{file_keyword_category_found.name.inspect} " +
+					  "with id #{file_keyword_category_found.id.inspect}"
+				logger.error(msg.red)
+				abort
 			end
 
 			op.clear
 			
 			# Get file ids
-			puts "[INFO] Retrieving file ids in category => #{category_found.name.inspect}."
+			msg = "Retrieving file ids in category => #{category_found.name.inspect}."
+			logger.info(msg.green)
+
 			op.add_option('limit','0')
 			op.add_option('displayFields','id')
 			op.add_option('category_id',"#{category_found.id}") # Returns files in specified project
@@ -4506,7 +4867,9 @@ module OpenAsset
 			op.clear
 
 			if files.empty?
-				abort("Category #{category_found.name.inspect} with id #{category_found.id.inspect} is empty.")
+				msg = "Category #{category_found.name.inspect} with id #{category_found.id.inspect} is empty."
+				logger.error(msg.red)
+				abort
 			end
 
 			# Extract file ids
@@ -4515,7 +4878,9 @@ module OpenAsset
 			# Prep iterations loop
 			total_file_count = file_ids.length
 
-			puts "[INFO] Calculating batch size."
+			msg = "Calculating batch size."
+			logger.info(msg.green)
+
 			if total_file_count % batch_size == 0
 				iterations = total_file_count / batch_size
 			else
@@ -4530,7 +4895,9 @@ module OpenAsset
 				end_index   = limit
 				ids         = file_ids[start_index...end_index].join(',')
 
-				puts "[INFO] Batch #{num} of #{iterations} => Retrieving files."
+				msg = "Batch #{num} of #{iterations} => Retrieving files."
+				logger.info(msg.green)
+
 				op.add_option('limit','0')
 				op.add_option('id',ids)
 
@@ -4541,7 +4908,9 @@ module OpenAsset
 				processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
 
 				# Perform file update
-				puts "[INFO] Batch #{num} of #{iterations} => Attempting to perform file updates."
+				msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
+				logger.info(msg.white)
+				
 				updated_obj_count = run_smart_update(files,total_files_updated)
 
 				total_files_updated += updated_obj_count
