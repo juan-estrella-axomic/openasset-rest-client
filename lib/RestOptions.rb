@@ -1,3 +1,5 @@
+require 'uri'
+
 class RestOptions
 
 	# @!parse attr_reader :options
@@ -53,9 +55,9 @@ class RestOptions
 		field = clean(field_name)
 		value = clean(field_value)
 		if field && value && @options.empty?
-			@options += '?' + field + '=' + value
+			@options += '?' + field + '=' + URI.escape(value)
 		elsif field && value && !@options.empty?
-			@options += '&' + field + '=' + value
+			@options += '&' + field + '=' + URI.escape(value)
 		end
 	end	
 
@@ -68,7 +70,7 @@ class RestOptions
 	# @example 
 	#         options.remove_option('name','jim')
 	def remove_option(field_name,field_value)
-		value = clean(field_name) + '=' + clean(field_value)
+		value = URI.escape(clean(field_name)) + '=' + URI.escape(clean(field_value))
 		unless @options.empty?
 			if @options.include?("?#{value}")
 				@options.gsub("?#{value}",'')
