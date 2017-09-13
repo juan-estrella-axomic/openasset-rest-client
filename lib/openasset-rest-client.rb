@@ -750,7 +750,7 @@ module OpenAsset
 				#Account for 2048 character limit with GET requests
 				options_str_len = options.get_options.length
 				if options_str_len > 1024
-					puts "Inside Get as POST"
+					
 					request = Net::HTTP::Post.new(uri.request_uri + options.get_options)
 					request.add_field('X-Http-Method-Override','GET')
 
