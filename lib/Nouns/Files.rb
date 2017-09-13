@@ -6,6 +6,13 @@ require_relative 'NestedKeywordItems.rb'
 # @author Juan Estrella
 class Files
 
+	@@encoding_options = {
+		:invalid           => :replace,  # Replace invalid byte sequences
+		:undef             => :replace,  # Replace anything not defined in ASCII
+		:replace           => '',        # Use a blank for those replacements
+		:universal_newline => true       # Always break lines with \n
+	}
+
 	# @!parse attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
 	attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
 
@@ -73,17 +80,17 @@ class Files
 		else
 			json_obj = Validator::validate_argument(args.first,'Files')
 		end
-		
+		  
 		@access_level = json_obj['access_level']
 		@alternate_store_id = json_obj['alternate_store_id']
-		@caption = json_obj['caption']
+		@caption = json_obj['caption'].encode(Encoding.find('ASCII'), @@encoding_options).gsub(/\n/,' ')
 		@category_id = json_obj['category_id']
 		@click_count = json_obj['click_count']
 		@contains_audio = json_obj['contains_audio']
 		@contains_video = json_obj['contains_video']
 		@copyright_holder_id = json_obj['copyright_holder_id']
 		@created = json_obj['created']   						#date
-		@description = json_obj['description']
+		@description = json_obj['description'].encode(Encoding.find('ASCII'), @@encoding_options)
 		@download_count = json_obj['download_count']
 		@duration = json_obj['duration']
 		@filename = json_obj['filename']

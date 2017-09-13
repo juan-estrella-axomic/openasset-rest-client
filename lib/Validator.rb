@@ -1,3 +1,5 @@
+require 'uri'
+
 class Validator
 
 	NOUNS = %w[

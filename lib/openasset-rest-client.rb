@@ -718,40 +718,43 @@ module OpenAsset
 		end
 
 		# @!visibility private
-		def get(uri,options_obj)
+		def get(uri,options_obj,with_nested_resources=false)
 			resource = uri.to_s.split('/').last
 			options = options_obj || RestOptions.new
 
+			if with_nested_resources
 			#Ensures File resource query returns all nested file sizes unless otherwise specified
-			case resource 
-			when 'Files'
-				options.add_option('sizes','all')
-				options.add_option('keywords','all')
-				options.add_option('fields','all')
-			when 'Albums'
-				options.add_option('files','all')
-				options.add_option('groups','all')
-				options.add_option('users','all')
-			when 'Projects'
-				options.add_option('projectKeywords','all')
-				options.add_option('fields','all')
-				options.add_option('albums','all')
-			when 'Fields'
-				options.add_option('fieldLookupStrings','all')
-			when 'Searches'
-				options.add_option('groups','all')
-				options.add_option('users','all')
-			else
-				
+				case resource 
+				when 'Files'
+					options.add_option('sizes','all')
+					options.add_option('keywords','all')
+					options.add_option('fields','all')
+				when 'Albums'
+					options.add_option('files','all')
+					options.add_option('groups','all')
+					options.add_option('users','all')
+				when 'Projects'
+					options.add_option('projectKeywords','all')
+					options.add_option('fields','all')
+					options.add_option('albums','all')
+				when 'Fields'
+					options.add_option('fieldLookupStrings','all')
+				when 'Searches'
+					options.add_option('groups','all')
+					options.add_option('users','all')
+				else
+					
+				end
+
 			end
 			
 			response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
 				
 				#Account for 2048 character limit with GET requests
 				options_str_len = options.get_options.length
-				if options_str_len > 1024
+				if options_str_len > 2048
 					
-					request = Net::HTTP::Post.new(uri.request_uri + options.get_options)
+					request = Net::HTTP::Post.new(uri.request_uri)
 					request.add_field('X-Http-Method-Override','GET')
 
 					post_parameters = {}
@@ -766,9 +769,33 @@ module OpenAsset
 
 					end.each do |pair| 
 						
+						key   = pair[0].to_sym
+						value = URI.unescape(pair[1])
+
 						# Insert data into post parameters hash 
-						post_parameters[pair[0]] = URI.unescape(pair[1]) 
-					
+						if post_parameters.has_key?(key) # then update it otherwise perform new insert
+							# Check if value for corresponding key is an array -> ex. ?id=[1,2,3] instead of ?id=1,2,3
+							existing_data = post_parameters[key]
+							match         = existing_data =~ /^(\[)([\w\d\s,]+)(\])$/  
+
+							if match
+								begin
+									arr = JSON.parse(existing_data)
+									arr.push(value)
+									value = arr.join(',')
+									post_parameters[key] = value
+								rescue => e
+									logger.error(e.message.red)
+									return
+								end
+							else
+								post_parameters[key] = existing_data + ',' + value # Combine duplicate query variables
+							end
+							
+						else
+							post_parameters[key] = value 
+						end
+								
 					end
 					
 					request.set_form_data(post_parameters)
@@ -786,7 +813,7 @@ module OpenAsset
 				begin
 					http.request(request)
 				rescue => e
-					puts "Error: #{e.inspect}"
+					logger.error(e.message.red)
 					abort
 				end
 			end
@@ -794,6 +821,9 @@ module OpenAsset
 			unless @session == response['X-SessionKey']
 				@session = response['X-SessionKey']
 			end
+
+			response.body = URI.unescape(response.body)
+
 			Validator::process_http_response(response,@verbose,resource,'GET')
 
 			return unless response.kind_of?(Net::HTTPSuccess)
@@ -862,12 +892,14 @@ module OpenAsset
 		# @!visibility private
 		def put(uri,data,generate_objects)
 			resource = uri.to_s.split('/').last
+			
 			json_body = Validator::validate_and_process_request_data(data)
+			require 'pp'
+			
 			unless json_body
 				return
 			end
 
-			require 'pp'
 			response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
 				request = Net::HTTP::Put.new(uri.request_uri)
 				if @session
