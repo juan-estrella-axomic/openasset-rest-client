@@ -749,11 +749,31 @@ module OpenAsset
 				
 				#Account for 2048 character limit with GET requests
 				options_str_len = options.get_options.length
-				if options_str_len > 2048
+				if options_str_len > 1024
+					puts "Inside Get as POST"
 					request = Net::HTTP::Post.new(uri.request_uri + options.get_options)
 					request.add_field('X-Http-Method-Override','GET')
+
+					post_parameters = {}
+
+					# Remove beginning ? mark from query
+					key_value_pairs = options.get_options.sub(/^\?/,'')
+
+					# Break down the string and extract key value arguments for the post parameters
+					key_value_pairs.split('&').map do |key_val| 
+
+						key_val.split('=') 
+
+					end.each do |pair| 
+						
+						# Insert data into post parameters hash 
+						post_parameters[pair[0]] = URI.unescape(pair[1]) 
+					
+					end
+					
+					request.set_form_data(post_parameters)
 				else
-					request = Net::HTTP::Get.new(uri.request_uri + URI.escape(options.get_options))
+					request = Net::HTTP::Get.new(uri.request_uri + options.get_options)
 				end
 
 				if @session

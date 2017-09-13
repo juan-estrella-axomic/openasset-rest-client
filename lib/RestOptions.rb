@@ -1,6 +1,11 @@
 require 'uri'
+require 'colorize'
+
+require_relative 'MyLogger.rb'
 
 class RestOptions
+
+	include Logging
 
 	# @!parse attr_reader :options
 	attr_reader :options
@@ -29,10 +34,11 @@ class RestOptions
 			#make sure only Integers or Strings are in the Array
 			value.each do |val|
 				unless val.is_a?(String) || val.is_a?(Integer)
-					puts "Error: Invalid value detected in RestOptions argument. Expected a String, " +
-					     "Integer, or Array of Strings and/or Integers.\nInstead got a(n) => #{val.class} " +
-					     "at index #{value.find_index(val)} ...Exiting"
-					exit
+					msg = "Error: Invalid value detected in RestOptions argument. Expected a String, " +
+					      "Integer, or Array of Strings and/or Integers.\nInstead got a(n) => #{val.class} " +
+						  "at index #{value.find_index(val)} ...Exiting"
+					logger.error(msg.red)
+					abort
 				end
 			end
 			#build clean string from array
@@ -70,14 +76,15 @@ class RestOptions
 	# @example 
 	#         options.remove_option('name','jim')
 	def remove_option(field_name,field_value)
-		value = URI.escape(clean(field_name)) + '=' + URI.escape(clean(field_value))
+		value = clean(field_name) + '=' + URI.escape(clean(field_value))
 		unless @options.empty?
 			if @options.include?("?#{value}")
-				@options.gsub("?#{value}",'')
+				@options.gsub!("?#{value}",'')
 			elsif @options.include?("&#{value}")
-				@options.gsub("&#{value}",'')
+				@options.gsub!("&#{value}",'')
 			else
-				warn "#{value} parameter not found. Nothing to remove." 
+				msg = "\"#{field_name}=#{field_value}\" parameter not found. Nothing to remove." 
+				logger.info(msg)
 			end
 		end
 	end
