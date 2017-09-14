@@ -841,7 +841,7 @@ module OpenAsset
         def post(uri,data,generate_objects)
 
             errors    = []
-            error_obj = Struct.new(:id,:name,:msg)
+            error_obj = Struct.new(:id,:name,:code,:msg)
             name      = (resource == 'Files') ? '@filename' : '@name'
             resource = ''
 
@@ -882,7 +882,8 @@ module OpenAsset
                     err      = error_obj.new
                     err.id   = data[index].id
                     err.name = data[index].instance_variable_get(name)
-                    err.msg  = obj["error_message"]
+					err.code = obj["error_message"]
+					err.msg  = obj["http_status_code"]
                     errors << err
                 end
             end
@@ -890,7 +891,8 @@ module OpenAsset
             unless errors.empty?
                 errors.each do |e|
                     logger.error("Update failed for #{resource.inspect} object: #{e.name} with id #{e.id}".red)
-                    logger.error("Message: #{e.msg}\n".red)
+					logger.error("Message: #{e.msg}\n".red)
+					logger.error("Code: #{e.code}".red)
                 end
             end
 
@@ -916,7 +918,7 @@ module OpenAsset
         def put(uri,data,generate_objects)
 
             errors    = []
-            error_obj = Struct.new(:id,:name,:msg)
+            error_obj = Struct.new(:id,:name,:code,:msg)
             resource  = uri.to_s.split('/').last
             name      = (resource == 'Files') ? '@filename' : '@name'
             
@@ -950,7 +952,8 @@ module OpenAsset
                 if obj.has_key?("error_message")
                     err      = error_obj.new
                     err.id   = data[index].id
-                    err.name = data[index].instance_variable_get(name)
+					err.name = data[index].instance_variable_get(name)
+					err.code = obj["http_status_code"]
                     err.msg  = obj["error_message"]
                     errors << err
                 end
@@ -959,7 +962,8 @@ module OpenAsset
             unless errors.empty?
                 errors.each do |e|
                     logger.error("Update failed for #{resource.inspect} object: #{e.name} with id #{e.id}".red)
-                    logger.error("Message: #{e.msg}\n".red)
+					logger.error("Message: #{e.msg}\n".red)
+                    logger.error("Code: #{e.code}".red)
                 end
             end
 
@@ -982,7 +986,7 @@ module OpenAsset
         def delete(uri,data)
 
             errors    = []
-            error_obj = Struct.new(:id,:name,:msg)
+            error_obj = Struct.new(:id,:name,:code,:msg)
             resource  = uri.to_s.split('/').last
             name      = (resource == 'Files') ? '@filename' : '@name'
             
@@ -1025,7 +1029,8 @@ module OpenAsset
                     if obj.has_key?("error_message")
                         err      = error_obj.new
                         err.id   = data[index].id
-                        err.name = data[index].instance_variable_get(name)
+						err.name = data[index].instance_variable_get(name)
+						err.code = obj["http_status_code"]
                         err.msg  = obj["error_message"]
                         errors << err
                     end
@@ -1035,7 +1040,8 @@ module OpenAsset
             unless errors.empty?
                 errors.each do |e|
                     logger.error("Delete failed for #{resource.inspect} object: #{e.name} with id #{e.id}".red)
-                    logger.error("Message: #{e.msg}\n".red)
+					logger.error("Message: #{e.msg}\n".red)
+					logger.error("Code: #{e.code}".red) if e.code
                 end
             end
 
