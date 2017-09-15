@@ -83,14 +83,14 @@ class Files
 		  
 		@access_level = json_obj['access_level']
 		@alternate_store_id = json_obj['alternate_store_id']
-		@caption = json_obj['caption'].encode(Encoding.find('ASCII'), @@encoding_options).gsub(/\n/,' ')
+		@caption = json_obj['caption']
 		@category_id = json_obj['category_id']
 		@click_count = json_obj['click_count']
 		@contains_audio = json_obj['contains_audio']
 		@contains_video = json_obj['contains_video']
 		@copyright_holder_id = json_obj['copyright_holder_id']
 		@created = json_obj['created']   						#date
-		@description = json_obj['description'].encode(Encoding.find('ASCII'), @@encoding_options)
+		@description = json_obj['description']
 		@download_count = json_obj['download_count']
 		@duration = json_obj['duration']
 		@filename = json_obj['filename']

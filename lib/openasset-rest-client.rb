@@ -52,9 +52,10 @@ module OpenAsset
                 end
             end
             @authenticator = Authenticator::get_instance(client_url)
-            @uri = @authenticator.uri
-            @session = @authenticator.get_session
-            @verbose = false
+            @uri           = @authenticator.uri
+            @session       = @authenticator.get_session
+			@verbose       = false
+			@char_encoding = "windows-1252"
         end
 
         private
@@ -113,7 +114,7 @@ module OpenAsset
                     container_found = container_found.first
                 else
                     msg = "Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
-                          "\n\tIntead got #{container.inspect}"
+                          "\n    Intead got #{container.inspect}"
                     logger.error(msg.red)
                     abort
                 end
@@ -166,7 +167,7 @@ module OpenAsset
                     container_found = container_found.first
                 else
                     msg = "Argument Error: Expected a Projects object, Project name, or Project id for the first argument in #{__callee__}" +
-                          "\n\tIntead got #{container.inspect}"
+                          "\n    Intead got #{container.inspect}"
                     logger.error(msg.red)
                     abort
                 end
@@ -214,7 +215,7 @@ module OpenAsset
 
                 else
                     msg = "Argument Error: Expected a Categories object, Category name, or Category id for the first argument in #{__callee__}" +
-                    "\n\tIntead got #{container.inspect}"
+                    "\n    Intead got #{container.inspect}"
                     logger.error(msg.red)
                     abort
                 end
@@ -271,9 +272,9 @@ module OpenAsset
                 end
             
             else
-                msg = "Argument Error: Expected \n\t1.) File keyword categories object\n\t2.) File keyword " +
-                      "category name\n\t3.) File keyword category id\nfor the second argument in #{__callee__}." +
-                      "\n\tIntead got #{target_keyword_category.inspect}"
+                msg = "Argument Error: Expected \n    1.) File keyword categories object\n    2.) File keyword " +
+                      "category name\n    3.) File keyword category id\nfor the second argument in #{__callee__}." +
+                      "\n    Intead got #{target_keyword_category.inspect}"
                 logger.error(msg.red)
                 abort
             end
@@ -323,7 +324,7 @@ module OpenAsset
                 source_field_found = results.first
             else
                 msg = "Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
-                      "\n\tIntead got #{source_field.inspect}"
+                      "\n    Intead got #{source_field.inspect}"
                 logger.error(msg.red)
                 abort
             end
@@ -338,14 +339,14 @@ module OpenAsset
 
             unless field_separator.is_a?(String) && !field_separator.nil?
                 msg = "Argument Error: Expected a string value for the fourth argument \"field_separator\"." +
-                      "\n\tInstead got #{field_separator.inspect}."
+                      "\n    Instead got #{field_separator.inspect}."
                 logger.error(msg.red)
                 abort
             end
 
             unless batch_size.to_i > 0
                 msg = "Argument Error: Expected a non zero numeric value for the fifth argument \"batch size\" in #{__callee__}." +
-                      "\n\tInstead got #{batch_size.inspect}."
+                      "\n    Instead got #{batch_size.inspect}."
                 logger.error(msg.red)
                 abort
             end
@@ -385,14 +386,14 @@ module OpenAsset
 
             unless Validator::NOUNS.include?(resource)
                 msg = "Argument Error: Expected Nouns Object for first argument in #{__callee__}." +
-                      "\n\tInstead got => #{object.inspect}"
+                      "\n    Instead got => #{object.inspect}"
                 logger.error(msg.red)
                 abort
             end
 
             unless rest_option_obj.is_a?(RestOptions) || rest_option_obj == nil
                 msg = "Argument Error: Expected RestOptions Object or no argument for second argument in #{__callee__}." + 
-                      "\n\tInstead got => #{rest_option_obj.inspect}"
+                      "\n    Instead got => #{rest_option_obj.inspect}"
                 logger.error(msg.red)
                 abort
             end
@@ -763,14 +764,24 @@ module OpenAsset
                     key_value_pairs = options.get_options.sub(/^\?/,'')
 
                     # Break down the string and extract key value arguments for the post parameters
-                    key_value_pairs.split('&').map do |key_val| 
-
-                        key_val.split('=') 
+                    key_value_pairs.split(/&/).map do |key_val| 
+						#puts key_val
+                        key_val.split(/=/) 
 
                     end.each do |pair| 
                         
-                        key   = pair[0].to_sym
-                        value = URI.unescape(pair[1])
+						key   = pair[0].to_sym
+						value = nil
+
+						begin
+							value = URI.decode(pair[1])
+						rescue => e
+							#require 'pp'
+							#pp e
+							puts value.inspect
+							puts key.inspect
+							return
+						end
 
                         # Insert data into post parameters hash 
                         if post_parameters.has_key?(key) # then update it otherwise perform new insert
@@ -822,7 +833,13 @@ module OpenAsset
                 @session = response['X-SessionKey']
             end
 
-            response.body = URI.unescape(response.body)
+			content_type = response['content-type']
+
+			unless content_type.nil? || content_type.eql?('')
+				@char_encoding = content_type.split(/=/).last # application/json;charset=windows-1252 => windows-1252
+			end
+
+            response.body = response.body.encode(@char_encoding, @char_encoding)
 
             Validator::process_http_response(response,@verbose,resource,'GET')
 
@@ -860,15 +877,25 @@ module OpenAsset
             end
 
             response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Post.new(uri.request_uri)
+				request = Net::HTTP::Post.new(uri.request_uri)
+				request["content-type"] = "application/json;charset=" + @char_encoding
+
                 if @session
                     request.add_field('X-SessionKey',@session)
                 else
                     @session = @authenticator.get_session
                     request.add_field('X-SessionKey',@session) #For when the token issue is sorted out
                     #request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
-                end
-                request.body = json_body.to_json
+				end
+				
+				begin
+					request.body = json_body.to_json
+				rescue
+					request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+				rescue => e
+					logger.error(e.message.red)
+				end
+				
                 http.request(request)
             end
 
@@ -930,15 +957,25 @@ module OpenAsset
             end
 
             response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Put.new(uri.request_uri)
+				request = Net::HTTP::Put.new(uri.request_uri)
+			    request["content-type"] = "application/json;charset=" + @char_encoding
+
                 if @session
                     request.add_field('X-SessionKey',@session)
                 else
                     @session = @authenticator.get_session
                     request.add_field('X-SessionKey',@session) #For when the token issue is sorted out
                     #request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
-                end
-                request.body = json_body.to_json
+				end
+				
+				begin
+					request.body = json_body.to_json
+				rescue
+					request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+				rescue => e
+					logger.error(e.message.red)
+				end
+
                 #pp json_body
                 http.request(request)
             end
@@ -997,15 +1034,25 @@ module OpenAsset
             end
 
             response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Delete.new(uri.request_uri) #e.g. when called in keywords => /keywords/id
+				request = Net::HTTP::Delete.new(uri.request_uri) #e.g. when called in keywords => /keywords/id
+				request["content-type"] = "application/json;charset=" + @char_encoding
+
                 if @session
                     request.add_field('X-SessionKey',@session)
                 else
                     @session = @authenticator.get_session
                     request.add_field('X-SessionKey',@session) #For when the token issue is sorted out
                     #request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
-                end
-                request.body = json_object.to_json
+				end
+				
+				begin
+					request.body = json_body.to_json
+				rescue
+					request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+				rescue => e
+					logger.error(e.message.red)
+				end
+               
                 http.request(request)
             end
 
@@ -1714,8 +1761,8 @@ module OpenAsset
             #verify that both files have the same file extentions otherwise you will
             #get a 400 Bad Request Error
             if File.extname(file_object.original_filename) != File.extname(replacement_file_path)
-                msg = "File extensions must match! Aborting update\n\t" + 
-                      "Original file extension => #{File.extname(file_object.original_filename)}\n\t" +
+                msg = "File extensions must match! Aborting update\n    " + 
+                      "Original file extension => #{File.extname(file_object.original_filename)}\n    " +
                       "Replacement file extension => #{File.extname(replacement_file_path)}"
                 logger.error(msg.red)
                 return
@@ -2438,19 +2485,19 @@ module OpenAsset
             #Looking for File objects or an array of File objects
             unless files.is_a?(Files) || (files.is_a?(Array) && files.first.is_a?(Files))
                 warn "Argument Error: Invalid type for first argument in \"file_add_keywords\" method.\n" +
-                     "\tExpected one the following:\n" +
-                     "\t1. Single Files object\n" +
-                     "\t2. Array of Files objects\n" +
-                     "\tInstead got => #{files.inspect}"
+                     "    Expected one the following:\n" +
+                     "    1. Single Files object\n" +
+                     "    2. Array of Files objects\n" +
+                     "    Instead got => #{files.inspect}"
                 return false            
             end 
 
             unless keywords.is_a?(Keywords) || (keywords.is_a?(Array) && keywords.first.is_a?(Keywords))
                 warn "Argument Error: Invalid type for second argument in \"file_add_keywords\" method.\n" +
-                     "\tExpected one the following:\n" +
-                     "\t1. Single Keywords object\n" +
-                     "\t2. Array of Keywords objects\n" +
-                     "\tInstead got => #{keywords.inspect}"
+                     "    Expected one the following:\n" +
+                     "    1. Single Keywords object\n" +
+                     "    2. Array of Keywords objects\n" +
+                     "    Instead got => #{keywords.inspect}"
                 return false            
             end 
             
@@ -2503,20 +2550,20 @@ module OpenAsset
             unless projects.is_a?(Projects) || (projects.is_a?(Array) && 
                     projects.first.is_a?(Projects))
                 warn "Argument Error: Invalid type for first argument in \"project_add_keywords\" method.\n" +
-                     "\tExpected one the following:\n" +
-                     "\t1. Single Projects object\n" +
-                     "\t2. Array of Projects objects\n" +
-                     "\tInstead got => #{projects.inspect}"
+                     "    Expected one the following:\n" +
+                     "    1. Single Projects object\n" +
+                     "    2. Array of Projects objects\n" +
+                     "    Instead got => #{projects.inspect}"
                 return false            
             end 
 
             unless proj_keywords.is_a?(ProjectKeywords) || (proj_keywords.is_a?(Array) && 
                     proj_keywords.first.is_a?(ProjectKeywords))
                 warn "Argument Error: Invalid type for second argument in \"project_add_keywords\" method.\n" +
-                     "\tExpected one the following:\n" +
-                     "\t1. Single ProjectKeywords object\n" +
-                     "\t2. Array of ProjectKeywords objects\n" +
-                     "\tInstead got => #{proj_keywords.inspect}"
+                     "    Expected one the following:\n" +
+                     "    1. Single ProjectKeywords object\n" +
+                     "    2. Array of ProjectKeywords objects\n" +
+                     "    Instead got => #{proj_keywords.inspect}"
                 return false            
             end 
             #2.build project json array for request body
@@ -2568,22 +2615,22 @@ module OpenAsset
             #validate class types
             unless file.is_a?(Files) || (file.is_a?(String) && (file.to_i != 0)) || file.is_a?(Integer)
                 warn "Argument Error: Invalid type for first argument in \"file_add_field_data\" method.\n" +
-                     "\tExpected Single Files object, Numeric string, or Integer for file id\n" +
-                     "\tInstead got => #{file.inspect}"
+                     "    Expected Single Files object, Numeric string, or Integer for file id\n" +
+                     "    Instead got => #{file.inspect}"
                 return            
             end 
 
             unless field.is_a?(Fields) ||  (field.is_a?(String) && (field.to_i != 0)) || field.is_a?(Integer)
                 warn "Argument Error: Invalid type for second argument in \"file_add_field_data\" method.\n" +
-                     "\tExpected Single Fields object, Numeric string, or Integer for field id\n" +
-                     "\tInstead got => #{field.inspect}"
+                     "    Expected Single Fields object, Numeric string, or Integer for field id\n" +
+                     "    Instead got => #{field.inspect}"
                 return             
             end
 
             unless value.is_a?(String) || value.is_a?(Integer) || value.is_a?(Float)
                 warn "Argument Error: Invalid type for third argument in \"file_add_field_data\" method.\n" +
-                     "\tExpected a String, Integer, or Float\n" +
-                     "\tInstead got => #{value.inspect}"
+                     "    Expected a String, Integer, or Float\n" +
+                     "    Instead got => #{value.inspect}"
                 return            
             end
 
@@ -2782,22 +2829,22 @@ module OpenAsset
             #validate class types
             unless project.is_a?(Projects) || (project.is_a?(String) && (project.to_i != 0)) || project.is_a?(Integer)
                 warn "Argument Error: Invalid type for first argument in \"project_add_field_data\" method.\n" +
-                     "\tExpected Single Projects object, a Numeric string or Integer for a Project id\n" +
-                     "\tInstead got => #{project.inspect}"
+                     "    Expected Single Projects object, a Numeric string or Integer for a Project id\n" +
+                     "    Instead got => #{project.inspect}"
                 return            
             end 
 
             unless field.is_a?(Fields) ||  (field.is_a?(String) && (field.to_i != 0)) || field.is_a?(Integer)
                 warn "Argument Error: Invalid type for second argument in \"project_add_field_data\" method.\n" +
-                     "\tExpected Single Projects object, Numeric string, or Integer for Projects id.\n" +
-                     "\tInstead got => #{field.inspect}"
+                     "    Expected Single Projects object, Numeric string, or Integer for Projects id.\n" +
+                     "    Instead got => #{field.inspect}"
                 return            
             end
 
             unless value.is_a?(String) || value.is_a?(Integer)
                 warn "Argument Error: Invalid type for third argument in \"project_add_field_data\" method.\n" +
-                     "\tExpected a String or an Integer.\n" +
-                     "\tInstead got => #{value.inspect}"
+                     "    Expected a String or an Integer.\n" +
+                     "    Instead got => #{value.inspect}"
                 return            
             end
 
@@ -3979,9 +4026,9 @@ module OpenAsset
 
             else
                 msg = "Argument Error: Expected one of the following: " +
-                      "\n\t1. Valid project keyword category object." +
-                      "\n\t2. Project keyword category id." +
-                      "\n\t3. Project keyword category name." +
+                      "\n    1. Valid project keyword category object." +
+                      "\n    2. Project keyword category id." +
+                      "\n    3. Project keyword category name." +
                       "\nfor first argument in #{__callee__} method." +
                       "\nInstead got #{target_project_keyword_category.inspect}."
                 logger.error(msg.red)
@@ -4043,9 +4090,9 @@ module OpenAsset
                 end
             else 
                 msg = "Error: Expected one of the following: " +
-                      "\n\t1. Valid Fields object." +
-                      "\n\t2. Field id."
-                      "\n\t3. Field name."
+                      "\n    1. Valid Fields object." +
+                      "\n    2. Field id."
+                      "\n    3. Field name."
                       "\nfor second argument in #{__callee__} method." +
                       "\nInstead got #{project_field.inspect}."
                 logger.error(msg.red)
@@ -4359,9 +4406,9 @@ module OpenAsset
 
             else
                 msg = "Argument Error: Expected one of the following: " +
-                      "\n\t1. Valid project keyword category object." +
-                      "\n\t2. Project keyword category id." +
-                      "\n\t3. Project keyword category name." +
+                      "\n    1. Valid project keyword category object." +
+                      "\n    2. Project keyword category id." +
+                      "\n    3. Project keyword category name." +
                       "\nfor first argument in #{__callee__} method." +
                       "\nInstead got #{target_project_keyword_category.inspect}."
                 logger.error(msg.red)
@@ -4423,9 +4470,9 @@ module OpenAsset
                 end
             else 
                 msg = "Error: Expected one of the following: " +
-                      "\n\t1. Valid Fields object." +
-                      "\n\t2. Field id."
-                      "\n\t3. Field name."
+                      "\n    1. Valid Fields object." +
+                      "\n    2. Field id."
+                      "\n    3. Field name."
                       "\nfor second argument in #{__callee__} method." +
                       "\nInstead got #{target_project_field.inspect}."
                 logger.error(msg.red)
@@ -4444,8 +4491,8 @@ module OpenAsset
                 answer = nil
                 error  = "\nInvalid input. Please enter \"yes\" or \"no\".\n> "
                 message = "Warning: You are inserting keywords into a restricted field type. " +
-                          "\n\t Project keywords are sorted in alphabetical order. " +
-                          "\n\t All project keywords will be created as options but only the first one will be displayed in the field." +
+                          "\n     Project keywords are sorted in alphabetical order. " +
+                          "\n     All project keywords will be created as options but only the first one will be displayed in the field." +
                           "\nContinue? (Yes/no)\n> "
 
                 print message.yellow
@@ -4620,8 +4667,8 @@ module OpenAsset
                 answer = nil
                 error  = "\nInvalid input. Please enter \"yes\" or \"no\".\n> "
                 message = "Warning: You are inserting keywords into a restricted field type. " +
-                          "\n\t Project keywords are sorted in alphabetical order. " +
-                          "\n\t All file keywords will be created as options but only the first one will be displayed in the field." +
+                          "\n     Project keywords are sorted in alphabetical order. " +
+                          "\n     All file keywords will be created as options but only the first one will be displayed in the field." +
                           "\nContinue? (Yes/no)\n> "
 
                 print message
@@ -4783,8 +4830,8 @@ module OpenAsset
                 answer = nil
                 error  = "\nInvalid input. Please enter \"yes\" or \"no\".\n> "
                 message = "Warning: You are inserting keywords into a restricted field type. " +
-                          "\n\t Project keywords are sorted in alphabetical order. " +
-                          "\n\t All file keywords will be created as options but only the first one will be displayed in the field." +
+                          "\n     Project keywords are sorted in alphabetical order. " +
+                          "\n     All file keywords will be created as options but only the first one will be displayed in the field." +
                           "\nContinue? (Yes/no)\n> "
 
                 print message
@@ -4952,8 +4999,8 @@ module OpenAsset
                 answer = nil
                 error  = "\nInvalid input. Please enter \"yes\" or \"no\".\n> "
                 message = "Warning: You are inserting keywords into a restricted field type. " +
-                          "\n\t Project keywords are sorted in alphabetical order. " +
-                          "\n\t All file keywords will be created as options but only the first one will be displayed in the field." +
+                          "\n     Project keywords are sorted in alphabetical order. " +
+                          "\n     All file keywords will be created as options but only the first one will be displayed in the field." +
                           "\nContinue? (Yes/no)\n> "
 
                 print message
