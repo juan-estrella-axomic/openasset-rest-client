@@ -776,8 +776,8 @@ module OpenAsset
 						begin
 							value = URI.decode(pair[1])
 						rescue => e
-							#require 'pp'
-							#pp e
+							require 'pp'
+							pp e
 							puts value.inspect
 							puts key.inspect
 							return

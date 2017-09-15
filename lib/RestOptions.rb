@@ -1,4 +1,4 @@
-require 'uri'
+require 'erb'
 require 'colorize'
 
 require_relative 'MyLogger.rb'
@@ -61,9 +61,9 @@ class RestOptions
 		field = clean(field_name)
 		value = clean(field_value)
 		if field && value && @options.empty?
-			@options += '?' + field + '=' + URI.escape(value)
+			@options += '?' + field + '=' + ERB::Util.url_encode(value)
 		elsif field && value && !@options.empty?
-			@options += '&' + field + '=' + URI.escape(value)
+			@options += '&' + field + '=' + ERB::Util.url_encode(value)
 		end
 	end	
 
@@ -76,7 +76,7 @@ class RestOptions
 	# @example 
 	#         options.remove_option('name','jim')
 	def remove_option(field_name,field_value)
-		value = clean(field_name) + '=' + URI.escape(clean(field_value))
+		value = clean(field_name) + '=' + ERB::Util.url_encode(clean(field_value))
 		unless @options.empty?
 			if @options.include?("?#{value}")
 				@options.gsub!("?#{value}",'')
