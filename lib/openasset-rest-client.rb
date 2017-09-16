@@ -924,9 +924,6 @@ module OpenAsset
 
             return unless res.kind_of?(Net::HTTPSuccess)
 
-            # ====== temp fix for potential bug in REST api =======
-            #return if response.body.include?("Keywords already exists")
-
             if generate_objects == true
 
                 return generate_objects_from_json_response_body(response,resource)

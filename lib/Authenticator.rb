@@ -138,7 +138,6 @@ class Authenticator
         create_signature()
         
         token_auth_string = "OAT #{key_id}:#{@signature}"     
-        #puts "auth_string val: #{token_auth_string}"
     
         response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
             request = Net::HTTP::Get.new(uri.request_uri,{'User-Agent' => @user_agent})
