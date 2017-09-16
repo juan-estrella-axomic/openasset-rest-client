@@ -4,10 +4,12 @@ require 'base64'
 require 'socket'
 require 'fileutils'
 require 'date'
+require 'colorize'
 
-require_relative 'Authenticator.rb'
-require_relative 'Downloader.rb'
-require_relative 'Nouns/Files.rb'
+require_relative 'Authenticator'
+require_relative 'Downloader'
+require_relative 'Nouns/Files'
+require_relative 'MyLogger'
 
 module CSVHelper
     
@@ -27,8 +29,9 @@ module CSVHelper
         noun = nil
         #check if the collection is emplty
         if self.empty?
-            warn "Oops. There are no items in the collection. " +
-            "No use in creating spreadsheet."
+            msg = "Oops. There are no items in the collection. " +
+                  "No use in creating spreadsheet."
+            Logging::logger.warn(msg.yellow)
             return
         end
        
@@ -39,21 +42,12 @@ module CSVHelper
         #Notes -> instance variables must be initialized to at least nil
         #in order for the instance_variables method to work
         if Validator::NOUNS.include?(self.first.class.to_s) #its a NOUN
-
             noun = true
-            
-            #TO DO: try using an exit clause in here
             object_variables = self.first.instance_variables #returns an array
-            
-            puts "#{object_variables.inspect}"
-
-            #exit
         end
 
         #Create csv file using the clients subdomain name and insert the headers
         filename = name + '_CSV_Export_' + Time.new.strftime("%Y%m%d%H%M%S") + '.csv'
-        #puts filename.inspect
-        #csv_file = File.new(filename, File::CREAT)
 
         CSV.open(filename, "w") do |csv|
             if noun
@@ -102,10 +96,10 @@ module CSVHelper
                     csv << arr
                 end
             else
-                 warn "Oops. Items in the collection are #{self.first.class.to_s} " + 
-                 "instead of NOUN objects, Strings, or a collection of Integers or Strings." +
-                 " Exiting."
-                 return
+                msg = "Oops. Items in the collection are #{self.first.class.to_s} " + 
+                      "instead of NOUN objects or Strings."
+                Logging::logger.error(msg.red)
+                return
             end
         end
     end
@@ -128,24 +122,28 @@ module DownloadHelper
         #Make sure the download location is Valid directory
         if File.exist?(download_location)
             unless File.directory?(download_location)
-                puts "Argument Error: The download location provided is invalid."
+                msg = "The download location provided is not a directory."
+                Logging::logger.error(msg.red)
                 return false
             end
         else
-            puts "Creating Directory => #{download_location}."
+            msg = "Creating Directory => #{download_location}"
+            Logging::logger.info(msg)
             download_location = download_location + '_' + DateTime.now.strftime("%Y%m%d%H%M%S")
             FileUtils::mkdir_p download_location
             FileUtils.chmod(0777, download_location, :verbose => false)
         end
 
         if self.empty?
-            puts "Oops. The array is empty. There are no Files to download."
+            msg = "Oops. The collection is empty. There are no Files to download."
+            Logging::logger.warn(msg.yellow)
             return false
         end 
 
         unless self.first.is_a?(Files) || self.first.is_a?(String)
-            puts "Error: 'download' method requires that the array only contains " +
-                 "Files NOUN objects or url strings."
+            msg = "Error: 'download' method requires that the array only contains " +
+                  "Files NOUN objects or url strings."
+            Logging::logger.error(msg.red)
             return false
         end
         
@@ -182,7 +180,7 @@ module DownloadHelper
                 begin
                     Downloader::download(uri,location)
                 rescue => exception
-                    puts "Error: #{exception.message}"
+                    Logging::logger.error("#{exception.message}".red)
                 end
             else
                 puts "Error: Invalid data detected in the array.\nValue => #{item.inspect}"

@@ -1,4 +1,4 @@
-require_relative 'Modules.rb'
+require_relative 'Modules'
 
 
 #########################

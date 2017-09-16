@@ -1,11 +1,9 @@
-
-require_relative 'Version/version.rb'
-
-require_relative 'Authenticator.rb'
-require_relative 'RestOptions.rb'
-require_relative 'Helpers.rb'
-require_relative 'Validator.rb'
-require_relative 'MyLogger.rb'
+require_relative 'Version/version'
+require_relative 'Authenticator'
+require_relative 'RestOptions'
+require_relative 'Helpers'
+require_relative 'Validator'
+require_relative 'MyLogger'
 
 require 'net/http'
 
