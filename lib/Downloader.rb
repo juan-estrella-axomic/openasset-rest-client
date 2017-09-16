@@ -1,13 +1,17 @@
 require 'net/http'
 require 'ruby-progressbar'
 
-require_relative 'Validator.rb'
+require_relative 'Validator'
+require_relative 'MyLogger'
 
 class Downloader
+
+  include Logging
+
   def self.download(uri,location)
     resource = uri.to_s.split('/').last
     filename = location.split('/').last
-    puts "Downloading file => #{filename}"
+    Logger.info( "Downloading file => #{filename}")
     Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
       #perform head request to get the content length to feed the progress bar      
       res = http.request_head(uri)
