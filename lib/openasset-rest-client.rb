@@ -841,7 +841,7 @@ module OpenAsset
 
             Validator::process_http_response(response,@verbose,resource,'GET')
 
-            response.body = response.body.encode(@char_encoding, @char_encoding)
+            response.body = response.body.encode(@char_encoding, @char_encoding) # Ensure data is encoded according to web server
 
             return unless response.kind_of?(Net::HTTPSuccess)
                 
