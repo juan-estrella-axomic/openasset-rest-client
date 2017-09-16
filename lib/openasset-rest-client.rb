@@ -54,8 +54,8 @@ module OpenAsset
             @authenticator = Authenticator::get_instance(client_url)
             @uri           = @authenticator.uri
             @session       = @authenticator.get_session
-			@verbose       = false
-			@char_encoding = "windows-1252"
+            @verbose       = false
+            @char_encoding = "windows-1252"
         end
 
         private
@@ -682,7 +682,7 @@ module OpenAsset
                 end
 
                 if server_test_passed
-                    #puts "before update file"
+                    
                     if scope == 'files'
                         res = update_files(payload,false)
                     elsif scope == 'projects'
@@ -693,7 +693,6 @@ module OpenAsset
                         abort
                     end
                         
-                    #puts "after update file"
                     if res.kind_of? Net::HTTPSuccess
                         total_objects_updated = res['X-Full-Results-Count'].to_i + total_objects_updated
                         msg = ""
@@ -724,7 +723,7 @@ module OpenAsset
             options = options_obj || RestOptions.new
 
             if with_nested_resources
-            #Ensures File resource query returns all nested file sizes unless otherwise specified
+            # Ensures File resource query returns all nested resources
                 case resource 
                 when 'Files'
                     options.add_option('sizes','all')
@@ -765,23 +764,23 @@ module OpenAsset
 
                     # Break down the string and extract key value arguments for the post parameters
                     key_value_pairs.split(/&/).map do |key_val| 
-						#puts key_val
+                        #puts key_val
                         key_val.split(/=/) 
 
                     end.each do |pair| 
                         
-						key   = pair[0].to_sym
-						value = nil
+                        key   = pair[0].to_sym
+                        value = nil
 
-						begin
-							value = URI.decode(pair[1])
-						rescue => e
-							require 'pp'
-							pp e
-							puts value.inspect
-							puts key.inspect
-							return
-						end
+                        begin
+                            value = URI.decode(pair[1])
+                        rescue => e
+                            require 'pp'
+                            pp e
+                            logger.error(e.message.red)
+                            logger.error("Bad query parameter => #{key.inspect}=#{value.inspect}")
+                            return
+                        end
 
                         # Insert data into post parameters hash 
                         if post_parameters.has_key?(key) # then update it otherwise perform new insert
@@ -791,16 +790,17 @@ module OpenAsset
 
                             if match
                                 begin
-                                    arr = JSON.parse(existing_data)
+                                    arr = JSON.parse(existing_data) # Convert array in string to an actual array
                                     arr.push(value)
                                     value = arr.join(',')
                                     post_parameters[key] = value
                                 rescue => e
                                     logger.error(e.message.red)
-                                    return
+                                    logger.error("Value causing the error => #{existing_data.inspect}")
+                                    abort
                                 end
                             else
-                                post_parameters[key] = existing_data + ',' + value # Combine duplicate query variables
+                                post_parameters[key] = existing_data + ',' + value 
                             end
                             
                         else
@@ -808,10 +808,10 @@ module OpenAsset
                         end
                                 
                     end
-                    
+
                     request.set_form_data(post_parameters)
                 else
-                    request = Net::HTTP::Get.new(uri.request_uri + options.get_options)
+                    request = Net::HTTP::Get.new(uri.request_uri + options.get_options) # Create regular GET request
                 end
 
                 if @session
@@ -824,24 +824,24 @@ module OpenAsset
                 begin
                     http.request(request)
                 rescue => e
-                    logger.error(e.message.red)
+                    logger.error("#{resource} retrieval failed => #{e.message}".red)
                     abort
                 end
             end
 
-            unless @session == response['X-SessionKey']
+            unless @session == response['X-SessionKey'] # Upate session if needed
                 @session = response['X-SessionKey']
             end
 
-			content_type = response['content-type']
+            content_type = response['content-type'] # Identify character encoding
 
-			unless content_type.nil? || content_type.eql?('')
-				@char_encoding = content_type.split(/=/).last # application/json;charset=windows-1252 => windows-1252
-			end
-
-            response.body = response.body.encode(@char_encoding, @char_encoding)
+            unless content_type.nil? || content_type.eql?('')
+                @char_encoding = content_type.split(/=/).last # application/json;charset=windows-1252 => windows-1252
+            end
 
             Validator::process_http_response(response,@verbose,resource,'GET')
+
+            response.body = response.body.encode(@char_encoding, @char_encoding)
 
             return unless response.kind_of?(Net::HTTPSuccess)
                 
@@ -877,25 +877,24 @@ module OpenAsset
             end
 
             response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-				request = Net::HTTP::Post.new(uri.request_uri)
-				request["content-type"] = "application/json;charset=" + @char_encoding
+                request = Net::HTTP::Post.new(uri.request_uri)
+                request["content-type"] = "application/json;charset=" + @char_encoding
 
                 if @session
                     request.add_field('X-SessionKey',@session)
                 else
                     @session = @authenticator.get_session
-                    request.add_field('X-SessionKey',@session) #For when the token issue is sorted out
-                    #request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
-				end
-				
-				begin
-					request.body = json_body.to_json
-				rescue
-					request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
-				rescue => e
-					logger.error(e.message.red)
-				end
-				
+                    request.add_field('X-SessionKey',@session)
+                end
+                
+                begin
+                    request.body = json_body.to_json
+                rescue
+                    request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+                rescue => e
+                    logger.error(e.message.red)
+                end
+                
                 http.request(request)
             end
 
@@ -909,8 +908,8 @@ module OpenAsset
                     err      = error_obj.new
                     err.id   = data[index].id
                     err.name = data[index].instance_variable_get(name)
-					err.code = obj["error_message"]
-					err.msg  = obj["http_status_code"]
+                    err.code = obj["error_message"]
+                    err.msg  = obj["http_status_code"]
                     errors << err
                 end
             end
@@ -918,8 +917,8 @@ module OpenAsset
             unless errors.empty?
                 errors.each do |e|
                     logger.error("Update failed for #{resource.inspect} object: #{e.name} with id #{e.id}".red)
-					logger.error("Message: #{e.msg}\n".red)
-					logger.error("Code: #{e.code}".red)
+                    logger.error("Message: #{e.msg}\n".red)
+                    logger.error("Code: #{e.code}".red)
                 end
             end
 
@@ -957,8 +956,8 @@ module OpenAsset
             end
 
             response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-				request = Net::HTTP::Put.new(uri.request_uri)
-			    request["content-type"] = "application/json;charset=" + @char_encoding
+                request = Net::HTTP::Put.new(uri.request_uri)
+                request["content-type"] = "application/json;charset=" + @char_encoding
 
                 if @session
                     request.add_field('X-SessionKey',@session)
@@ -966,15 +965,15 @@ module OpenAsset
                     @session = @authenticator.get_session
                     request.add_field('X-SessionKey',@session) #For when the token issue is sorted out
                     #request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
-				end
-				
-				begin
-					request.body = json_body.to_json
-				rescue
-					request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
-				rescue => e
-					logger.error(e.message.red)
-				end
+                end
+                
+                begin
+                    request.body = json_body.to_json
+                rescue
+                    request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+                rescue => e
+                    logger.error(e.message.red)
+                end
 
                 #pp json_body
                 http.request(request)
@@ -989,8 +988,8 @@ module OpenAsset
                 if obj.has_key?("error_message")
                     err      = error_obj.new
                     err.id   = data[index].id
-					err.name = data[index].instance_variable_get(name)
-					err.code = obj["http_status_code"]
+                    err.name = data[index].instance_variable_get(name)
+                    err.code = obj["http_status_code"]
                     err.msg  = obj["error_message"]
                     errors << err
                 end
@@ -999,7 +998,7 @@ module OpenAsset
             unless errors.empty?
                 errors.each do |e|
                     logger.error("Update failed for #{resource.inspect} object: #{e.name} with id #{e.id}".red)
-					logger.error("Message: #{e.msg}\n".red)
+                    logger.error("Message: #{e.msg}\n".red)
                     logger.error("Code: #{e.code}".red)
                 end
             end
@@ -1034,8 +1033,8 @@ module OpenAsset
             end
 
             response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-				request = Net::HTTP::Delete.new(uri.request_uri) #e.g. when called in keywords => /keywords/id
-				request["content-type"] = "application/json;charset=" + @char_encoding
+                request = Net::HTTP::Delete.new(uri.request_uri) #e.g. when called in keywords => /keywords/id
+                request["content-type"] = "application/json;charset=" + @char_encoding
 
                 if @session
                     request.add_field('X-SessionKey',@session)
@@ -1043,15 +1042,15 @@ module OpenAsset
                     @session = @authenticator.get_session
                     request.add_field('X-SessionKey',@session) #For when the token issue is sorted out
                     #request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
-				end
-				
-				begin
-					request.body = json_body.to_json
-				rescue
-					request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
-				rescue => e
-					logger.error(e.message.red)
-				end
+                end
+                
+                begin
+                    request.body = json_body.to_json
+                rescue
+                    request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+                rescue => e
+                    logger.error(e.message.red)
+                end
                
                 http.request(request)
             end
@@ -1076,8 +1075,8 @@ module OpenAsset
                     if obj.has_key?("error_message")
                         err      = error_obj.new
                         err.id   = data[index].id
-						err.name = data[index].instance_variable_get(name)
-						err.code = obj["http_status_code"]
+                        err.name = data[index].instance_variable_get(name)
+                        err.code = obj["http_status_code"]
                         err.msg  = obj["error_message"]
                         errors << err
                     end
@@ -1087,8 +1086,8 @@ module OpenAsset
             unless errors.empty?
                 errors.each do |e|
                     logger.error("Delete failed for #{resource.inspect} object: #{e.name} with id #{e.id}".red)
-					logger.error("Message: #{e.msg}\n".red)
-					logger.error("Code: #{e.code}".red) if e.code
+                    logger.error("Message: #{e.msg}\n".red)
+                    logger.error("Code: #{e.code}".red) if e.code
                 end
             end
 
