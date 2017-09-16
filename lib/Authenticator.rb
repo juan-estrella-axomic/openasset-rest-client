@@ -264,7 +264,7 @@ class Authenticator
         
         unless conf[url].nil?
             #retrieve base64 encoded values
-            token_id            = conf[url]['i']
+            token_id         = conf[url]['i']
             enc_token        = conf[url]['t']
             enc_session_key  = conf[url]['s']
         
