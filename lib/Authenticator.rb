@@ -10,12 +10,14 @@ require 'base64'
 require 'mime/types'
 require 'fileutils'
 require 'io/console'
+require 'colorize'
 require 'yaml'  #for storing data locally
 
 
 require_relative 'Helpers.rb'
 require_relative 'Validator.rb'
-require_relative 'Security.rb'
+require_relative 'Security'
+require_relative 'MyLogger'
 
 
 #use this class to generate a token
@@ -23,6 +25,8 @@ require_relative 'Security.rb'
 
 #Authentication
 class Authenticator
+
+	include Logging
 
 	#@@DOMAIN_CONST = 'https://se1.openasset.com'
 	@@API_CONST = '/REST'
@@ -93,21 +97,25 @@ class Authenticator
 		if response.kind_of? Net::HTTPSuccess 
 			@token[:id] = JSON.parse(response.body)['id'].to_s
 			@token[:value] = JSON.parse(response.body)['token'].to_s
-			puts 'Token created successfully!'
+			msg = 'Token created successfully!'
+			logger.info(msg)
 			create_signature()
 		elsif response.kind_of? Net::HTTPRedirection 
 			location = response['location']
-			warn "Warning: Redirected to #{location}"
-			#return false
+			msg = "Redirected to #{location}"
+			logger.warn(msg.yellow)
 		elsif response.kind_of? Net::HTTPUnauthorized 
-			warn "Error: #{response.message}: invalid credentials.\n\n"
+			msg = "#{response.message}: invalid credentials.\n\n"
+			logger.error(msg.red)
 			create_token(attempts + 1)
 		elsif response.kind_of? Net::HTTPServerError 
-			warn "Error: #{response.message}: try again later."
-			exit
+			msg = "Error: #{response.message}: try again later."
+			logger.error(msg.red)
+			abort
 		else
-			warn "Error: #{response.message}"
-			exit
+			msg = "Error: #{response.message}"
+			logger.error(msg.red)
+			abort
 		end
 	end
 
@@ -141,22 +149,27 @@ class Authenticator
 		
 		if response.kind_of? Net::HTTPSuccess
 			#if the token is valid then we can grab the session key for our requests
-			puts "Valid Token detected...Acquiring session."
+			msg = "Valid Token detected...Acquiring session."
+			logger.info(msg)
 			@session_key = response['X-SessionKey']
 			store_session_data(@session_key, @token[:value], @token[:id])
 			return true
 		elsif response.kind_of? Net::HTTPRedirection 
 			location = response['location']
-			warn "Warning: Redirected to #{location}"
+			msg = "Redirected to #{location}"
+			logger.warn(msg.yellow)
 			return false
 		elsif response.kind_of? Net::HTTPUnauthorized 
-			warn "Error: #{response.message}" 
+			msg = "#{response.message}" 
+			logger.error(msg.red)
 			return false
 		elsif response.kind_of? Net::HTTPServerError 
-			warn "Error: #{response.message}: try again later."
+			msg = "#{response.message}: Try again later."
+			logger.error(msg.red)
 			return false
 		else
-			warn "Error: #{response.message}"
+			msg = "Error: #{response.message}"
+			logger.error(msg.red)
 			return false
 		end
 		 
@@ -173,12 +186,13 @@ class Authenticator
 		 	create_token()
 		 	validate_token()
 		 elsif !token_valid?     
-		 	puts "Invalid token!"
+		 	logger.warn("Invalid token detected!".yellow)
 		 	create_token()
 		 	validate_token()
 		 else
-		 	warn "Unknown Error: Authentication setup failure."
-		 	exit!
+			msg = "Unknown Error: Authentication setup failure."
+			logger.error(msg.red)
+		 	abort
 		 end
 	end
 
@@ -192,10 +206,11 @@ class Authenticator
 		#puts "In session_valid? - after req"
 		case response
 		    when Net::HTTPSuccess
-		    	puts "Session validated!"
+		    	logger.info("Session validated!")
 				return true
 		    else
-		        warn "Error: #{response.message} - Invalid Session"
+				msg = "Error: #{response.message} - Invalid Session."
+			    logger.warn(msg.yellow)
 		        return false
 		 end
 	end
@@ -211,9 +226,9 @@ class Authenticator
 		url = URI.parse(@url).host #get url w/o protocol
 
 		if conf.nil?
-			puts "Looks like you messed with the config yaml file and saved it with\n " +
-				"whitespace characters in the beginning. Bailing."
-			exit!
+			msg = "Looks like the configuration file has been altered or become corrupted. Aborting."
+			logger.error(msg.red)
+			abort
 		end
 
 		if conf[url].nil?
@@ -228,9 +243,9 @@ class Authenticator
 		end	
 
 		File.open(yml_file,"w+") do |file|
-			puts "Writing to config file."
+			logger.info("Updating configuration file data.")
 			file.write(conf.to_yaml)
-			puts "Done. Session data stored"
+			logger.info("Done. Successfully stored session data".green)
 		end
 	end
 
@@ -242,11 +257,12 @@ class Authenticator
 		url = URI.parse(@url).host #get url w/o protocol
 		#puts conf
 		unless conf
-			warn "Empty config file: No session data found."
+			msg = "Empty config file: No session data found."
+			logger.warn(msg.yellow)
 			return
 		end
 		
-		if !conf[url].nil?
+		unless conf[url].nil?
 			#retrieve base64 encoded values
 			token_id   	     = conf[url]['i']
 			enc_token        = conf[url]['t']
@@ -259,10 +275,12 @@ class Authenticator
 				@token[:value] = Security::decrypt(enc_token)
 				@token[:id]    = token_id
 			rescue Exception => e
-				warn "Error: Unable to decrypt stored session data. Possibly due to hostname change or destroyed session.\n#{e.message} "
+				msg = "Unable to retrieve stored session data. => #{e.message}."
+				logger.warn(msg.yellow)
 			end	
 		else
-			puts "No Client data found."
+			msg = "No client session data found."
+			logger.info(msg)
 			return
 		end	
 	end
@@ -283,7 +301,7 @@ class Authenticator
 		elsif !session_valid?			 #check for exired session
 		 	validate_token()
 		else
-			puts "Retrieved stored session."
+			logger.info("Retrieved stored session.")
 		end
 		@session_key
 	end
@@ -299,28 +317,30 @@ class Authenticator
 
 		#return if there is no session to edit
 		unless conf
-			puts "Conf file is empty. No session to destroy."
+			logger.info( "Conf file is empty. No session to destroy.")
 			return
 		end
 
 		url = URI.parse(@url).host #get url w/o protocol
 
 		if conf[url].nil?
-			puts "No Entry for #{url} found. No session to destroy."
+			msg = "No Entry for #{url} found. No session to destroy."
+			logger.info(msg)
 			return
 		elsif conf.has_key?(url) && conf[url].has_key?('s')
 			#conf[url]['token'] = enc_token
 			conf[url]['s']  = enc_session_key
 
 		else
-			warn "An unknown error happened while trying to kill the session."
+			msg = "An unknown error happened while trying to kill the session."
+			logger.error(msg.red)
 			return
 		end	
 		#write it out to the config file
 		File.open(yml_file,"w") do |file|
-			puts "Writing to config file."
+			logger.info("Updating configuration data.")
 			file.write(conf.to_yaml)
-			puts "Done. Session destroyed"
+			logger.info("Done. Session destroyed.")
 		end	
 		
     end    
