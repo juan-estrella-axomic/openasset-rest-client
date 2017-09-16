@@ -53,7 +53,7 @@ class Authenticator
     
     def get_credentials(attempts=0)
 
-        abort("Too many failed attempts.") if attempts == 3
+        logger.error("Too many failed login attempts.".red) if attempts.eql?(3)
 
         u = ''
         p = ''
@@ -179,20 +179,18 @@ class Authenticator
     end
 
     def setup_authentication
-        #puts "In setup_authentication"
-         if @token[:id].nil?
-            #puts "Token is NULL"
-             create_token()
-             validate_token()
-         elsif !token_valid?     
-             logger.warn("Invalid token detected!".yellow)
-             create_token()
-             validate_token()
-         else
+        if @token[:id].nil?
+            create_token()
+            validate_token()
+        elsif !token_valid?     
+            logger.warn("Invalid token detected!".yellow)
+            create_token()
+            validate_token()
+        else
             msg = "Unknown Error: Authentication setup failure."
             logger.error(msg.red)
-             abort
-         end
+            abort
+        end
     end
 
     def session_valid?
@@ -211,7 +209,8 @@ class Authenticator
                 msg = "Error: #{response.message} - Invalid Session."
                 logger.warn(msg.yellow)
                 return false
-         end
+            end
+        end
     end
 
     def store_session_data(session,token,token_id)
