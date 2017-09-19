@@ -53,7 +53,10 @@ class Authenticator
     
     def get_credentials(attempts=0)
 
-        logger.error("Too many failed login attempts.".red) if attempts.eql?(3)
+        if attempts.eql?(3) 
+            logger.error("Too many failed login attempts.".red)
+            abort
+        end
 
         u = ''
         p = ''
@@ -202,14 +205,13 @@ class Authenticator
         end
         #puts "In session_valid? - after req"
         case response
-            when Net::HTTPSuccess
-                logger.info("Session validated!")
-                return true
-            else
-                msg = "Error: #{response.message} - Invalid Session."
-                logger.warn(msg.yellow)
-                return false
-            end
+        when Net::HTTPSuccess
+            logger.info("Session validated!")
+            return true
+        else
+            msg = "Error: #{response.message} - Invalid Session."
+            logger.warn(msg.yellow)
+            return false
         end
     end
 
@@ -273,7 +275,7 @@ class Authenticator
                 @token[:value] = Security::decrypt(enc_token)
                 @token[:id]    = token_id
             rescue Exception => e
-                msg = "Unable to retrieve stored session data. => #{e.message}."
+                msg = "Unable to retrieve stored session data."
                 logger.warn(msg.yellow)
             end    
         else
@@ -287,6 +289,7 @@ class Authenticator
     def self.get_instance(url)
         self.new(url)
     end
+
     def get_session
         config_set_up()
         retrieve_session_data()

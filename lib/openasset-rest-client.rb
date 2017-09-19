@@ -19,7 +19,7 @@ module OpenAsset
         include Logging
         
         RESTRICTED_LIST_FIELD_TYPES   = %w[ suggestion fixedSuggestion option ]
-        NORMAL_FIELD_TYPES               = %w[ singleLine multiLine ]
+        NORMAL_FIELD_TYPES            = %w[ singleLine multiLine ]
         ALLOWED_BOOLEAN_FIELD_OPTIONS = %w[ enable disable yes no set unset check uncheck tick untick on off true false 1 0]
 
         # @!parse attr_reader :session, :uri
