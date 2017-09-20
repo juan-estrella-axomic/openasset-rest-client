@@ -211,7 +211,7 @@ class Files
                 puts "Error: Could not find the postfix value => #{size.inspect}. \n" +
                      "Verify that the image size exists and that the size was generated for file " +
                      "#{@filename.inspect} in OpenAsset."
-                return ''
+                return false
             else
                 image.http_root.gsub('//','') + image.http_relative_path
             end

@@ -77,7 +77,7 @@ class Validator
             msg = "Error #{err_header} resource.\n\tMETHOD: #{http_method}\n\tCODE: #{response.code}" + 
                   "\n\tMESSAGE: #{response.message} #{response.body}\n\tRESOURCE: #{resource}"
 
-            if response.code.eql?('403') && resource.downcase.eql?('files') 
+            if response.code.eql?('403')
                 msg += "\n\tDon't let the error fool you. The image size specified is no longer available in S3. Go see the Wizard (aka Justin)."
             end
 

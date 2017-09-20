@@ -13,9 +13,9 @@ class Downloader
     Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
       #perform head request to get the content length to feed the progress bar      
       res = http.request_head(uri)
+      file_size = res['content-length'].to_i
       response = Validator::process_http_response(res,true,resource,'GET')
-      file_size = response['content-length'].to_i
-      
+    
       return response unless response.kind_of? Net::HTTPSuccess
 
       pbar = ProgressBar.create(:format => '%p%% [%b>%i] %r KB/sec  ETA %e',

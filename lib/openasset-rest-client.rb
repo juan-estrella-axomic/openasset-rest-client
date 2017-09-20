@@ -1590,9 +1590,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_files
         #          rest_client.get_files(rest_options_object)
-        def get_files(query_obj=nil)
+        def get_files(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Files")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Uploads a file to OpenAsset.

@@ -150,7 +150,9 @@ module DownloadHelper
         #loop through objects in the Array
         self.each do |item|
             if item.is_a?(Files)
-                url = "https://" + item.get_image_size_file_path(size)          
+                file_path = item.get_image_size_file_path(size)
+                next unless file_path # Skip file if the size hasn't been created
+                url = "https://" + file_path         
                 uri = URI.parse(url)
                 filename = url.split('/').last
                 location = download_location + '/' + filename 
