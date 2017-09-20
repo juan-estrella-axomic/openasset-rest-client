@@ -193,10 +193,10 @@ class Files
     # @example 
     #          file_obj.get_image_size_file_path('1')
     #           file_obj.get_image_size_file_path('medium')
-    def get_image_size_file_path(search_parameter='1') #Always returns the original by default
-        if (search_parameter.is_a?(String) && search_parameter.to_i > 0) || search_parameter.is_a?(Integer)
+    def get_image_size_file_path(size='1') #Always returns the original by default
+        if (size.is_a?(String) && size.to_i > 0) || size.is_a?(Integer)
             #Look for the nested image size containing the id passed as the search_parameter
-            image = @sizes.find {|item| item.id.to_s == search_parameter.to_s}
+            image = @sizes.find {|item| item.id.to_s == size.to_s}
             unless image
                 puts "Error: Image size id not found. Check if the image size " +
                      "was created in OpenAsset."
@@ -204,9 +204,9 @@ class Files
             else
                 image.http_root.gsub('//','') + image.http_relative_path
             end
-        elsif search_parameter.is_a?(String)
+        elsif size.is_a?(String)
             #Look for the postfix search_parameter string in the path 
-            image = @sizes.find {|item| item.http_relative_path.include?(search_parameter.downcase)}
+            image = @sizes.find {|item| item.http_relative_path.include?(size.downcase)}
             unless image
                 puts "Error: Could not find the postfix value => #{size.inspect}. \n" +
                      "Verify that the image size exists and that the size was generated for file " +
@@ -218,7 +218,7 @@ class Files
         else
             puts "Argument Error for 'get_url' method:\n\t" +
                  "Expected an Integer or Numeric String id value, or the image size postfix name.\n\t" +
-                 "Instead got => #{search_parameter.inspect}"
+                 "Instead got => #{size.inspect}"
             return false
         end
     end
