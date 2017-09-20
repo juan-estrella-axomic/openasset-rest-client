@@ -6,12 +6,10 @@ require_relative 'MyLogger'
 
 class Downloader
 
-  include Logging
-
   def self.download(uri,location)
     resource = uri.to_s.split('/').last
     filename = location.split('/').last
-    logger.info( "Downloading file => #{filename}")
+    Logging::logger.info( "Downloading file => #{filename}")
     Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
       #perform head request to get the content length to feed the progress bar      
       res = http.request_head(uri)
