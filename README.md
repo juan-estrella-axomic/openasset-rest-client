@@ -21,7 +21,7 @@ Download it using the link below and run the gem install command from the folder
 
 ## Usage
 
-TODO: Put link to online documentation
+http://192.168.1.173
 
 
 ## License
