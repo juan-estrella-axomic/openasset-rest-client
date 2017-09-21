@@ -1,10 +1,26 @@
 class Sizes
-
+    
+    # @!parse attr_accessor :alive, :always_create, :colourspace, :crop_to_fit, :description, :display_order
     attr_accessor :alive, :always_create, :colourspace, :crop_to_fit, :description, :display_order
-    attr_accessor :file_format, :height, :id, :name, :original, :postfix, :protected, :quality
-    attr_accessor :size_protected, :use_for_contact_sheet, :use_for_power_point, :use_for_zip
-    attr_accessor :width, :x_resolution, :y_resolution
 
+    # @!parse attr_accessor :file_format, :height, :id, :name, :original, :postfix, :protected, :quality
+    attr_accessor :file_format, :height, :id, :name, :original, :postfix, :protected, :quality
+
+    # @!parse attr_accessor :size_protected, :use_for_contact_sheet, :use_for_power_point, :use_for_zip
+    attr_accessor :size_protected, :use_for_contact_sheet, :use_for_power_point, :use_for_zip
+
+    # @!parse attr_accessor :width, :x_resolution, :y_resolution
+    attr_accessor :width, :x_resolution, :y_resolution
+    
+    # Creates a Sizes object
+    #
+    # @param *args [ Hash, String, Integer, or nil] Default => nil
+    # @return [Sizes object]
+    #
+    # @example 
+    #         size =  Sizes.new
+    #         size =  Sizes.new(postfix,file_format,colourspace,width,height,always_create)
+    #         size =  Sizes.new('pptlarge','jpg','rgb','6000','4000',true)
     def initialize(*args)
         json_obj = nil
         if args.length > 1 #We only want one arguement or 6 non-null ones

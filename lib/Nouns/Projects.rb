@@ -1,8 +1,19 @@
 class Projects
-
+    
+    # @!parse attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name
     attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name
-    attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields
 
+    # @!parse attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields
+    attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields
+    
+    # Creates a Projects object
+    #
+    # @param *args  [String]
+    # @return [Projects object]
+    #
+    # @example 
+    #         proj =  Projects.new
+    #         proj =  Projects.new('My Project','1234.00')
     def initialize(*args)
         
         if args.length > 1 #We only want one arguement or 2 non-null ones

@@ -1,9 +1,18 @@
 class Photographers
-
+    
+    # @!parse attr_accessor :id, :name
     attr_accessor :id, :name
-
+    
+    # Creates a Photographers object
+    #
+    # @param *args [String] Takes a String or no argument 
+    # @return [Photographers object]
+    #
+    # @example 
+    #         photographer = Photographers.new
+    #         photographer = Photographers.new('John Smith')
     def initialize(*args)
-        json_obj = nil
+        json_obj = nil  
     
         if args.length > 0 && args.first.is_a?(String) #Make sure only one argument is passed
             unless args.first.is_a?(String) || args.first.is_a?(Integer)

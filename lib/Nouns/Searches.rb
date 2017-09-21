@@ -2,11 +2,24 @@ require_relative 'SearchItems.rb'
 
 
 class Searches
-
+    
+    # @!parse attr_accessor :all_users_can_modify, :approved_company_search, :can_modify, :code
     attr_accessor :all_users_can_modify, :approved_company_search, :can_modify, :code
-    attr_accessor :company_saved_search, :created, :id, :locked, :name, :saved, :search_items
-    attr_accessor :share_with_all_users, :updated, :user_id
 
+    # @!parse attr_accessor :company_saved_search, :created, :id, :locked, :name, :saved, :search_items
+    attr_accessor :company_saved_search, :created, :id, :locked, :name, :saved, :search_items
+
+    # @!parse attr_accessor :share_with_all_users, :updated, :user_id
+    attr_accessor :share_with_all_users, :updated, :user_id
+    
+    # Creates a Searches object
+    #
+    # @param *args [(String,SearchItems object) or nil] Default => nil
+    # @return [Searches object]
+    #
+    # @example 
+    #         search =  Searches.new
+    #         search =  Searches.new('search1',search_items_object)
     def initialize(*args)
         json_obj = nil
     

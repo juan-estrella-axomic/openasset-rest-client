@@ -1,7 +1,15 @@
 class Users
-
+    
+    # @!parse attr_accessor :alive, :full_name, :id, :username
     attr_accessor :alive, :full_name, :id, :username
-
+    
+    # Creates a Users object (Only Permits GET requests)
+    #
+    # @param data [ Hash or nil ] Default => nil
+    # @return [ Users object]
+    #
+    # @example 
+    #         user = Users.new
     def initialize(data=nil)
         json_obj = Validator::validate_argument(data,'Users')
         @alive = json_obj['alive']

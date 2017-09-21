@@ -1,7 +1,16 @@
 class ProjectKeywordCategories
 
+    # @!parse attr_accessor :code, :display_order, :id, :name
     attr_accessor :code, :display_order, :id, :name
-
+    
+    # Creates a ProjectKeywordCategories object
+    #
+    # @param arg [Hash, String] Takes a Hash, String or no argument 
+    # @return [ProjectKeywordCategories object]
+    #
+    # @example 
+    #         proj_kwd_category =  ProjectKeywordCategories.new
+    #         proj_kwd_category =  ProjectKeywordCategories.new('MyKCat')
     def initialize(arg=nil)
         json_obj = nil    
         

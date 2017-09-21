@@ -6,13 +6,6 @@ require_relative 'NestedKeywordItems.rb'
 # @author Juan Estrella
 class Files
 
-    @@encoding_options = {
-        :invalid           => :replace,  # Replace invalid byte sequences
-        :undef             => :replace,  # Replace anything not defined in ASCII
-        :replace           => '',        # Use a blank for those replacements
-        :universal_newline => true       # Always break lines with \n
-    }
-
     # @!parse attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
     attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
 
@@ -27,7 +20,7 @@ class Files
 
     # Creates an Files object
     #
-    # @param args [Hash, Argument list, nil] Takes a JSON object/Hash or no argument 
+    # @param args [Hash, String Argument list, nil] Takes a JSON object/Hash or no argument 
     # @return [Files object]
     #
     # @example 
@@ -186,13 +179,13 @@ class Files
 
     # Retrieves the file path for specified image size.
     #
-    # @param search_parameter [String, Integer] Takes image size id or postfix string like 'medium'
+    # @param name [String, Integer] Takes image size id or postfix string like 'medium'
     #                              Defaults to id of 1 which provides path to original image size
     # @return [String, false] Returns image download path or empty string when error is encountered.
     #
     # @example 
     #          file_obj.get_image_size_file_path('1')
-    #           file_obj.get_image_size_file_path('medium')
+    #          file_obj.get_image_size_file_path('medium')
     def get_image_size_file_path(size='1') #Always returns the original by default
         if (size.is_a?(String) && size.to_i > 0) || size.is_a?(Integer)
             #Look for the nested image size containing the id passed as the search_parameter
