@@ -24,28 +24,28 @@ class SearchItems
              args[3].is_a?(Array))
 
             json_obj = {}
-            json_obj['code']     = args[0]
-            json_obj['exclude']  = args[1]
-            json_obj['operator'] = args[2]
-            json_obj['ids']      = args[3]
+            json_obj['code']       = args[0]
+            json_obj['exclude']    = args[1]
+            json_obj['operator']   = args[2]
+            json_obj['values/ids'] = args[3]
         else
             puts "Argument Error:\n\tInvalid argument detected for nested search items object." +
                  "Expected a Hash, Nil, or 4 arguments in constructor.\n\tReceived => #{args.inspect}" 
             return false
         end
         
-        @code = json_obj['code']
-        @exlcude = json_obj['exclude']
+        @code     = json_obj['code']
+        @exlcude  = json_obj['exclude']
         @operator = json_obj['operator']
-        @ids = json_obj['ids'] || Array.new 
+        @values   = json_obj['values/ids'] || Array.new
     end
 
     def json
         json_data = Hash.new
-        json_data[:code] = @code                unless @code.nil?
-        json_data[:exclude] = @exclude          unless @exclude.nil?
-        json_data[:operator] = @operator        unless @operator.nil?
-        json_data[:ids] = @ids                  
+        json_data[:code]        = @code        unless @code.nil?
+        json_data[:exclude]     = @exclude     unless @exclude.nil?
+        json_data[:operator]    = @operator    unless @operator.nil?
+        json_data['values/ids'] = @values                  
     
         return json_data    
     end
