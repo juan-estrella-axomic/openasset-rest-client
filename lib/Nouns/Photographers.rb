@@ -5,7 +5,7 @@ class Photographers
     
     # Creates a Photographers object
     #
-    # @param *args [String] Takes a String or no argument 
+    # @param args [String] Takes a String or no argument 
     # @return [Photographers object]
     #
     # @example 

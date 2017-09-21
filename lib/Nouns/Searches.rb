@@ -14,7 +14,7 @@ class Searches
     
     # Creates a Searches object
     #
-    # @param *args [(String,SearchItems object) or nil] Default => nil
+    # @param args [(String,SearchItems object) or nil] Default => nil
     # @return [Searches object]
     #
     # @example 

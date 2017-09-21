@@ -5,7 +5,7 @@ class SearchItems
 
     # Creates a SearchItems object
     #
-    # @param *args [ String, bool or nil] Default => nil
+    # @param args [ String, bool or nil] Default => nil
     # @return [SearchItems object]
     #
     # @example 

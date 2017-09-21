@@ -5,7 +5,7 @@ class ProjectKeywords
     
     # Creates a ProjectKeywords object
     #
-    # @param *args  [String]
+    # @param args  [String]
     # @return [ProjectKeywords object]
     #
     # @example 

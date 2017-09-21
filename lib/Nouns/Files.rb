@@ -179,7 +179,7 @@ class Files
 
     # Retrieves the file path for specified image size.
     #
-    # @param name [String, Integer] Takes image size id or postfix string like 'medium'
+    # @param size [String, Integer] Takes image size id or postfix string like 'medium'
     #                              Defaults to id of 1 which provides path to original image size
     # @return [String, false] Returns image download path or empty string when error is encountered.
     #

@@ -8,7 +8,7 @@ class Projects
     
     # Creates a Projects object
     #
-    # @param *args  [String]
+    # @param args  [String]
     # @return [Projects object]
     #
     # @example 
