@@ -1588,8 +1588,10 @@ module OpenAsset
         # @return [Array] Returns an array of Files objects.
         #
         # @example 
-        #          rest_client.get_files
-        #          rest_client.get_files(rest_options_object)
+        #          rest_client.get_files => Gets 10 files w/o nested resources
+        #          rest_client.get_files(rest_options_object) => Gets file limit set in RestOption w/o nested resources
+        #          rest_client.get_files(rest_options_object,true) => Gets file limit set in RestOption with nested resources
+        #          rest_client.get_files(nil,true) => Gets 10 files including all nested fields and image sizes
         def get_files(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Files")
             results = get(uri,query_obj,with_nested_resources)
