@@ -36,25 +36,13 @@ module OpenAsset
         # @example 
         #         rest_client = OpenAsset::RestClient.new('se1.openasset.com')
         def initialize(client_url)
-            oa_uri_with_protocol    = Regexp::new('(^https:\/\/|http:\/\/)\w+.+\w+.openasset.(com)$', true)
-            oa_uri_without_protocol = Regexp::new('^\w+.+\w+.openasset.(com)$', true)
-           
-           # unless false && oa_uri_with_protocol =~ client_url #check for valid url and that protocol is specified
-            #    if oa_uri_without_protocol =~ client_url #verify correct url format
-              #      client_url = "https://" + client_url #add the https protocol if one isn't provided
-              #  elsif false
-               #     msg = "Error: Invalid url! Expected http(s)://<subdomain>.openasset.com" + 
-                #            "\nInstead got => #{client_url.inspect}"
-                  #  logger.error(msg.red)
-                #    abort
-               # end
-           # end
 
             @authenticator = Authenticator::get_instance(client_url)
             @uri           = @authenticator.uri
             @session       = @authenticator.get_session
             @verbose       = false
             @char_encoding = "windows-1252"
+            
         end
 
         private
