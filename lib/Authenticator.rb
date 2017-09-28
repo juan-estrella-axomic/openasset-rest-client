@@ -37,10 +37,9 @@ class Authenticator
 
     private
     def initialize(url)
-        Validator::validate_url(url)
+        @url = Validator::validate_and_process_url(url)
         @username = ''
         @password = ''
-        @url = url
         @uri = @url + @@API_CONST + @@VERSION_CONST
         @token_endpoint = @url + @@API_CONST + @@VERSION_CONST + @@SERVICE_CONST
         @token = {:id => nil, :value => nil}
@@ -58,8 +57,10 @@ class Authenticator
             abort
         end
 
-        u = ''
-        p = ''
+        # Use previously enterd credentials in the event of http redirect
+        u = @username || ''
+        p = @password || ''
+
         while u == '' || p == ''
             print "Enter username: "
             u=gets.chomp
@@ -105,8 +106,10 @@ class Authenticator
             create_signature()
         elsif response.kind_of? Net::HTTPRedirection 
             location = response['location']
-            msg = "Redirected to #{location}"
+            msg = "Redirected to #{location} blah"
             logger.warn(msg.yellow)
+            @token_endpoint = location
+            setup_authentication()
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}: invalid credentials.\n\n"
             logger.error(msg.red)
@@ -157,9 +160,9 @@ class Authenticator
             store_session_data(@session_key, @token[:value], @token[:id])
             return true
         elsif response.kind_of? Net::HTTPRedirection 
-            location = response['location']
-            msg = "Redirected to #{location}"
-            logger.warn(msg.yellow)
+            #location = response['location']
+            #msg = "Unexpected Redirect to #{location}"
+            #logger.error(msg.yellow)
             return false
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}" 
@@ -209,8 +212,6 @@ class Authenticator
             logger.info("Session validated!")
             return true
         else
-            msg = "Error: #{response.message} - Invalid Session."
-            logger.warn(msg.yellow)
             return false
         end
     end

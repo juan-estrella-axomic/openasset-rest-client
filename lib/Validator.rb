@@ -62,9 +62,9 @@ class Validator
             return response
         elsif response.kind_of? Net::HTTPRedirection 
             location = response['location']
-            msg      = "Warning: Redirected to #{location}"
-            Logging::logger.warn(msg.yellow) 
-            return response
+            msg      = "Unexpected Redirect to #{location}"
+            Logging::logger.error(msg.yellow) 
+            abort
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "Error: #{response.message}: invalid credentials."
             Logging::logger.error(msg.red) 
@@ -108,7 +108,7 @@ class Validator
             return id
     end
 
-    def self.validate_url(uri)
+    def self.validate_and_process_url(uri)
         #Perform all the checks for the url
         unless uri.is_a?(String)
             msg = "Expected a String for first argument => \"uri\": Instead Got #{uri.class}"
@@ -116,18 +116,33 @@ class Validator
             abort
         end
 
-        uri_with_protocol    = Regexp::new('(^https:\/\/|http:\/\/)\w+.+\w+.openasset.(com)$', true)
-        uri_without_protocol = Regexp::new('^\w+.+\w+.openasset.(com)$', true)
+        uri_with_protocol    = Regexp::new('(^https:\/\/|http:\/\/)\w+\.openasset\.(com)$', true)
+        uri_without_protocol = Regexp::new('^\w+\.openasset\.(com)$', true)
+        uri_is_ip_address    = Regexp::new('(http(s)?:\/\/)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})',true)
 
-        unless uri_with_protocol =~ uri #check for valid url and that protocol is specified
-            if uri_without_protocol =~ uri #verify correct url format
-                uri = "https://" + uri #add the https protocol if one isn't provided
-            else
-                msg = "Error: Invalid url! Expected http(s)://<subdomain>.openasset.com" + 
-                      "\nInstead got => #{uri}"
+        if (uri_with_protocol =~ uri) == 0 #check for valid url and that protocol is specified
+            uri
+        elsif (uri_without_protocol =~ uri) == 0 
+            uri = "https://" + uri               
+        elsif (uri_is_ip_address =~ uri) == 0
+            unless uri.to_s.include?('http://') || uri.to_s.include?('https://')
+                uri = 'http://' + uri.to_s          
+            end
+            # Only allow private IPs because public ones will fail due to SSL certificate error
+            unless /http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}/ =~ uri ||                # Class A IP range
+                   /http:\/\/172\.(1[6-9]|2[0-9]|3[01])\.\d{1,3}\.\d{1,3}/ =~ uri || # Class B IP range
+                   /http:\/\/192\.168\.\d{1,3}\.\d{1,3}/ =~ uri                      # Class C IP range
+
+                msg = "Only private IP ranges allowed. Public IPs will trigger an SSL certificate error."
                 Logging::logger.error(msg.red)
                 abort
             end
+            uri
+        else
+            msg = "Invalid url! Expected http(s)://<subdomain>.openasset.com" + 
+                  "\nInstead got => #{uri.inspect}"
+            Logging::logger.error(msg.red)
+            abort
         end
 
     end

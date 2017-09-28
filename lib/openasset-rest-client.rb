@@ -891,7 +891,7 @@ module OpenAsset
 
             # Check each object for error during update
             JSON.parse(response.body).each_with_index do |obj,index|
-                if !obj.is_a?(Array) && obj.has_key?("error_message")
+                if obj.is_a?(Hash) && obj.has_key?("error_message")
                     err      = error_obj.new
                     err.id   = data[index].id
                     err.name = data[index].instance_variable_get(name)
@@ -966,11 +966,10 @@ module OpenAsset
             unless @session == response['X-SessionKey']
                 @session = response['X-SessionKey']
             end
-            require 'pp'
+            
             # Check each object for error during update
             JSON.parse(response.body).each_with_index do |obj,index|
-         
-                if !obj.is_a?(Array) && obj.has_key?("error_message")
+                if obj.is_a?(Hash) && obj.has_key?("error_message")
                     err      = error_obj.new
                     err.id   = data[index].id
                     err.name = data[index].instance_variable_get(name)
@@ -1045,9 +1044,9 @@ module OpenAsset
             end
 
             # Bug in rest api where deleting a file twice
-            if resource == 'files' && !response.code.to_s.eql?('204') && response.body
+            if resource.downcase == 'files' && !response.code.to_s.eql?('204') && response.body
                 JSON.parse(response.body).each_with_index do |obj,index|
-                    if !obj.is_a?(Array) && obj.has_key?("error_message")
+                    if obj.is_a?(Hash) && obj.has_key?("error_message")
                         err      = error_obj.new
                         err.id   = data[index].id
                         err.name = data[index].instance_variable_get(name)
@@ -1057,7 +1056,7 @@ module OpenAsset
                 end
             elsif response.body
                 JSON.parse(response.body).each_with_index do |obj,index|
-                    if !obj.is_a?(Array) && obj.has_key?("error_message")
+                    if obj.is_a?(Hash) && obj.has_key?("error_message")
                         err      = error_obj.new
                         err.id   = data[index].id
                         err.name = data[index].instance_variable_get(name)
