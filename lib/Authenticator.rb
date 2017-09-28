@@ -109,6 +109,8 @@ class Authenticator
             msg = "Redirected to #{location} blah"
             logger.warn(msg.yellow)
             @token_endpoint = location
+            uri  = URI.parse(location)  # Update the url to match the redirect
+            @url = uri.scheme + '://' + uri.host
             setup_authentication()
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}: invalid credentials.\n\n"
@@ -160,9 +162,11 @@ class Authenticator
             store_session_data(@session_key, @token[:value], @token[:id])
             return true
         elsif response.kind_of? Net::HTTPRedirection 
-            #location = response['location']
-            #msg = "Unexpected Redirect to #{location}"
-            #logger.error(msg.yellow)
+            location = response['location']
+            msg = "Unexpected Redirect to #{location}"
+            logger.error(msg.yellow)
+            uri  = URI.parse(location)  # Update the url to match the redirect
+            @url = uri.scheme + '://' + uri.host
             return false
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}" 
@@ -212,6 +216,8 @@ class Authenticator
             logger.info("Session validated!")
             return true
         else
+            msg = "Invalid session detected. Renewing."
+            logger.warn(msg.yellow)
             return false
         end
     end
@@ -309,6 +315,13 @@ class Authenticator
     end
 
     def kill_session
+
+        if @session_key.eql?('INVALIDATED SESSION KEY')
+            msg = "Session already invalidated."
+           logger.info(msg)
+           return
+        end
+
         @session_key = 'INVALIDATED SESSION KEY'
         
         enc_session_key = Security::encrypt(@session_key)
