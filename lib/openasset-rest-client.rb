@@ -35,9 +35,9 @@ module OpenAsset
         #
         # @example 
         #         rest_client = OpenAsset::RestClient.new('se1.openasset.com')
-        def initialize(client_url)
+        def initialize(client_url,un='',pw='')
 
-            @authenticator = Authenticator::get_instance(client_url)
+            @authenticator = Authenticator::get_instance(client_url,un,pw)
             @uri           = @authenticator.uri
             @session       = @authenticator.get_session
             @verbose       = false

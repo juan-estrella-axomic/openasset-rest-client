@@ -36,10 +36,10 @@ class Authenticator
     attr_reader :uri
 
     private
-    def initialize(url)
+    def initialize(url,un,pw)
         @url = Validator::validate_and_process_url(url)
-        @username = ''
-        @password = ''
+        @username = un
+        @password = pw
         @uri = @url + @@API_CONST + @@VERSION_CONST
         @token_endpoint = @url + @@API_CONST + @@VERSION_CONST + @@SERVICE_CONST
         @token = {:id => nil, :value => nil}
@@ -58,8 +58,8 @@ class Authenticator
         end
 
         # Use previously enterd credentials in the event of http redirect
-        u = @username || ''
-        p = @password || ''
+        u = @username
+        p = @password
 
         while u == '' || p == ''
             print "Enter username: "
@@ -70,6 +70,8 @@ class Authenticator
             puts "Invalid username."  if u == ''
             puts "Invalid password."  if p == ''
         end
+
+        # Update username and password if needed
         @username = u
         @password = p
     end
@@ -293,8 +295,8 @@ class Authenticator
     end
 
     public
-    def self.get_instance(url)
-        self.new(url)
+    def self.get_instance(url,un,pw)
+        self.new(url,un,pw)
     end
 
     def get_session
