@@ -117,6 +117,8 @@ class Authenticator
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}: invalid credentials.\n\n"
             logger.error(msg.red)
+            @username = ''
+            @password = ''
             create_token(attempts + 1)
         elsif response.kind_of? Net::HTTPServerError 
             msg = "Error: #{response.message}: try again later."
