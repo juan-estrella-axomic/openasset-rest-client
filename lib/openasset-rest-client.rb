@@ -846,14 +846,16 @@ module OpenAsset
 
             errors    = []
             error_obj = Struct.new(:id,:name,:code,:msg)
-            name      = (resource == 'Files') ? '@filename' : '@name'
             resource = ''
+            name     = ''
 
             if uri.to_s.split('/').last.to_i == 0 #its a non numeric string meaning its a resource endpoint
                 resource = uri.to_s.split('/').last
             else
                 resource = uri.to_s.split('/')[-2] #the request is using a REST shortcut so we need to grab 
             end                                       #second to last string of the url as the endpoint
+
+            name = (resource == 'Files') ? '@filename' : '@name'
 
             json_body = Validator::validate_and_process_request_data(data)
 
