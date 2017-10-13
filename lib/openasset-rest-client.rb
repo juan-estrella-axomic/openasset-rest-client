@@ -26,7 +26,7 @@ module OpenAsset
         attr_reader :session, :uri
         
         # @!parse attr_accessor :verbose
-        attr_accessor :verbose :char_encoding
+        attr_accessor :verbose, :char_encoding
 
         # Create new instance of the OpenAsset rest client
         #
