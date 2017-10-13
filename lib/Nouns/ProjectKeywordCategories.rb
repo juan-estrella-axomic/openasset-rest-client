@@ -15,7 +15,7 @@ class ProjectKeywordCategories
         json_obj = nil    
         
         if arg.is_a?(String) || arg.is_a?(Integer)
-            json_obj = {"name" => args[0].to_s}
+            json_obj = {"name" => arg.to_s}
         elsif arg.is_a?(Hash) || arg == nil
             json_obj = (arg) ? arg : Hash.new
         else 
