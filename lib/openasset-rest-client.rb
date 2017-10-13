@@ -26,7 +26,7 @@ module OpenAsset
         attr_reader :session, :uri
         
         # @!parse attr_accessor :verbose
-        attr_accessor :verbose
+        attr_accessor :verbose :char_encoding
 
         # Create new instance of the OpenAsset rest client
         #
@@ -905,8 +905,8 @@ module OpenAsset
 
             unless errors.empty?
                 errors.each do |e|
-                    logger.error("Update failed for #{resource.inspect} object: #{e.name} with id #{e.id}".red)
-                    logger.error("Message: #{e.msg}\n".red)
+                    logger.error("Create failed for #{resource.inspect} object named => #{e.name}".red)
+                    logger.error("Message: #{e.msg}".red)
                     logger.error("Code: #{e.code}".red)
                 end
             end
@@ -983,8 +983,8 @@ module OpenAsset
 
             unless errors.empty?
                 errors.each do |e|
-                    logger.error("Update failed for #{resource.inspect} object: #{e.name} with id #{e.id}".red)
-                    logger.error("Message: #{e.msg}\n".red)
+                    logger.error("Update failed for #{resource.inspect} object named => #{e.name}".red)
+                    logger.error("Message: #{e.msg}".red)
                     logger.error("Code: #{e.code}".red)
                 end
             end
