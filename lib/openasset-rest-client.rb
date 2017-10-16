@@ -4,6 +4,7 @@ require_relative 'RestOptions'
 require_relative 'Helpers'
 require_relative 'Validator'
 require_relative 'MyLogger'
+require_relative 'Error'
 
 require 'net/http'
 
@@ -343,6 +344,62 @@ module OpenAsset
             return args.new(container_found, source_field_found, keyword_category_found)
 
         end
+
+        # @!visibility private
+        def process_errors(res=nil,resource=nil)
+            
+            return unless res && resource
+        
+            json_obj_collection = Array.new
+            errors              = Array.new
+            
+            # Bug in rest api where deleting a file twice
+            if resource.downcase == 'files' && !res.code.to_s.eql?('204') && res.body
+                JSON.parse(res.body).each_with_index do |obj,index|
+                    if obj.is_a?(Hash) && obj.has_key?("error_message")
+                        err                  = Hash.new
+                        err['id']            = data[index].id
+                        err['resource_name'] = data[index].instance_variable_get(name)
+                        err['resource_type'] = resource  # Determined by api endpoint
+                        err['code']          = obj["http_status_code"]
+                        err['msg']           = "Resource has already been deleted."
+        
+                        errors << err
+                        json_obj_collection << err
+                    else
+                        obj
+                    end
+                end
+            elsif res.body
+                JSON.parse(res.body).each_with_index do |obj,index|
+                    if obj.is_a?(Hash) && obj.has_key?("error_message")
+                        err                  = Hash.new
+                        err['id']            = data[index].id
+                        err['resource_name'] = data[index].instance_variable_get(name)
+                        err['resource_type'] = resource  # Determined by api endpoint
+                        err['code']          = obj["error_message"]
+                        err['msg']           = obj["http_status_code"]
+        
+                        errors << err
+                        json_obj_collection << err
+                    else
+                        obj
+                    end
+                end
+            end
+        
+            unless errors.empty?
+                errors.each do |e|
+                    logger.error("Delete failed for #{resource.inspect} object: #{e.name}".red)
+                    logger.error("Message: #{e.msg}\n".red)
+                    logger.error("Code: #{e.code}".red) if e.code
+                end
+            end
+        
+            json_obj_collection
+        
+        end
+        
         # @!visibility private
         def generate_objects_from_json_response_body(json_response,resource_type)    
 
@@ -354,9 +411,12 @@ module OpenAsset
                     (parsed_response_body.is_a?(Array)) ? parsed_response_body : [parsed_response_body]
 
                 inferred_class = Object.const_get(resource_type)
-                #puts "inferred_class: #{inferred_class}"
                 
-                objects_array = parsed_response_body.map { |item| inferred_class.new(item) }
+                objects_array = parsed_response_body.map do |item|
+
+                    ########################################## CREATE ERROR OBJECTS!!!!!!!!!!!!!!!!!!!!!!!!!!
+                     inferred_class.new(item) 
+                end
                 #puts "objects_array #{objects_array}"
                 #puts "OBJECTS ARRAY => #{objects_array}"
                 return objects_array
@@ -844,10 +904,9 @@ module OpenAsset
         # @!visibility private
         def post(uri,data,generate_objects)
 
-            errors    = []
-            error_obj = Struct.new(:id,:name,:code,:msg)
-            resource = ''
-            name     = ''
+            obj_collection = []
+            resource       = ''
+            name           = ''
 
             if uri.to_s.split('/').last.to_i == 0 #its a non numeric string meaning its a resource endpoint
                 resource = uri.to_s.split('/').last
@@ -890,34 +949,17 @@ module OpenAsset
             unless @session == response['X-SessionKey']
                 @session = response['X-SessionKey']
             end
+            
+            Validator::process_http_response(response,@verbose,resource,'POST')
+
+            return unless response.kind_of?(Net::HTTPSuccess)
 
             # Check each object for error during update
-            JSON.parse(response.body).each_with_index do |obj,index|
-                if obj.is_a?(Hash) && obj.has_key?("error_message")
-                    err      = error_obj.new
-                    err.id   = data[index].id
-                    err.name = data[index].instance_variable_get(name)
-                    err.code = obj["error_message"]
-                    err.msg  = obj["http_status_code"]
-                    errors << err
-                end
-            end
-
-            unless errors.empty?
-                errors.each do |e|
-                    logger.error("Create failed for #{resource.inspect} object named => #{e.name}".red)
-                    logger.error("Message: #{e.msg}".red)
-                    logger.error("Code: #{e.code}".red)
-                end
-            end
-
-            res = Validator::process_http_response(response,@verbose,resource,'POST')
-
-            return unless res.kind_of?(Net::HTTPSuccess)
+            res = process_errors(response,resource)
 
             if generate_objects == true
 
-                return generate_objects_from_json_response_body(response,resource)
+                return generate_objects_from_json_response_body(res,resource)
 
             else
                 # JSON object
@@ -969,29 +1011,12 @@ module OpenAsset
                 @session = response['X-SessionKey']
             end
             
-            # Check each object for error during update
-            JSON.parse(response.body).each_with_index do |obj,index|
-                if obj.is_a?(Hash) && obj.has_key?("error_message")
-                    err      = error_obj.new
-                    err.id   = data[index].id
-                    err.name = data[index].instance_variable_get(name)
-                    err.code = obj["http_status_code"]
-                    err.msg  = obj["error_message"]
-                    errors << err
-                end
-            end
-
-            unless errors.empty?
-                errors.each do |e|
-                    logger.error("Update failed for #{resource.inspect} object named => #{e.name}".red)
-                    logger.error("Message: #{e.msg}".red)
-                    logger.error("Code: #{e.code}".red)
-                end
-            end
-
-            Validator::process_http_response(response,@verbose,resource,'PUT')
+            Validator::process_http_response(res,@verbose,resource,'PUT')
 
             return unless response.kind_of?(Net::HTTPSuccess)
+
+            # Check each object for error during update
+            res = process_errors(response,resource)
 
             if generate_objects == true
 
@@ -1007,8 +1032,6 @@ module OpenAsset
         # @!visibility private
         def delete(uri,data)
 
-            errors    = []
-            error_obj = Struct.new(:id,:name,:code,:msg)
             resource  = uri.to_s.split('/').last
             name      = (resource == 'Files') ? '@filename' : '@name'
             
@@ -1043,43 +1066,13 @@ module OpenAsset
 
             unless @session == response['X-SessionKey']
                 @session = response['X-SessionKey']
-            end
-
-            # Bug in rest api where deleting a file twice
-            if resource.downcase == 'files' && !response.code.to_s.eql?('204') && response.body
-                JSON.parse(response.body).each_with_index do |obj,index|
-                    if obj.is_a?(Hash) && obj.has_key?("error_message")
-                        err      = error_obj.new
-                        err.id   = data[index].id
-                        err.name = data[index].instance_variable_get(name)
-                        err.msg  = "Resource has already been deleted"
-                        errors << err
-                    end
-                end
-            elsif response.body
-                JSON.parse(response.body).each_with_index do |obj,index|
-                    if obj.is_a?(Hash) && obj.has_key?("error_message")
-                        err      = error_obj.new
-                        err.id   = data[index].id
-                        err.name = data[index].instance_variable_get(name)
-                        err.code = obj["http_status_code"]
-                        err.msg  = obj["error_message"]
-                        errors << err
-                    end
-                end
-            end
-
-            unless errors.empty?
-                errors.each do |e|
-                    logger.error("Delete failed for #{resource.inspect} object: #{e.name} with id #{e.id}".red)
-                    logger.error("Message: #{e.msg}\n".red)
-                    logger.error("Code: #{e.code}".red) if e.code
-                end
-            end
+            end        
 
             Validator::process_http_response(response,@verbose,resource,'DELETE')
 
-            return response
+            res = process_errors(response,resource)
+
+            return res
         end
         
         public
