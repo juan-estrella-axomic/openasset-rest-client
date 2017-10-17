@@ -387,16 +387,20 @@ module OpenAsset
                     end
                 end
             end
-        
+
             unless errors.empty?
                 errors.each do |e|
-                    logger.error("Delete failed for #{resource.inspect} object: #{e['name']}".red)
-                    logger.error("ID: #{e['id']}")   unless e['id'].nil?
-                    logger.error("Message: #{e['msg']}".red)
-                    logger.error("Code: #{e.['code']}".red)
+                    n = e[:name]
+                    i = e[:id]
+                    m = e[:msg]
+                    c = e[:code]
+                    logger.error("Delete failed for #{resource.inspect} object: #{n}".red)
+                    logger.error("ID: #{i}")   unless i.nil?
+                    logger.error("Message: #{m}".red)
+                    logger.error("Code: #{c}".red)
                 end
             end
-        
+ 
             json_obj_collection
         
         end
