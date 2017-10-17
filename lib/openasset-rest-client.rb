@@ -357,12 +357,12 @@ module OpenAsset
             if resource.downcase == 'files' && !res.code.to_s.eql?('204') && res.body
                 JSON.parse(res.body).each_with_index do |obj,index|
                     if obj.is_a?(Hash) && obj.has_key?("error_message")
-                        err                  = Hash.new
-                        err['id']            = data[index].id
-                        err['resource_name'] = data[index].instance_variable_get(name)
-                        err['resource_type'] = resource  # Determined by api endpoint
-                        err['code']          = obj["http_status_code"]
-                        err['msg']           = "Resource has already been deleted."
+                        err                     = Hash.new
+                        err['id']               = data[index].id
+                        err['resource_name']    = data[index].instance_variable_get(name)
+                        err['resource_type']    = resource  # Determined by api endpoint
+                        err['http_status_code'] = obj["http_status_code"]
+                        err['error_message']    = 'Resource has already been deleted.'
         
                         errors << err
                         json_obj_collection << err
@@ -373,12 +373,12 @@ module OpenAsset
             elsif res.body
                 JSON.parse(res.body).each_with_index do |obj,index|
                     if obj.is_a?(Hash) && obj.has_key?("error_message")
-                        err                  = Hash.new
-                        err['id']            = data[index].id
-                        err['resource_name'] = data[index].instance_variable_get(name)
-                        err['resource_type'] = resource  # Determined by api endpoint
-                        err['code']          = obj["http_status_code"]
-                        err['msg']           = obj["error_message"]
+                        err                     = Hash.new
+                        err['id']               = data[index].id
+                        err['resource_name']    = data[index].instance_variable_get(name)
+                        err['resource_type']    = resource  # Determined by api endpoint
+                        err['http_status_code'] = obj['http_status_code']
+                        err['error_message']    = obj['error_message']
         
                         errors << err
                         json_obj_collection << err
@@ -390,11 +390,12 @@ module OpenAsset
 
             unless errors.empty?
                 errors.each do |e|
-                    n = e[:name]
-                    i = e[:id]
-                    m = e[:msg]
-                    c = e[:code]
-                    logger.error("Delete failed for #{resource.inspect} object: #{n}".red)
+                    n = e["resource_name"]
+                    r = e["resource_type"]
+                    i = e["id"]
+                    m = e["error_message"]
+                    c = e["http_status_code"]
+                    logger.error("Delete failed for #{r.inspect} object: #{n}".red)
                     logger.error("ID: #{i}")   unless i.nil?
                     logger.error("Message: #{m}".red)
                     logger.error("Code: #{c}".red)
@@ -408,36 +409,29 @@ module OpenAsset
         # @!visibility private
         def generate_objects_from_json_response_body(json,resource_type)    
 
-            parsed_response_body = JSON.parse(json)
-
-            if parsed_response_body != [] && parsed_response_body != {} && parsed_response_body != nil
-
-                parsed_response_body = 
-                    (parsed_response_body.is_a?(Array)) ? parsed_response_body : [parsed_response_body]
-
+            unless json.empty?
                 inferred_class = Object.const_get(resource_type)
                 
                 # Create array of JSON Converted to objects => this can include Nouns AND Error objects
                 objects_array = parsed_response_body.map do |item|
                     obj = nil
                     if item.has_key?("error_message")
-                        obj = Error.new(item['id'],
-                                        item['resource_name'],
-                                        item['resource_type'],
-                                        item['code'],
-                                        item['msg'])
+                        obj = Error.new(item["id"],
+                                        item["resource_name"],
+                                        item["resource_type"],
+                                        item["code"],
+                                        item["msg"])
                         
                     else
                         obj = inferred_class.new(item)
                     end
                     obj
                 end
-                #puts "objects_array #{objects_array}"
-                #puts "OBJECTS ARRAY => #{objects_array}"
+                # return array of rest noun and/or error objects
                 return objects_array
             else
-                # return raw JSON response if empty body comes back
-                 return json_response
+                # return empty body 
+                 return json
             end
         end 
 
@@ -976,7 +970,7 @@ module OpenAsset
                 return generate_objects_from_json_response_body(res,resource)
 
             else
-                # JSON object
+                # Raw JSON object
                 return response
 
             end
@@ -1034,7 +1028,7 @@ module OpenAsset
                 return generate_objects_from_json_response_body(res,resource)
 
             else
-                # JSON object
+                # Raw JSON object
                 return response
 
             end    

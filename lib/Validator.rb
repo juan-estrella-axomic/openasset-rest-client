@@ -64,7 +64,7 @@ class Validator
             location = response['location']
             msg      = "Unexpected Redirect to #{location}"
             Logging::logger.error(msg.yellow) 
-            abort
+            return response
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "Error: #{response.message}: invalid credentials."
             Logging::logger.error(msg.red) 
