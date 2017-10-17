@@ -35,7 +35,7 @@ class Validator
         unless  arg.is_a?(NilClass) || arg.is_a?(Hash)
             msg = "Argument Validation Error: Expected no argument or a \"Hash\" to create #{val} object." +
                   "\nInstead got a(n) #{arg.class} with contents => #{arg.inspect}"
-            Logging::logger.error(msg.red)
+            Logging::logger.error(msg)
             abort
         end
         return (arg) ? arg : Hash.new # Return arg or empty hash in case arg is nil
@@ -67,21 +67,20 @@ class Validator
             return response
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "Error: #{response.message}: invalid credentials."
-            Logging::logger.error(msg.red) 
+            Logging::logger.error(msg) 
             return response
         elsif response.kind_of? Net::HTTPServerError 
             msg = "Error: #{response.message}: Try again later."
-            Logging::logger.error(msg.red)
+            Logging::logger.error(msg)
             return response
         else
-            msg = "Error #{err_header} resource.\n\tMETHOD: #{http_method}\n\tCODE: #{response.code}" + 
-                  "\n\tMESSAGE: #{response.message} #{response.body}\n\tRESOURCE: #{resource}"
-
+            #msg = "Error #{err_header} resource.\n\tMETHOD: #{http_method}\n\tCODE: #{response.code}" + 
+            #      "\n\tMESSAGE: #{response.message} #{response.body}\n\tRESOURCE: #{resource}"
+            msg = ''
             if response.code.eql?('403')
-                msg += "\n\tDon't let the error fool you. The image size specified is no longer available in S3. Go see the Wizard (aka Justin)."
+                msg = "Don't let the error fool you. The image size specified is no longer available in S3. Go see the Wizard (aka Justin)."
+                Logging::logger.error(msg)
             end
-
-            Logging::logger.error(msg.red)
                  
         end
     end
@@ -102,7 +101,7 @@ class Validator
                       "one of the following so take your pick.\n\t1. Fields object\n\t2. Field object converted " +
                       "to Hash (e.g) field.json\n\t3. A hash just containing an id (e.g) {'id' => 1}\n\t" +
                       "4. A string or an Integer for the id\n\t5. An array of Integers of Numeric Strings"
-                Logging::logger.error(msg.red)
+                Logging::logger.error(msg)
                 abort
             end
             return id
@@ -112,7 +111,7 @@ class Validator
         #Perform all the checks for the url
         unless uri.is_a?(String)
             msg = "Expected a String for first argument => \"uri\": Instead Got #{uri.class}"
-            Logging::logger.error(msg.red)
+            Logging::logger.error(msg)
             abort
         end
 
@@ -134,14 +133,14 @@ class Validator
                    /http:\/\/192\.168\.\d{1,3}\.\d{1,3}/ =~ uri                      # Class C IP range
 
                 msg = "Only private IP ranges allowed. Public IPs will trigger an SSL certificate error."
-                Logging::logger.error(msg.red)
+                Logging::logger.error(msg)
                 abort
             end
             uri
         else
             msg = "Invalid url! Expected http(s)://<subdomain>.openasset.com" + 
                   "\nInstead got => #{uri.inspect}"
-            Logging::logger.error(msg.red)
+            Logging::logger.error(msg)
             abort
         end
 
@@ -152,7 +151,7 @@ class Validator
         
         if data.nil?
             msg = "Error: No body provided."
-            Logging::logger.error(msg.red)
+            Logging::logger.error(msg)
             return false
         end
             
@@ -169,12 +168,12 @@ class Validator
             json_object = data.json #This means we have a noun object
         elsif data.is_a?(Array) && data.empty?
             msg = "Oops. Array is empty so there is nothing to send."
-            Logging::logger.error(msg.red)
+            Logging::logger.error(msg)
             return false
         else
             msg = "Argument Error: Expected either\n1. A NOUN object\n2. An Array of NOUN objects\n3. A Hash\n4. An Array of Hashes\n" +
                   "Instead got a #{data.class.to_s}."
-            Logging::logger.error(msg.red)
+            Logging::logger.error(msg)
             return false
         end
         return json_object
@@ -193,7 +192,7 @@ class Validator
                 json_object['id'] = data.to_s
             else
                 msg = "Expected an Integer or Numberic string for id in delete request body. Instead got #{data.inspect}"
-                Logging::logger.error(msg.red)
+                Logging::logger.error(msg)
                 return false
             end
         elsif data.is_a?(Array) && data.size > 0
@@ -212,20 +211,20 @@ class Validator
                 end
             else
                 msg = "Expected Array of id Strings or Integers but instead got => #{data.first.class.to_s}"
-                Logging::logger.error(msg.red)
+                Logging::logger.error(msg)
                 return false
             end
         elsif Validator::NOUNS.include?(data.class.to_s) #Single object
             json_object = data.json # Convert Noun to JSON object (NOT JSON string. We do that right befor sending the request)
         elsif data.is_a?(Array) && data.empty?
             msg = "Oops. Array is empty so there is nothing to send."
-            Logging::logger.error(msg.red)
+            Logging::logger.error(msg)
             return false
         else
             msg = "Argument Error: Expected either\n\t1. A NOUN object\n\t2. An Array of NOUN objects" + 
                                   "\n\t3. A Hash\n\t4. An Array of Hashes\n\t5. An Array of id strings or integers\n\t" +
                                   "Instead got a => #{data.class.to_s}."
-            Logging::logger.error(msg.red)
+            Logging::logger.error(msg)
             return false
         end
         return json_object

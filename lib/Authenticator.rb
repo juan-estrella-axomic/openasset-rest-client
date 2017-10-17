@@ -53,7 +53,7 @@ class Authenticator
     def get_credentials(attempts=0)
 
         if attempts.eql?(3) 
-            logger.error("Too many failed login attempts.".red)
+            logger.error("Too many failed login attempts.")
             abort
         end
 
@@ -116,17 +116,17 @@ class Authenticator
             setup_authentication()
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}: invalid credentials.\n\n"
-            logger.error(msg.red)
+            logger.error(msg)
             @username = ''
             @password = ''
             create_token(attempts + 1)
         elsif response.kind_of? Net::HTTPServerError 
             msg = "Error: #{response.message}: try again later."
-            logger.error(msg.red)
+            logger.error(msg)
             abort
         else
             msg = "Error: #{response.message}"
-            logger.error(msg.red)
+            logger.error(msg)
             abort
         end
     end
@@ -174,15 +174,15 @@ class Authenticator
             return false
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}" 
-            logger.error(msg.red)
+            logger.error(msg)
             return false
         elsif response.kind_of? Net::HTTPServerError 
             msg = "#{response.message}: Try again later."
-            logger.error(msg.red)
+            logger.error(msg)
             return false
         else
             msg = "Error: #{response.message}"
-            logger.error(msg.red)
+            logger.error(msg)
             return false
         end
          
@@ -202,7 +202,7 @@ class Authenticator
             validate_token()
         else
             msg = "Unknown Error: Authentication setup failure."
-            logger.error(msg.red)
+            logger.error(msg)
             abort
         end
     end
@@ -238,7 +238,7 @@ class Authenticator
 
         if conf.nil?
             msg = "Looks like the configuration file has been altered or become corrupted. Aborting."
-            logger.error(msg.red)
+            logger.error(msg)
             abort
         end
 
@@ -352,7 +352,7 @@ class Authenticator
 
         else
             msg = "An unknown error happened while trying to kill the session."
-            logger.error(msg.red)
+            logger.error(msg)
             return
         end    
         #write it out to the config file

@@ -70,7 +70,7 @@ module OpenAsset
 
                     unless container_found
                         msg = "Album id #{album.id} not found in OpenAsset. Aborting."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
 
@@ -80,7 +80,7 @@ module OpenAsset
 
                     unless container_found
                         msg = "Album id #{album.inspect} not found in OpenAsset. Aborting"
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
 
@@ -90,20 +90,20 @@ module OpenAsset
 
                     if container_found.length > 1
                         msg = "Multiple #{scope} found named #{container.inspect}. Specify an id instead."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
 
                     if container_found.empty?
                         msg = "Album named #{container.inspect} not found in OpenAsset. Aborting"
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
                     container_found = container_found.first
                 else
                     msg = "Argument Error: Expected a Albums object, Album name, or Album id for the first argument in #{__callee__}" +
                           "\n    Intead got #{container.inspect}"
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -122,7 +122,7 @@ module OpenAsset
 
                     unless container_found
                         msg = "Project id #{container.id} not found in OpenAsset. Aborting."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
 
@@ -132,7 +132,7 @@ module OpenAsset
 
                     unless container_found
                         msg = "Project id #{container} not found in OpenAsset. Aborting."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
                     
@@ -142,13 +142,13 @@ module OpenAsset
 
                     if container_found.length > 1
                         msg = "Multiple #{scope} found named #{container.inspect}. Specify an id instead."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
 
                     if container_found.empty?
                         msg = "Project named #{container.inspect} not found in OpenAsset. Aborting."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
 
@@ -156,7 +156,7 @@ module OpenAsset
                 else
                     msg = "Argument Error: Expected a Projects object, Project name, or Project id for the first argument in #{__callee__}" +
                           "\n    Intead got #{container.inspect}"
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -168,7 +168,7 @@ module OpenAsset
 
                     unless container_found
                         msg = "Category id #{container.id} not found in OpenAsset. Aborting."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
 
@@ -178,7 +178,7 @@ module OpenAsset
 
                     unless container_found
                         msg = "Category id #{container.inspect} not found in OpenAsset. Aborting."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
 
@@ -189,13 +189,13 @@ module OpenAsset
 
                     if container_found.length > 1
                         msg = "Multiple #{scope} found named #{container.inspect}. Specify an id instead."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
 
                     if container_found.empty?
                         msg = "Category named #{container.inspect} not found in OpenAsset. Aborting."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
                     
@@ -204,7 +204,7 @@ module OpenAsset
                 else
                     msg = "Argument Error: Expected a Categories object, Category name, or Category id for the first argument in #{__callee__}" +
                     "\n    Intead got #{container.inspect}"
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -219,7 +219,7 @@ module OpenAsset
 
                 unless keyword_category_found
                     msg = "FILE Keyword Category id \"#{target_keyword_category.id}\" not found in OpenAsset. Aborting."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -232,7 +232,7 @@ module OpenAsset
 
                 unless keyword_category_found
                     msg = "FILE Keyword Category id \"#{target_keyword_category}\" not found in OpenAsset. Aborting."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -245,13 +245,13 @@ module OpenAsset
                 
                 if results.empty?
                     msg = "FILE Keyword Category \"#{target_keyword_category}\" not found in OpenAsset. Aborting."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
                 if results.length > 1 && allow_mutiple_results == false
                     msg = "Multiple File keyword categories found with name => #{target_keyword_category.inspect}. Specify an id instead."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 elsif results.length > 1 && allow_mutiple_results == true
                     keyword_category_found = results
@@ -263,7 +263,7 @@ module OpenAsset
                 msg = "Argument Error: Expected \n    1.) File keyword categories object\n    2.) File keyword " +
                       "category name\n    3.) File keyword category id\nfor the second argument in #{__callee__}." +
                       "\n    Intead got #{target_keyword_category.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -276,7 +276,7 @@ module OpenAsset
 
                 unless source_field_found
                     msg = "Field id #{source_field.id} not found in OpenAsset. Aborting."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -287,7 +287,7 @@ module OpenAsset
 
                 unless source_field_found
                     msg = "Field id #{source_field} not found in OpenAsset. Aborting."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -299,13 +299,13 @@ module OpenAsset
                 
                 if results.length > 1
                     msg = "Multiple Fields found named #{source_field.inspect}. Specify an id instead."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
                 if results.empty?
                     msg = "Field named #{source_field.inspect} not found in OpenAsset. Aborting."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -313,13 +313,13 @@ module OpenAsset
             else
                 msg = "Argument Error: Expected a Fields object, File Field name, or File Field id for the third argument in #{__callee__}" +
                       "\n    Intead got #{source_field.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
             unless source_field_found.field_type == 'image'
                 msg = "Field #{source_field_found.name.inspect} with id #{source_field_found.id.inspect} is not an image field. Aborting."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -328,14 +328,14 @@ module OpenAsset
             unless field_separator.is_a?(String) && !field_separator.nil?
                 msg = "Argument Error: Expected a string value for the fourth argument \"field_separator\"." +
                       "\n    Instead got #{field_separator.inspect}."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
             unless batch_size.to_i > 0
                 msg = "Argument Error: Expected a non zero numeric value for the fifth argument \"batch size\" in #{__callee__}." +
                       "\n    Instead got #{batch_size.inspect}."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -346,16 +346,23 @@ module OpenAsset
         end
 
         # @!visibility private
-        def process_errors(data=nil,res=nil,resource=nil)
+        def process_errors(data=nil,res=nil,resource=nil,operation='')
             
             return unless data && res && resource
         
             json_obj_collection = Array.new
             errors              = Array.new
             
+            name = (resource == 'Files') ? '@filename' : '@name'
+
             # Bug in rest api where deleting a file twice returns the wrong message
+            jsonBody = JSON.parse(res.body)
+            if !jsonBody.is_a?(Array)
+                jsonBody = [jsonBody]
+            end
+
             if resource.downcase == 'files' && !res.code.to_s.eql?('204') && res.body
-                JSON.parse(res.body).each_with_index do |obj,index|
+                jsonBody.each_with_index do |obj,index|
                     if obj.is_a?(Hash) && obj.has_key?("error_message")
                         err                     = Hash.new
                         err['id']               = data[index].id
@@ -371,7 +378,7 @@ module OpenAsset
                     end
                 end
             elsif res.body
-                JSON.parse(res.body).each_with_index do |obj,index|
+                jsonBody.each_with_index do |obj,index|
                     if obj.is_a?(Hash) && obj.has_key?("error_message")
                         err                     = Hash.new
                         err['id']               = data[index].id
@@ -395,10 +402,10 @@ module OpenAsset
                     i = e["id"]
                     m = e["error_message"]
                     c = e["http_status_code"]
-                    logger.error("Delete failed for #{r.inspect} object: #{n}".red)
-                    logger.error("ID: #{i}")   unless i.nil?
-                    logger.error("Message: #{m}".red)
-                    logger.error("Code: #{c}".red)
+                    logger.error("#{operation} failed for #{r.inspect} object: #{n}")
+                    logger.error("#{r.chop} id: #{i}")   unless i.nil?
+                    logger.error("Message: #{m}")
+                    logger.error("HTTP Status Code: #{c}")
                 end
             end
  
@@ -410,17 +417,19 @@ module OpenAsset
         def generate_objects_from_json_response_body(json,resource_type)    
 
             unless json.empty?
+
+                # Single object requests may return this
                 inferred_class = Object.const_get(resource_type)
-                
+              
                 # Create array of JSON Converted to objects => this can include Nouns AND Error objects
-                objects_array = parsed_response_body.map do |item|
+                objects_array = json.map do |item|
                     obj = nil
                     if item.has_key?("error_message")
                         obj = Error.new(item["id"],
                                         item["resource_name"],
                                         item["resource_type"],
-                                        item["code"],
-                                        item["msg"])
+                                        item["http_status_code"],
+                                        item["error_message"])
                         
                     else
                         obj = inferred_class.new(item)
@@ -443,14 +452,14 @@ module OpenAsset
             unless Validator::NOUNS.include?(resource)
                 msg = "Argument Error: Expected Nouns Object for first argument in #{__callee__}." +
                       "\n    Instead got => #{object.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
             unless rest_option_obj.is_a?(RestOptions) || rest_option_obj == nil
                 msg = "Argument Error: Expected RestOptions Object or no argument for second argument in #{__callee__}." + 
                       "\n    Instead got => #{rest_option_obj.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -604,7 +613,7 @@ module OpenAsset
             
                                 msg = "#{object_type} keyword move operation not allowed to field display type " +
                                       "#{field.field_display_type.inspect}."
-                                logger.error(msg.red)
+                                logger.error(msg)
                                 abort
             
                             end
@@ -651,7 +660,7 @@ module OpenAsset
             
                                 msg = "#{object_type} keyword move operation not allowed to field display type " +
                                       "#{field.field_display_type.inspect}."
-                                logger.error(msg.red)
+                                logger.error(msg)
                                 abort
             
                             end
@@ -698,7 +707,7 @@ module OpenAsset
             
                             msg = "#{object_type} keyword move operation not allowed to field display type " +
                                   "#{field.field_display_type.inspect}."
-                            logger.error(msg.red)
+                            logger.error(msg)
                             abort
             
                         end
@@ -733,7 +742,7 @@ module OpenAsset
                     Validator::process_http_response(res,@verbose,scope.capitalize,'HEAD')
                     msg = "Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
                           " Try adjusting the batch size."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -745,7 +754,7 @@ module OpenAsset
                         res = update_projects(payload,false)
                     else
                         msg = "Invalid update scope. Expected Files or Projects in payload. Instead got => #{scope}"
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
                         
@@ -833,7 +842,7 @@ module OpenAsset
                         rescue => e
                             require 'pp'
                             pp e
-                            logger.error(e.message.red)
+                            logger.error(e.message)
                             logger.error("Bad query parameter => #{key.inspect}=#{value.inspect}")
                             return
                         end
@@ -851,7 +860,7 @@ module OpenAsset
                                     value = arr.join(',')           # Convert the Array back to a string
                                     post_parameters[key] = value    # Add it to the post parameters HASH
                                 rescue => e
-                                    logger.error(e.message.red)
+                                    logger.error(e.message)
                                     logger.error("Value causing the error => #{existing_data.inspect}")
                                     abort
                                 end
@@ -880,7 +889,7 @@ module OpenAsset
                 begin
                     http.request(request) 
                 rescue => e
-                    logger.error("#{resource} retrieval failed => #{e.message}".red)
+                    logger.error("#{resource} retrieval failed => #{e.message}")
                     abort
                 end
             end
@@ -913,8 +922,9 @@ module OpenAsset
         # @!visibility private
         def post(uri,data,generate_objects)
 
-            resource       = ''
-            name           = ''
+            data = [data] unless data.is_a?(Array)
+            resource = ''
+            name     = ''
 
             if uri.to_s.split('/').last.to_i == 0 #its a non numeric string meaning its a resource endpoint
                 resource = uri.to_s.split('/').last
@@ -928,7 +938,7 @@ module OpenAsset
 
             unless json_body
                 msg = "No data in json_body in POST request."
-                logger.error(msg.red)
+                logger.error(msg)
                 return false
             end
 
@@ -948,7 +958,7 @@ module OpenAsset
                 rescue
                     request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
                 rescue => e
-                    logger.error(e.message.red)
+                    logger.error(e.message)
                 end
                 
                 http.request(request)
@@ -959,11 +969,9 @@ module OpenAsset
             end
             
             Validator::process_http_response(response,@verbose,resource,'POST')
-
-            return unless response.kind_of?(Net::HTTPSuccess)
-
+           
             # Check each object for error during update
-            res = process_errors(data,response,resource)
+            res = process_errors(data,response,resource,'Create')
 
             if generate_objects == true
 
@@ -979,8 +987,8 @@ module OpenAsset
         # @!visibility private
         def put(uri,data,generate_objects)
 
-            resource  = uri.to_s.split('/').last
-            name      = (resource == 'Files') ? '@filename' : '@name'
+            resource = uri.to_s.split('/').last
+            name     = (resource == 'Files') ? '@filename' : '@name'
             
             json_body = Validator::validate_and_process_request_data(data)
             
@@ -1005,30 +1013,28 @@ module OpenAsset
                 rescue
                     request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
                 rescue => e
-                    logger.error(e.message.red)
+                    logger.error(e.message)
                 end
 
-                #pp json_body
+             
                 http.request(request)
             end
-            #pp JSON.parse(response.body)
+            
             unless @session == response['X-SessionKey']
                 @session = response['X-SessionKey']
             end
             
-            Validator::process_http_response(res,@verbose,resource,'PUT')
-
-            return unless response.kind_of?(Net::HTTPSuccess)
+            Validator::process_http_response(response,@verbose,resource,'PUT')
 
             # Check each object for error during update
-            res = process_errors(data,response,resource)
+            res = process_errors(data,response,resource,'Update')
 
             if generate_objects == true
 
-                return generate_objects_from_json_response_body(res,resource)
+                return generate_objects_from_json_response_body(res,resource,)
 
-            else
-                # Raw JSON object
+            else  # Raw JSON object
+
                 return response
 
             end    
@@ -1063,7 +1069,7 @@ module OpenAsset
                 rescue
                     request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
                 rescue => e
-                    logger.error(e.message.red)
+                    logger.error(e.message)
                 end
                
                 http.request(request)
@@ -1075,7 +1081,7 @@ module OpenAsset
 
             Validator::process_http_response(response,@verbose,resource,'DELETE')
 
-            res = process_errors(data,response,resource)
+            res = process_errors(data,response,resource,'Delete')
 
             return res   # Success should always return an empty array. Any content means there was an error,
         end
@@ -1615,7 +1621,7 @@ module OpenAsset
         
             unless File.exists?(file.to_s)
                 msg = "The file #{file.inspect} does not exist...Bailing out."
-                logger.error(msg.red)
+                logger.error(msg)
                 return false
             end
 
@@ -1623,7 +1629,7 @@ module OpenAsset
                 msg = "Argument Error for upload_files method: Invalid category id passed to second argument.\n" +
                       "Acceptable arguments: Category object, a non-zero numeric String or Integer, " +
                       "or no argument.\nInstead got #{category.class}...Bailing out."
-                logger.error(msg.red)
+                logger.error(msg)
                 return false
             end
 
@@ -1631,7 +1637,7 @@ module OpenAsset
                 msg = "Argument Error for upload_files method: Invalid project id passed to third argument.\n" +
                       "Acceptable arguments: Projects object, a non-zero numeric String or Integer, " +
                       "or no argument.\nInstead got a(n) #{project.class} with value => #{project.inspect}...Bailing out."
-                      logger.error(msg.red)    
+                      logger.error(msg)    
                 return false
             end
 
@@ -1724,14 +1730,14 @@ module OpenAsset
             unless file_object.is_a?(Files) 
                 msg = "Argument Error: First argument => Invalid object type! Expected File object" +
                       " and got #{file_obj.class} object instead. Aborting update."
-                logger.error(msg.red)
+                logger.error(msg)
                 return
             end
             
             if File.directory?(replacement_file_path)
                 msg = "Argument Error: Second argument => Expected a file! " +
                       "#{replacement_file_path} is a directory! Aborting update."
-                logger.error(msg.red)
+                logger.error(msg)
                 return
             end
 
@@ -1739,7 +1745,7 @@ module OpenAsset
             #check if the replacement file exists
             unless File.exists?(replacement_file_path) && File.file?(replacement_file_path)
                 msg = "The file #{replacement_file_path} does not exist. Aborting update."
-                logger.error(msg.red)
+                logger.error(msg)
                 return
             end
 
@@ -1749,14 +1755,14 @@ module OpenAsset
                 msg = "File extensions must match! Aborting update\n    " + 
                       "Original file extension => #{File.extname(file_object.original_filename)}\n    " +
                       "Replacement file extension => #{File.extname(replacement_file_path)}"
-                logger.error(msg.red)
+                logger.error(msg)
                 return
             end
 
             #verify that the original file id is provided
             unless id.to_s != "0"
                 msg = "Invalid target file id! Aborting update."
-                logger.error(msg.red)
+                logger.error(msg)
                 return
             end
 
@@ -1767,7 +1773,7 @@ module OpenAsset
                     original_filename = File.basename(file_object.original_filename)
                 else
                     msg = "No original filename detected in Files object. Aborting update."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     return
                 end
             else
@@ -2759,7 +2765,7 @@ module OpenAsset
                 unless ALLOWED_BOOLEAN_FIELD_OPTIONS.include?(value.to_s.strip)
                     msg = "Invalid value #{value.inspect} for \"On/Off Switch\" field type.\n" +
                           "Acceptable Values => #{ALLOWED_BOOLEAN_FIELD_OPTIONS.inspect}"
-                    logger.error(msg.red)
+                    logger.error(msg)
                     return
                 end
                 
@@ -2789,7 +2795,7 @@ module OpenAsset
             else
                 msg = "The field specified does not have a valid field_display_type." +
                       "Value provided => #{field.field_display_type.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 return
             end
 
@@ -2931,7 +2937,7 @@ module OpenAsset
                 date_regex = Regexp::new('((\d{2}-\d{2}-(\d{4}|\d{2}))|(\d{2}\/\d{2}\/(\d{4}|\d{2})))')
                 unless (value =~ date_regex) == 0
                     msg = "Invalid date format. Expected => \"mm-dd-yyyy\" or \"mm-dd-yy\""
-                    logger.error(msg.red)
+                    logger.error(msg)
                     return
                 end
 
@@ -2981,7 +2987,7 @@ module OpenAsset
                 unless ALLOWED_BOOLEAN_FIELD_OPTIONS.include?(value.to_s.strip)
                     msg = "Error: Invalid value #{value.inspect} for \"On/Off Switch\" field type.\n" +
                           "Acceptable Values => #{ALLOWED_BOOLEAN_FIELD_OPTIONS.inspect}"
-                    logger.error(msg.red)
+                    logger.error(msg)
                     return
                 end
                 
@@ -3124,7 +3130,7 @@ module OpenAsset
                     
                     unless kwd_cat_obj
                         msg = "Error creating keyword category in #{__callee__}"
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
                     
@@ -3263,7 +3269,7 @@ module OpenAsset
                             new_keywords.each { |item| existing_keywords.push(item) }
                         else
                             msg = "An error occured creating keywords in #{__callee__}"
-                            logger.error(msg.red)
+                            logger.error(msg)
                             abort
                         end
                     end
@@ -3305,7 +3311,7 @@ module OpenAsset
 
                         unless associated_kwd_cat
                             msg = "Associated keyword category retrieval failed in #{__callee__}"
-                            logger.fatal(msg.red)
+                            logger.fatal(msg)
                             abort
                         end
 
@@ -3336,7 +3342,7 @@ module OpenAsset
                                 end 
                             else
                                 msg = "Unable to retrieve previously created keyword! => #{value}"
-                                logger.fatal(msg.red)
+                                logger.fatal(msg)
                                 abort
                             end
                             
@@ -3403,7 +3409,7 @@ module OpenAsset
             if file_keyword_category_found.category_id != category_found.id
                 msg = "Specified keyword category #{file_keyword_category_found.name.inspect} " +
                       "with id #{file_keyword_category_found.id.inspect} not found in #{category_found.name.inspect}."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -3522,7 +3528,7 @@ module OpenAsset
                             new_keywords.each { |item| existing_keywords.push(item) }
                         else
                             msg = "An error occured creating keywords in #{__callee__}"
-                            logger.error(msg.red)
+                            logger.error(msg)
                             abort
                         end
                     end
@@ -3580,7 +3586,7 @@ module OpenAsset
                                 end
                             else
                                 msg = "Unable to retrieve previously created keyword in #{__callee__}"
-                                logger.fatal(msg.red)
+                                logger.fatal(msg)
                                 abort
                             end        
                         end    
@@ -3700,7 +3706,7 @@ module OpenAsset
                     
                     unless kwd_cat_obj
                         msg = "Keyword category creation failed in #{__callee__} method."
-                        logger.error(msg.red)
+                        logger.error(msg)
                         abort
                     end
 
@@ -3792,7 +3798,7 @@ module OpenAsset
 
                     unless associated_kwd_cat
                         msg = "Unable to retrieve associated keyword category!"
-                        logger.fatal(msg.red)
+                        logger.fatal(msg)
                         abort
                     end
 
@@ -3847,7 +3853,7 @@ module OpenAsset
                             new_keywords.each { |item| existing_keywords.push(item) }
                         else
                             msg = "An error occured creating keywords in #{__callee__}"
-                            logger.error(msg.red)
+                            logger.error(msg)
                             abort
                         end
                     end
@@ -3893,7 +3899,7 @@ module OpenAsset
 
                         unless associated_kwd_cat
                             msg = "Existing keyword category retrieval failure in #{__callee__}"
-                            logger.fatal(msg.red)
+                            logger.fatal(msg)
                             abort
                         end
 
@@ -3919,7 +3925,7 @@ module OpenAsset
                                 file.keywords.push(NestedKeywordItems.new(keyword_obj.id)) unless already_tagged
                             else
                                 msg = "Unable to retrieve previously created keyword! => #{value}"
-                                logger.fatal(msg.red)
+                                logger.fatal(msg)
                                 abort
                             end
                             
@@ -3996,14 +4002,14 @@ module OpenAsset
 
                 unless project_keyword_category_found
                     msg = "Project keyword category with name #{target_project_keyword_category.inspect} not found in OpenAsset."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
                 if project_keyword_category_found.length > 1
                     msg = "Error: Multiple Project keyword categories found with search query #{op.get_options.inspect}." +
                           " Specify an id instead."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 else
                     project_keyword_category_found = project_keyword_category_found.first
@@ -4016,7 +4022,7 @@ module OpenAsset
                       "\n    3. Project keyword category name." +
                       "\nfor first argument in #{__callee__} method." +
                       "\nInstead got #{target_project_keyword_category.inspect}."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4024,7 +4030,7 @@ module OpenAsset
             unless project_keyword_category_found.is_a?(ProjectKeywordCategories)
                 msg = "Error: Specified Project keyword category named #{project_keyword_category_found.name.inspect} with id " +
                       "#{project_keyword_category_found.id.inspect} is actually a #{project_keyword_category_found.class.inspect}."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4038,7 +4044,7 @@ module OpenAsset
 
                 unless project_field_found
                     msg = "Field with id #{project_field.id.inspect} not found in OpenAsset."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -4050,7 +4056,7 @@ module OpenAsset
 
                 unless project_field_found
                     msg = "Field with id #{project_field.inspect} not found in OpenAsset."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -4062,13 +4068,13 @@ module OpenAsset
 
                 unless project_field_found
                     msg = "Field with name #{project_field.inspect} not found in OpenAsset."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
                 if project_field_found.length > 1
                     msg = "Error: Multiple fields found with name #{project_field.inspect}. Specify an id instead."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 else
                     project_field_found = project_field_found.first
@@ -4080,7 +4086,7 @@ module OpenAsset
                       "\n    3. Field name."
                       "\nfor second argument in #{__callee__} method." +
                       "\nInstead got #{project_field.inspect}."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4088,7 +4094,7 @@ module OpenAsset
             unless project_field_found.field_type == 'project'
                 msg = "Error: Specified field #{project_field_found.name.inspect} with id " +
                       "#{project_field_found.id.inspect} is not a project field"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4096,13 +4102,13 @@ module OpenAsset
 
             if field_separator.nil?
                 msg = "You Must specify field separator."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
             if batch_size.zero?
                 msg = "Invalid batch size. Specify a positive numeric value or use default value of 200."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4126,7 +4132,7 @@ module OpenAsset
 
             if project_ids.length.zero?
                 msg = "No Projects found in OpenAsset!"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4164,7 +4170,7 @@ module OpenAsset
 
                 if projects.empty?
                     msg = "Project retrieval failure in #{__callee__} method."
-                    logger.fatal(msg.red)
+                    logger.fatal(msg)
                     abort
                 end
 
@@ -4293,7 +4299,7 @@ module OpenAsset
                             project.project_keywords.push(nested_proj_keyword.new(proj_keyword_obj.id)) unless already_tagged
                         else
                             msg = "Unable to retrieve previously created keyword! => #{value}"
-                            logger.fatal(msg.red)
+                            logger.fatal(msg)
                             abort
                         end
                         
@@ -4376,14 +4382,14 @@ module OpenAsset
 
                 unless project_keyword_category_found
                     msg = "Project keyword category with name #{target_project_keyword_category.inspect} not found in OpenAsset."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
                 if project_keyword_category_found.length > 1
                     msg = "Multiple Project keyword categories found with search query #{op.get_options.inspect}." +
                           " Specify an id instead."
-                    logger.error(msg.red)    
+                    logger.error(msg)    
                     abort
                 else
                     project_keyword_category_found = project_keyword_category_found.first
@@ -4396,7 +4402,7 @@ module OpenAsset
                       "\n    3. Project keyword category name." +
                       "\nfor first argument in #{__callee__} method." +
                       "\nInstead got #{target_project_keyword_category.inspect}."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4404,7 +4410,7 @@ module OpenAsset
             unless project_keyword_category_found.is_a?(ProjectKeywordCategories)
                 msg = "Error: Specified Project keyword category named #{project_keyword_category_found.name.inspect} with id " +
                       "#{project_keyword_category_found.id.inspect} is actually a #{project_keyword_category_found.class.inspect}."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4418,7 +4424,7 @@ module OpenAsset
 
                 unless project_field_found
                     msg = "Field with id #{project_field.id.inspect} not found in OpenAsset."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -4430,7 +4436,7 @@ module OpenAsset
 
                 unless project_field_found
                     msg = "Field with id #{target_project_field.inspect} not found in OpenAsset."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
@@ -4442,13 +4448,13 @@ module OpenAsset
 
                 unless project_field_found
                     msg = "Field with name #{target_project_field.inspect} not found in OpenAsset."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 end
 
                 if project_field_found.length > 1
                     msg = "Multiple fields found with name #{target_project_field.inspect}. Specify an id instead."
-                    logger.error(msg.red)
+                    logger.error(msg)
                     abort
                 else
                     project_field_found = project_field_found.first
@@ -4460,7 +4466,7 @@ module OpenAsset
                       "\n    3. Field name."
                       "\nfor second argument in #{__callee__} method." +
                       "\nInstead got #{target_project_field.inspect}."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4468,7 +4474,7 @@ module OpenAsset
             unless project_field_found.field_type == 'project'
                 msg = "Error: Specified field #{project_field_found.name.inspect} with id " +
                       "#{project_field_found.id.inspect} is not a project field."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
             
@@ -4505,13 +4511,13 @@ module OpenAsset
             unless ['append','overwrite'].include?(insert_mode.to_s)
                 msg = "Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
                       "Instead got #{insert_mode.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
             if batch_size.zero?
                 msg = "Invalid batch size. Specify a positive numeric value or use default value of 200."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4533,7 +4539,7 @@ module OpenAsset
 
             if project_ids.length.zero?
                 msg = "No Projects found in OpenAsset!"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4675,7 +4681,7 @@ module OpenAsset
             unless ['append','overwrite'].include?(insert_mode.to_s)
                 msg = "Argument Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
                       "Instead got #{insert_mode.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
             
@@ -4693,7 +4699,7 @@ module OpenAsset
             if keywords.empty?
                 msg = "No keywords found in keyword category => #{file_keyword_category_found.name.inspect} " +
                       "with id #{file_keyword_category_found.id.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4714,7 +4720,7 @@ module OpenAsset
 
             if total_file_count.zero?
                 msg = "No files found in album #{album_found.name.inspect} with id #{album_found.id.inspect}."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4838,7 +4844,7 @@ module OpenAsset
             unless ['append','overwrite'].include?(insert_mode.to_s)
                 msg = "Argument Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
                       "Instead got #{insert_mode.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -4857,7 +4863,7 @@ module OpenAsset
 
             if keywords.empty?
                 msg = "No keywords found in keyword category => #{file_keyword_categories_found.first.name.inspect}."
-                logger.error(msg.red)            
+                logger.error(msg)            
                 abort
             end
 
@@ -4877,7 +4883,7 @@ module OpenAsset
 
             if files.empty?
                 msg = "Project #{project_found.name.inspect} with id #{project_found.id.inspect} is empty."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -5007,7 +5013,7 @@ module OpenAsset
             unless ['append','overwrite'].include?(insert_mode.to_s)
                 msg = "Argument Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
                       "Instead got #{insert_mode.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -5026,7 +5032,7 @@ module OpenAsset
             if keywords.empty?
                 msg = "No keywords found in keyword category => #{file_keyword_category_found.name.inspect} " +
                       "with id #{file_keyword_category_found.id.inspect}"
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
@@ -5046,7 +5052,7 @@ module OpenAsset
 
             if files.empty?
                 msg = "Category #{category_found.name.inspect} with id #{category_found.id.inspect} is empty."
-                logger.error(msg.red)
+                logger.error(msg)
                 abort
             end
 
