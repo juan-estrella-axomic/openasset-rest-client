@@ -346,14 +346,14 @@ module OpenAsset
         end
 
         # @!visibility private
-        def process_errors(res=nil,resource=nil)
+        def process_errors(data=nil,res=nil,resource=nil)
             
-            return unless res && resource
+            return unless data && res && resource
         
             json_obj_collection = Array.new
             errors              = Array.new
             
-            # Bug in rest api where deleting a file twice
+            # Bug in rest api where deleting a file twice returns the wrong message
             if resource.downcase == 'files' && !res.code.to_s.eql?('204') && res.body
                 JSON.parse(res.body).each_with_index do |obj,index|
                     if obj.is_a?(Hash) && obj.has_key?("error_message")
@@ -367,7 +367,7 @@ module OpenAsset
                         errors << err
                         json_obj_collection << err
                     else
-                        obj
+                        json_obj_collection << obj
                     end
                 end
             elsif res.body
@@ -377,22 +377,23 @@ module OpenAsset
                         err['id']            = data[index].id
                         err['resource_name'] = data[index].instance_variable_get(name)
                         err['resource_type'] = resource  # Determined by api endpoint
-                        err['code']          = obj["error_message"]
-                        err['msg']           = obj["http_status_code"]
+                        err['code']          = obj["http_status_code"]
+                        err['msg']           = obj["error_message"]
         
                         errors << err
                         json_obj_collection << err
                     else
-                        obj
+                        json_obj_collection << obj
                     end
                 end
             end
         
             unless errors.empty?
                 errors.each do |e|
-                    logger.error("Delete failed for #{resource.inspect} object: #{e.name}".red)
-                    logger.error("Message: #{e.msg}\n".red)
-                    logger.error("Code: #{e.code}".red) if e.code
+                    logger.error("Delete failed for #{resource.inspect} object: #{e['name']}".red)
+                    logger.error("ID: #{e['id']}")   unless e['id'].nil?
+                    logger.error("Message: #{e['msg']}".red)
+                    logger.error("Code: #{e.['code']}".red)
                 end
             end
         
@@ -401,9 +402,9 @@ module OpenAsset
         end
         
         # @!visibility private
-        def generate_objects_from_json_response_body(json_response,resource_type)    
+        def generate_objects_from_json_response_body(json,resource_type)    
 
-            parsed_response_body = JSON.parse(json_response.body)
+            parsed_response_body = JSON.parse(json)
 
             if parsed_response_body != [] && parsed_response_body != {} && parsed_response_body != nil
 
@@ -412,10 +413,20 @@ module OpenAsset
 
                 inferred_class = Object.const_get(resource_type)
                 
+                # Create array of JSON Converted to objects => this can include Nouns AND Error objects
                 objects_array = parsed_response_body.map do |item|
-
-                    ########################################## CREATE ERROR OBJECTS!!!!!!!!!!!!!!!!!!!!!!!!!!
-                     inferred_class.new(item) 
+                    obj = nil
+                    if item.has_key?("error_message")
+                        obj = Error.new(item['id'],
+                                        item['resource_name'],
+                                        item['resource_type'],
+                                        item['code'],
+                                        item['msg'])
+                        
+                    else
+                        obj = inferred_class.new(item)
+                    end
+                    obj
                 end
                 #puts "objects_array #{objects_array}"
                 #puts "OBJECTS ARRAY => #{objects_array}"
@@ -838,20 +849,20 @@ module OpenAsset
                             if match
                                 begin
                                     arr = JSON.parse(existing_data) # Convert array in string to an actual array
-                                    arr.push(value)
-                                    value = arr.join(',')
-                                    post_parameters[key] = value
+                                    arr.push(value)                 # Insert the URI.decoded value
+                                    value = arr.join(',')           # Convert the Array back to a string
+                                    post_parameters[key] = value    # Add it to the post parameters HASH
                                 rescue => e
                                     logger.error(e.message.red)
                                     logger.error("Value causing the error => #{existing_data.inspect}")
                                     abort
                                 end
                             else
-                                post_parameters[key] = existing_data + ',' + value 
+                                post_parameters[key] = existing_data + ',' + value  # For non array list format => ?id=1,2,3
                             end
                             
                         else
-                            post_parameters[key] = value 
+                            post_parameters[key] = value # For regular key value format => ?name=joe
                         end
                                 
                     end
@@ -869,7 +880,7 @@ module OpenAsset
                 end
                 
                 begin
-                    http.request(request)
+                    http.request(request) 
                 rescue => e
                     logger.error("#{resource} retrieval failed => #{e.message}".red)
                     abort
@@ -904,7 +915,6 @@ module OpenAsset
         # @!visibility private
         def post(uri,data,generate_objects)
 
-            obj_collection = []
             resource       = ''
             name           = ''
 
@@ -955,7 +965,7 @@ module OpenAsset
             return unless response.kind_of?(Net::HTTPSuccess)
 
             # Check each object for error during update
-            res = process_errors(response,resource)
+            res = process_errors(data,response,resource)
 
             if generate_objects == true
 
@@ -971,8 +981,6 @@ module OpenAsset
         # @!visibility private
         def put(uri,data,generate_objects)
 
-            errors    = []
-            error_obj = Struct.new(:id,:name,:code,:msg)
             resource  = uri.to_s.split('/').last
             name      = (resource == 'Files') ? '@filename' : '@name'
             
@@ -991,8 +999,7 @@ module OpenAsset
                     request.add_field('X-SessionKey',@session)
                 else
                     @session = @authenticator.get_session
-                    request.add_field('X-SessionKey',@session) #For when the token issue is sorted out
-                    #request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
+                    request.add_field('X-SessionKey',@session)
                 end
                 
                 begin
@@ -1016,11 +1023,11 @@ module OpenAsset
             return unless response.kind_of?(Net::HTTPSuccess)
 
             # Check each object for error during update
-            res = process_errors(response,resource)
+            res = process_errors(data,response,resource)
 
             if generate_objects == true
 
-                return generate_objects_from_json_response_body(response,resource)
+                return generate_objects_from_json_response_body(res,resource)
 
             else
                 # JSON object
@@ -1049,8 +1056,8 @@ module OpenAsset
                     request.add_field('X-SessionKey',@session)
                 else
                     @session = @authenticator.get_session
-                    request.add_field('X-SessionKey',@session) #For when the token issue is sorted out
-                    #request['authorization'] = "Basic YWRtaW5pc3RyYXRvcjphZG1pbg=="
+                    request.add_field('X-SessionKey',@session)
+                
                 end
                 
                 begin
@@ -1070,9 +1077,9 @@ module OpenAsset
 
             Validator::process_http_response(response,@verbose,resource,'DELETE')
 
-            res = process_errors(response,resource)
+            res = process_errors(data,response,resource)
 
-            return res
+            return res   # Success should always return an empty array. Any content means there was an error,
         end
         
         public
