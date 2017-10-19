@@ -38,9 +38,9 @@ module OpenAsset
         #         rest_client = OpenAsset::RestClient.new('se1.openasset.com')
         def initialize(client_url,un='',pw='')
 
-            @authenticator = Authenticator::get_instance(client_url,un,pw)
-            @uri           = @authenticator.uri
+            @authenticator = Authenticator::get_instance(client_url,un,pw)  
             @session       = @authenticator.get_session
+            @uri           = @authenticator.uri
             @verbose       = false
             @char_encoding = "windows-1252"
 

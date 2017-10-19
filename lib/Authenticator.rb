@@ -38,8 +38,8 @@ class Authenticator
     private
     def initialize(url,un,pw)
         @url = Validator::validate_and_process_url(url)
-        @username = un
-        @password = pw
+        @username = un.to_s
+        @password = pw.to_s
         @uri = @url + @@API_CONST + @@VERSION_CONST
         @token_endpoint = @url + @@API_CONST + @@VERSION_CONST + @@SERVICE_CONST
         @token = {:id => nil, :value => nil}
@@ -62,8 +62,10 @@ class Authenticator
         p = @password
 
         while u == '' || p == ''
-            print "Enter username: "
-            u=gets.chomp
+            if u.empty?
+                print "Enter username: "
+                u=gets.chomp
+            end
             print "Enter password: "
             p=STDIN.noecho(&:gets).chomp
             puts ''
@@ -108,12 +110,13 @@ class Authenticator
             create_signature()
         elsif response.kind_of? Net::HTTPRedirection 
             location = response['location']
-            msg = "Redirected to #{location} blah"
+            msg = "Redirected to #{location}"
             logger.warn(msg.yellow)
             @token_endpoint = location
             uri  = URI.parse(location)  # Update the url to match the redirect
             @url = uri.scheme + '://' + uri.host
-            setup_authentication()
+            @uri = uri.scheme + '://' + uri.host + @@API_CONST + @@VERSION_CONST
+            create_token()
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}: invalid credentials.\n\n"
             logger.error(msg)
@@ -145,7 +148,7 @@ class Authenticator
     def token_valid?
         
         key_id =  @token[:id]
-        uri = URI.parse(@uri + '/Headers') #'https://se1.openasset.com/REST/1/Headers'
+        uri = URI.parse(@url + @@API_CONST + @@VERSION_CONST + '/Headers') #'https://se1.openasset.com/REST/1/Headers'
 
         create_signature()
         
@@ -167,10 +170,11 @@ class Authenticator
             return true
         elsif response.kind_of? Net::HTTPRedirection 
             location = response['location']
-            msg = "Unexpected Redirect to #{location}"
-            logger.error(msg.yellow)
+            msg = "Redirect detected to #{location}"
+            logger.warn(msg.yellow)
             uri  = URI.parse(location)  # Update the url to match the redirect
             @url = uri.scheme + '://' + uri.host
+            @uri = uri.scheme + '://' + uri.host + @@API_CONST + @@VERSION_CONST
             return false
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}" 
