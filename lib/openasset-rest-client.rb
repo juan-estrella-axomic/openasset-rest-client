@@ -360,6 +360,8 @@ module OpenAsset
             if !jsonBody.is_a?(Array)
                 jsonBody = [jsonBody]
             end
+            
+            data = [data] unless data.is_a?(Array)
 
             if resource.downcase == 'files' && !res.code.to_s.eql?('204') && res.body
                 jsonBody.each_with_index do |obj,index|
@@ -1031,7 +1033,7 @@ module OpenAsset
 
             if generate_objects == true
 
-                return generate_objects_from_json_response_body(res,resource,)
+                return generate_objects_from_json_response_body(res,resource)
 
             else  # Raw JSON object
 
