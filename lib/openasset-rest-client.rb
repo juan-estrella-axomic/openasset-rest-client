@@ -1666,7 +1666,7 @@ module OpenAsset
 
             msg = "Uploading File: => {\"original_filename\":\"#{File.basename(file)}\",\"category_id\":\"#{category_id}\",\"project_id\":\"#{project_id}\"}"
             logger.info(msg.white)
-
+ 
             response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
                 request = Net::HTTP::Post.new(uri.request_uri)
                 

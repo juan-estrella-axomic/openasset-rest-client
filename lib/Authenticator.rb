@@ -94,16 +94,17 @@ class Authenticator
         get_credentials(attempts)
         uri = URI.parse(@token_endpoint)
         token_creation_data = '{"name" : "rest-client-r"}'
-
-        response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
-            request = Net::HTTP::Post.new(uri.request_uri,'Content-Type' => 'application/json') 
-            request.basic_auth(@username,@password)
-            request.body = token_creation_data
-            begin
-                http.request(request)
-            rescue => e 
-                logger.error("Connection failed: #{e}")
+        resonse = nil
+        begin
+            response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+                request = Net::HTTP::Post.new(uri.request_uri,'Content-Type' => 'application/json') 
+                request.basic_auth(@username,@password)
+                request.body = token_creation_data        
+                http.request(request)  
             end
+        rescue => e 
+            logger.error("Connection failed: #{e}")
+            exit(-1)
         end
         
         if response.kind_of? Net::HTTPSuccess 
@@ -157,16 +158,17 @@ class Authenticator
         create_signature()
         
         token_auth_string = "OAT #{key_id}:#{@signature}"     
-    
-        response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
-            request = Net::HTTP::Get.new(uri.request_uri,{'User-Agent' => @user_agent})
-            request['Authorization'] = token_auth_string #By using the signature, you indirectly check if token is valid
-            request['X-Date'] = @http_date
-            begin
-                http.request(request)
-            rescue => e 
-                logger.error("Connection failed: #{e}")
+        response = nil
+        begin
+            response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+                request = Net::HTTP::Get.new(uri.request_uri,{'User-Agent' => @user_agent})
+                request['Authorization'] = token_auth_string #By using the signature, you indirectly check if token is valid
+                request['X-Date'] = @http_date
+                http.request(request) 
             end
+        rescue => e
+            logger.error("Connection failed: #{e}")
+            exit(-1)
         end
         
         if response.kind_of? Net::HTTPSuccess
@@ -221,14 +223,16 @@ class Authenticator
 
     def session_valid?
         uri = URI.parse(@uri + '/Headers')
-        response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
-            request = Net::HTTP::Get.new(uri.request_uri)
-            request.add_field('X-SessionKey',@session_key)
-            begin
+        resonse = nil
+        begin
+            response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+                request = Net::HTTP::Get.new(uri.request_uri)
+                request.add_field('X-SessionKey',@session_key)       
                 http.request(request)
-            rescue => e 
-                logger.error("Connection failed: #{e}")
             end
+        rescue => e 
+            logger.error("Connection failed: #{e}")
+            exit(-1)
         end
         #puts "In session_valid? - after req"
         case response
