@@ -102,7 +102,7 @@ class Authenticator
                 request.body = token_creation_data        
                 http.request(request)  
             end
-        rescue => e 
+        rescue Exception => e 
             logger.error("Connection failed: #{e}")
             exit(-1)
         end
@@ -166,7 +166,7 @@ class Authenticator
                 request['X-Date'] = @http_date
                 http.request(request) 
             end
-        rescue => e
+        rescue Exception => e
             logger.error("Connection failed: #{e}")
             exit(-1)
         end
@@ -230,7 +230,7 @@ class Authenticator
                 request.add_field('X-SessionKey',@session_key)       
                 http.request(request)
             end
-        rescue => e 
+        rescue Exception => e 
             logger.error("Connection failed: #{e}")
             exit(-1)
         end

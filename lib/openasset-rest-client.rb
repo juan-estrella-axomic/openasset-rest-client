@@ -815,85 +815,95 @@ module OpenAsset
 
             end
             
-            response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-                
-                #Account for 2048 character limit with GET requests
-                options_str_len = options.get_options.length
-                if options_str_len > 2048
+            begin
+                attempts ||= 1
+                response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
                     
-                    request = Net::HTTP::Post.new(uri.request_uri)
-                    request.add_field('X-Http-Method-Override','GET')
-
-                    post_parameters = {}
-
-                    # Remove beginning ? mark from query
-                    key_value_pairs = options.get_options.sub(/^\?/,'')
-
-                    # Break down the string and extract key value arguments for the post parameters
-                    key_value_pairs.split(/&/).map do |key_val| 
-                        #puts key_val
-                        key_val.split(/=/) 
-
-                    end.each do |pair| 
+                    #Account for 2048 character limit with GET requests
+                    options_str_len = options.get_options.length
+                    if options_str_len > 2048
                         
-                        key   = pair[0].to_sym
-                        value = nil
+                        request = Net::HTTP::Post.new(uri.request_uri)
+                        request.add_field('X-Http-Method-Override','GET')
 
-                        begin
-                            value = URI.decode(pair[1])
-                        rescue => e
-                            require 'pp'
-                            pp e
-                            logger.error(e.message)
-                            logger.error("Bad query parameter => #{key.inspect}=#{value.inspect}")
-                            return
-                        end
+                        post_parameters = {}
 
-                        # Insert data into post parameters hash 
-                        if post_parameters.has_key?(key) # then update it otherwise perform new insert
-                            # Check if value for corresponding key is an array -> ex. ?id=[1,2,3] instead of ?id=1,2,3
-                            existing_data = post_parameters[key]
-                            match         = existing_data =~ /^(\[)([\w\d\s,]+)(\])$/  
+                        # Remove beginning ? mark from query
+                        key_value_pairs = options.get_options.sub(/^\?/,'')
 
-                            if match
-                                begin
-                                    arr = JSON.parse(existing_data) # Convert array in string to an actual array
-                                    arr.push(value)                 # Insert the URI.decoded value
-                                    value = arr.join(',')           # Convert the Array back to a string
-                                    post_parameters[key] = value    # Add it to the post parameters HASH
-                                rescue => e
-                                    logger.error(e.message)
-                                    logger.error("Value causing the error => #{existing_data.inspect}")
-                                    abort
-                                end
-                            else
-                                post_parameters[key] = existing_data + ',' + value  # For non array list format => ?id=1,2,3
-                            end
+                        # Break down the string and extract key value arguments for the post parameters
+                        key_value_pairs.split(/&/).map do |key_val| 
+                            #puts key_val
+                            key_val.split(/=/) 
+
+                        end.each do |pair| 
                             
-                        else
-                            post_parameters[key] = value # For regular key value format => ?name=joe
-                        end
+                            key   = pair[0].to_sym
+                            value = nil
+
+                            begin
+                                value = URI.decode(pair[1])
+                            rescue Exception => e
+                                require 'pp'
+                                pp e
+                                logger.error(e.message)
+                                logger.error("Bad query parameter => #{key.inspect}=#{value.inspect}")
+                                return
+                            end
+
+                            # Insert data into post parameters hash 
+                            if post_parameters.has_key?(key) # then update it otherwise perform new insert
+                                # Check if value for corresponding key is an array -> ex. ?id=[1,2,3] instead of ?id=1,2,3
+                                existing_data = post_parameters[key]
+                                match         = existing_data =~ /^(\[)([\w\d\s,]+)(\])$/  
+
+                                if match
+                                    begin
+                                        arr = JSON.parse(existing_data) # Convert array in string to an actual array
+                                        arr.push(value)                 # Insert the URI.decoded value
+                                        value = arr.join(',')           # Convert the Array back to a string
+                                        post_parameters[key] = value    # Add it to the post parameters HASH
+                                    rescue Exception => e
+                                        logger.error(e.message)
+                                        logger.error("Value causing the error => #{existing_data.inspect}")
+                                        abort
+                                    end
+                                else
+                                    post_parameters[key] = existing_data + ',' + value  # For non array list format => ?id=1,2,3
+                                end
                                 
+                            else
+                                post_parameters[key] = value # For regular key value format => ?name=joe
+                            end
+                                    
+                        end
+
+                        request.set_form_data(post_parameters)
+                    else
+                        request = Net::HTTP::Get.new(uri.request_uri + options.get_options) # Create regular GET request
                     end
 
-                    request.set_form_data(post_parameters)
-                else
-                    request = Net::HTTP::Get.new(uri.request_uri + options.get_options) # Create regular GET request
-                end
-
-                if @session
-                    request.add_field('X-SessionKey',@session)
-                else
-                    @session = @authenticator.get_session
-                    request.add_field('X-SessionKey',@session) 
-                end
-                
-                begin
+                    if @session
+                        request.add_field('X-SessionKey',@session)
+                    else
+                        @session = @authenticator.get_session
+                        request.add_field('X-SessionKey',@session) 
+                    end
+            
                     http.request(request) 
-                rescue => e
-                    logger.error("#{resource} retrieval failed => #{e.message}")
-                    abort
                 end
+            rescue Exception => e 
+                attempts += 1
+                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
+                if attempts.eql?(1)
+                    15.times do |num|
+                        printf("\rRetrying in %-2.0d",(15-num)) 
+                        sleep(1)
+                    end
+                    retry
+                end
+                logger.error("Connection failed: #{e}")
+                exit(-1)
             end
 
             unless @session == response['X-SessionKey'] # Upate session if needed
@@ -944,26 +954,41 @@ module OpenAsset
                 return false
             end
 
-            response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Post.new(uri.request_uri)
-                request["content-type"] = "application/json;charset=" + @char_encoding
+            begin
+                attempts ||= 1
+                response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
+                    request = Net::HTTP::Post.new(uri.request_uri)
+                    request["content-type"] = "application/json;charset=" + @char_encoding
 
-                if @session
-                    request.add_field('X-SessionKey',@session)
-                else
-                    @session = @authenticator.get_session
-                    request.add_field('X-SessionKey',@session)
+                    if @session
+                        request.add_field('X-SessionKey',@session)
+                    else
+                        @session = @authenticator.get_session
+                        request.add_field('X-SessionKey',@session)
+                    end
+                    
+                    begin
+                        request.body = json_body.to_json
+                    rescue
+                        request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+                    rescue Exception => e
+                        logger.error(e.message)
+                    end
+                    
+                    http.request(request)
                 end
-                
-                begin
-                    request.body = json_body.to_json
-                rescue
-                    request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
-                rescue => e
-                    logger.error(e.message)
+            rescue Exception => e 
+                attempts += 1
+                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
+                if attempts.eql?(1)
+                    15.times do |num|
+                        printf("\rRetrying in %-2.0d",(15-num)) 
+                        sleep(1)
+                    end
+                    retry
                 end
-                
-                http.request(request)
+                logger.error("Connection failed: #{e}")
+                exit(-1)
             end
 
             unless @session == response['X-SessionKey']
@@ -982,7 +1007,6 @@ module OpenAsset
             else
                 # Raw JSON object
                 return response
-
             end
         end
 
@@ -993,35 +1017,50 @@ module OpenAsset
             name     = (resource == 'Files') ? '@filename' : '@name'
             
             json_body = Validator::validate_and_process_request_data(data)
-            
-            
+                 
             unless json_body
-                return
+                msg = "No data in json_body in PUT request."
+                logger.error(msg)
+                return false
             end
 
-            response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Put.new(uri.request_uri)
-                request["content-type"] = "application/json;charset=" + @char_encoding
+            begin
+                attempts ||= 1
+                response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
+                    request = Net::HTTP::Put.new(uri.request_uri)
+                    request["content-type"] = "application/json;charset=" + @char_encoding
 
-                if @session
-                    request.add_field('X-SessionKey',@session)
-                else
-                    @session = @authenticator.get_session
-                    request.add_field('X-SessionKey',@session)
-                end
-                
-                begin
-                    request.body = json_body.to_json
-                rescue
-                    request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
-                rescue => e
-                    logger.error(e.message)
-                end
+                    if @session
+                        request.add_field('X-SessionKey',@session)
+                    else
+                        @session = @authenticator.get_session
+                        request.add_field('X-SessionKey',@session)
+                    end
+                    
+                    begin
+                        request.body = json_body.to_json
+                    rescue
+                        request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+                    rescue Exception => e
+                        logger.error(e.message)
+                    end
 
-             
-                http.request(request)
+                    http.request(request)
+                end
+            rescue Exception => e 
+                attempts += 1
+                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
+                if attempts.eql?(1)
+                    15.times do |num|
+                        printf("\rRetrying in %-2.0d",(15-num)) 
+                        sleep(1)
+                    end
+                    retry
+                end
+                logger.error("Connection failed: #{e}")
+                exit(-1)
             end
-            
+
             unless @session == response['X-SessionKey']
                 @session = response['X-SessionKey']
             end
@@ -1050,31 +1089,48 @@ module OpenAsset
             
             json_object = Validator::validate_and_process_delete_body(data)
 
-            unless json_object
-                return
+            unless json_body
+                msg = "No data in json_body being sent for DELETE request."
+                logger.error(msg)
+                return false
             end
 
-            response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Delete.new(uri.request_uri) #e.g. when called in keywords => /keywords/id
-                request["content-type"] = "application/json;charset=" + @char_encoding
+            begin
+                attempts ||= 1
+                response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
+                    request = Net::HTTP::Delete.new(uri.request_uri) #e.g. when called in keywords => /keywords/id
+                    request["content-type"] = "application/json;charset=" + @char_encoding
 
-                if @session
-                    request.add_field('X-SessionKey',@session)
-                else
-                    @session = @authenticator.get_session
-                    request.add_field('X-SessionKey',@session)
+                    if @session
+                        request.add_field('X-SessionKey',@session)
+                    else
+                        @session = @authenticator.get_session
+                        request.add_field('X-SessionKey',@session)
+                    
+                    end
+                    
+                    begin
+                        request.body = json_body.to_json
+                    rescue
+                        request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+                    rescue Exception => e
+                        logger.error(e.message)
+                    end
                 
+                    http.request(request)
                 end
-                
-                begin
-                    request.body = json_body.to_json
-                rescue
-                    request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
-                rescue => e
-                    logger.error(e.message)
+            rescue Exception => e 
+                attempts += 1
+                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
+                if attempts.eql?(1)
+                    15.times do |num|
+                        printf("\rRetrying in %-2.0d",(15-num)) 
+                        sleep(1)
+                    end
+                    retry
                 end
-               
-                http.request(request)
+                logger.error("Connection failed: #{e}")
+                exit(-1)
             end
 
             unless @session == response['X-SessionKey']
@@ -1666,29 +1722,40 @@ module OpenAsset
 
             msg = "Uploading File: => {\"original_filename\":\"#{File.basename(file)}\",\"category_id\":\"#{category_id}\",\"project_id\":\"#{project_id}\"}"
             logger.info(msg.white)
- 
-            response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Post.new(uri.request_uri)
-                
-                if @session
-                    request.add_field('X-SessionKey',@session)
-                else
-                    @session = @authenticator.get_session
-                    request.add_field('X-SessionKey',@session)
+            
+            begin
+                attempts ||= 1
+                response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+                    request = Net::HTTP::Post.new(uri.request_uri)
+                    if @session
+                        request.add_field('X-SessionKey',@session)
+                    else
+                        @session = @authenticator.get_session
+                        request.add_field('X-SessionKey',@session)
+                    end
+                    request["cache-control"] = 'no-cache'
+                    request["content-type"] = 'multipart/form-data; boundary=----WebKitFormBoundary' + boundary
+                    body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"_jsonBody\"" 
+                    body << "\r\n\r\n[{\"original_filename\":\"#{File.basename(file)}\",\"category_id\":#{category_id},\"project_id\":\"#{project_id}\"}]\r\n"
+                    body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"file\";"
+                    body << "filename=\"#{File.basename(file)}\"\r\nContent-Type: #{MIME::Types.type_for(file)}\r\n\r\n"
+                    body << IO.binread(file)
+                    body << "\r\n------WebKitFormBoundary#{boundary}--"
+                    request.body = body.join
+                    http.request(request)
+                end 
+            rescue Exception => e 
+                attempts += 1
+                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
+                if attempts.eql?(1)
+                    15.times do |num|
+                        printf("\rRetrying in %-2.0d",(15-num)) 
+                        sleep(1)
+                    end
+                    retry
                 end
-
-                request["cache-control"] = 'no-cache'
-                request["content-type"] = 'multipart/form-data; boundary=----WebKitFormBoundary' + boundary
-
-                body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"_jsonBody\"" 
-                body << "\r\n\r\n[{\"original_filename\":\"#{File.basename(file)}\",\"category_id\":#{category_id},\"project_id\":\"#{project_id}\"}]\r\n"
-                body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"file\";"
-                body << "filename=\"#{File.basename(file)}\"\r\nContent-Type: #{MIME::Types.type_for(file)}\r\n\r\n"
-                body << IO.binread(file)
-                body << "\r\n------WebKitFormBoundary#{boundary}--"
-
-                request.body = body.join
-                http.request(request)
+                logger.error("Connection failed: #{e}")
+                exit(-1)
             end
 
             Validator::process_http_response(response,@verbose,'Files','POST')
@@ -1784,25 +1851,41 @@ module OpenAsset
 
             body = Array.new
 
-            response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Put.new(uri.request_uri)
-                request["content-type"] = 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
-                if @session
-                    request.add_field('X-SessionKey',@session)
-                else
-                    @session = @authenticator.get_session
-                    request.add_field('X-SessionKey',@session)
+            begin
+                attempts ||= 1
+                response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+                    request = Net::HTTP::Put.new(uri.request_uri)
+                    request["content-type"] = 'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
+                    if @session
+                        request.add_field('X-SessionKey',@session)
+                    else
+                        @session = @authenticator.get_session
+                        request.add_field('X-SessionKey',@session)
+                    end
+                    request["cache-control"] = 'no-cache'
+                    body << "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"_jsonBody\""  
+                    body << "\r\n\r\n[{\"id\":\"#{id}\",\"original_filename\":\"#{original_filename}\"}]\r\n"
+                    body << "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"file\";" 
+                    body << "filename=\"#{original_filename}\"\r\nContent-Type: #{MIME::Types.type_for(original_filename)}\r\n\r\n"
+                    body << IO.binread(replacement_file_path)
+                    body << "\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--"
+                    request.body = body.join
+                    http.request(request)
                 end
-                request["cache-control"] = 'no-cache'
-                body << "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"_jsonBody\""  
-                body << "\r\n\r\n[{\"id\":\"#{id}\",\"original_filename\":\"#{original_filename}\"}]\r\n"
-                body << "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"file\";" 
-                body << "filename=\"#{original_filename}\"\r\nContent-Type: #{MIME::Types.type_for(original_filename)}\r\n\r\n"
-                body << IO.binread(replacement_file_path)
-                body << "\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--"
-                request.body = body.join
-                http.request(request)
+            rescue Exception => e
+                attempts += 1
+                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
+                if attempts.eql?(1)
+                    15.times do |num|
+                        printf("\rRetrying in %-2.0d",(15-num)) 
+                        sleep(1)
+                    end
+                    retry
+                end
+                logger.error("Connection failed: #{e}")
+                exit(-1)
             end
+
             Validator::process_http_response(response,@verbose,'Files', 'PUT')
 
             if generate_objects
