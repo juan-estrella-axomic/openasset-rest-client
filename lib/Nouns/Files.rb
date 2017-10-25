@@ -1,5 +1,7 @@
-require_relative 'NestedSizeItems.rb'
-require_relative 'NestedKeywordItems.rb'
+require_relative 'NestedSizeItems'
+require_relative 'NestedFieldItems'
+require_relative 'NestedKeywordItems'
+require_relative 'NestedAlbumItems'
 
 # Files class
 # 
@@ -15,8 +17,8 @@ class Files
     # @!parse attr_accessor :filename, :id, :md5_at_upload, :md5_now, :original_filename, :photographer_id, :project_id
     attr_accessor :filename, :id, :md5_at_upload, :md5_now, :original_filename, :photographer_id, :project_id
 
-    # @!parse attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes
-    attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes
+    # @!parse attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes, :albums
+    attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes, :albums
 
     # Creates an Files object
     #
@@ -101,12 +103,13 @@ class Files
         @keywords = []
         @fields = []
         @sizes = []
+        @albums = []
 
         if json_obj['fields'].is_a?(Array) && !json_obj['fields'].empty?
             #convert nested size json into objects
-            nested_field = Struct.new(:id, :values)
+            #nested_field = Struct.new(:id, :values)
             @fields = json_obj['fields'].map do |item|
-                nested_field.new(item['id'], item['values'])
+                NestedFieldItems.new(item['id'], item['values'])
             end
         end
 
@@ -121,6 +124,13 @@ class Files
             #convert nested keywords into objects
             @keywords = json_obj['keywords'].map do |item|
                 NestedKeywordItems.new(item)
+            end
+        end
+
+        if json_obj['albums'].is_a?(Array) && !json_obj['albums'].empty?
+            #convert nested keywords into objects
+            @albums = json_obj['albums'].map do |item|
+                NestedAlbumItems.new(item)
             end
         end
 
@@ -174,6 +184,12 @@ class Files
             end                            
         end
         
+        unless @albums.empty?
+            #you get the idea...
+            json_data[:albums] = @albums.map do |item| 
+                item.to_h 
+            end                            
+        end
         return json_data
     end
 

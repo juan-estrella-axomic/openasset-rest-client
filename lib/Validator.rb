@@ -32,7 +32,7 @@ class Validator
     
     #Validate the right object type is passed for Noun's constructor
     def self.validate_argument(arg,val='NOUN')
-        unless  arg.is_a?(NilClass) || arg.is_a?(Hash)
+        unless arg.is_a?(NilClass) || arg.is_a?(Hash)
             msg = "Argument Validation Error: Expected no argument or a \"Hash\" to create #{val} object." +
                   "\nInstead got a(n) #{arg.class} with contents => #{arg.inspect}"
             Logging::logger.error(msg)

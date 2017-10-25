@@ -1,10 +1,15 @@
+require_relative 'NestedProjectKeywordItems'
+require_relative 'NestedFieldItems'
+require_relative 'NestedAlbumItems'
+
+
 class Projects
     
     # @!parse attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name
     attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name
 
-    # @!parse attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields
-    attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields
+    # @!parse attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields, :albums
+    attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields, :albums
     
     # Creates a Projects object
     #
@@ -47,24 +52,24 @@ class Projects
             #convert each of the nested project keywords into objects
             #This is not a Fields noun. Its just a C struct holding the
             #data we need for the nested resource
-            proj_keyword = Struct.new(:id)
+            #proj_keyword = Struct.new(:id)
             @project_keywords = json_obj['projectKeywords'].map do |item|
-                proj_keyword.new(item['id'])
+                NestedProjectKeywordItems.new(item['id'])
             end
         end
 
         if json_obj['fields'].is_a?(Array) && !json_obj['fields'].empty?
             #You get the idea...
-            field = Struct.new(:id, :values)
+            #field = Struct.new(:id, :values)
             @fields = json_obj['fields'].map do |item|
-                field.new(item['id'], item['values'])
+                NestedFieldItems.new(item['id'], item['values'])
             end
         end
 
         if json_obj['albums'].is_a?(Array) && !json_obj['albums'].empty?
-            nested_album = Struct.new(:id)
+            #nested_album = Struct.new(:id)
             @albums = json_obj['albums'].map do |item|
-                nested_album.new(item['id'])
+                NestedAlbumItems.new(item['id'])
             end
         end
 
