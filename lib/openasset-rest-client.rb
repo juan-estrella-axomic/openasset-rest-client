@@ -1158,8 +1158,7 @@ module OpenAsset
         # @example 
         #           rest_client.kill_session()
         def kill_session
-            @authenticator.kill_session
-            @session = ''
+           @session = @authenticator.kill_session
         end
 
         # Generates a new session
@@ -1169,7 +1168,7 @@ module OpenAsset
         # @example 
         #           rest_client.get_session()
         def get_session
-            @authenticator.get_session
+            @session = @authenticator.get_session
         end
 
         # Destroys current session and Generates new one
@@ -1179,8 +1178,8 @@ module OpenAsset
         # @example 
         #          rest_client.renew_session()
         def renew_session
-            @authenticator.kill_session
-            @authenticator.get_session
+            kill_session
+            get_session
         end
         
         ####################################################

@@ -341,7 +341,7 @@ class Authenticator
     def kill_session
 
         if @session_key.eql?('INVALIDATED SESSION KEY')
-            msg = "Session already invalidated."
+           msg = "Session already invalidated."
            logger.info(msg)
            return
         end
@@ -381,6 +381,6 @@ class Authenticator
             file.write(conf.to_yaml)
             logger.info("Done. Session destroyed.")
         end    
-        
+        @session_key
     end    
 end
