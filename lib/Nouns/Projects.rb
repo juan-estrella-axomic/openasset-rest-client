@@ -88,19 +88,19 @@ class Projects
 
         unless @project_keywords.empty?
             json_data[:projectKeywords] = @project_keywords.map do |item|
-                item.to_h
+                item.json
             end
         end
 
         unless @fields.empty?
             json_data[:fields] = @fields.map do |item|
-                item.to_h
+                item.json
             end
         end
 
         unless @albums.empty?
             json_data[:albums] = @albums.map do |item|
-                item.to_h
+                item.json
             end
         end
 

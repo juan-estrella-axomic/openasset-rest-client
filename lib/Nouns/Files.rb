@@ -180,14 +180,14 @@ class Files
         unless @fields.empty?
             #you get the idea...
             json_data[:fields] = @fields.map do |item| 
-                item.to_h 
+                item.json 
             end                            
         end
         
         unless @albums.empty?
             #you get the idea...
             json_data[:albums] = @albums.map do |item| 
-                item.to_h 
+                item.json 
             end                            
         end
         return json_data

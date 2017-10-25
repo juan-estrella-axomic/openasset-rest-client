@@ -1203,9 +1203,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_access_levels()
         #          rest_client.get_access_levels(rest_options_object)
-        def get_access_levels(query_obj=nil)
+        def get_access_levels(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/AccessLevels")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         ##########
@@ -1222,9 +1222,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_albums()
         #          rest_client.get_albums(rest_options_object)
-        def get_albums(query_obj=nil)    
+        def get_albums(query_obj=nil,with_nested_resources=false)    
             uri = URI.parse(@uri + "/Albums")
-            result = get(uri,query_obj)
+            result = get(uri,query_obj,with_nested_resources)
         end
 
         # Create Albums.
@@ -1292,9 +1292,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_alternate_stores()
         #          rest_client.get_alternate_stores(rest_options_object)
-        def get_alternate_stores(query_obj=nil)
+        def get_alternate_stores(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/AlternateStores")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         #################
@@ -1311,9 +1311,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_aspect_ratios()
         #          rest_client.get_aspect_ratios(rest_options_object)
-        def get_aspect_ratios(query_obj=nil)
+        def get_aspect_ratios(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/AspectRatios")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         ##############
@@ -1330,9 +1330,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_categories()
         #          rest_client.get_categories(rest_options_object)
-        def get_categories(query_obj=nil)
+        def get_categories(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Categories")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Modify system Categories.
@@ -1366,9 +1366,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_copyright_holders()
         #          rest_client.get_copyright_holders(rest_options_object)
-        def get_copyright_holders(query_obj=nil)
+        def get_copyright_holders(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/CopyrightHolders")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create CopyrightHoloders.
@@ -1419,9 +1419,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_copyright_policies()
         #          rest_client.get_copyright_policies(rest_options_object)
-        def get_copyright_policies(query_obj=nil)
+        def get_copyright_policies(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/CopyrightPolicies")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create CopyrightPolicies.
@@ -1489,9 +1489,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_fields()
         #          rest_client.get_fields(rest_options_object)
-        def get_fields(query_obj=nil)
+        def get_fields(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Fields")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create fields.
@@ -1560,11 +1560,11 @@ module OpenAsset
         # @example 
         #          rest_client.get_field_lookup_strings()
         #          rest_client.get_field_lookup_strings(rest_options_object)
-        def get_field_lookup_strings(field=nil,query_obj=nil)
+        def get_field_lookup_strings(field=nil,query_obj=nil,with_nested_resources=false)
             id = Validator::validate_field_lookup_string_arg(field)
             
             uri = URI.parse(@uri + '/Fields' + "/#{id}" +'/FieldLookupStrings')
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # creates options for Fixed Suggestion, Suggestion, and Option field types.
@@ -1967,9 +1967,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_groups()
         #          rest_client.get_groups(rest_options_object)
-        def get_groups(query_obj=nil)
+        def get_groups(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Groups")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         ############
@@ -1986,9 +1986,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_keywords()
         #          rest_client.get_keywords(rest_options_object)
-        def get_keywords(query_obj=nil)
+        def get_keywords(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Keywords")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create new file Keywords in OpenAsset.
@@ -2056,9 +2056,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_keyword_categories()
         #          rest_client.get_keyword_categories(rest_options_object)
-        def get_keyword_categories(query_obj=nil)
+        def get_keyword_categories(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/KeywordCategories")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create file keyword categories.
@@ -2126,9 +2126,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_photographers()
         #          rest_client.get_photographers(rest_options_object)
-        def get_photographers(query_obj=nil)
+        def get_photographers(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Photographers")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create Photographers.
@@ -2179,9 +2179,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_projects()
         #          rest_client.get_projects(rest_options_object)
-        def get_projects(query_obj=nil)
+        def get_projects(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Projects")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create Projects.
@@ -2250,9 +2250,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_project_keywords()
         #          rest_client.get_project_keywords(rest_options_object)
-        def get_project_keywords(query_obj=nil)
+        def get_project_keywords(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/ProjectKeywords")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create Project Keywords.
@@ -2320,9 +2320,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_project_keyword_categories()
         #          rest_client.get_project_keyword_categories(rest_options_object)
-        def get_project_keyword_categories(query_obj=nil)
+        def get_project_keyword_categories(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create project keyword categories.
@@ -2390,9 +2390,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_searches()
         #          rest_client.get_searches(rest_options_object)
-        def get_searches(query_obj=nil)
+        def get_searches(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Searches")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create Searches.
@@ -2443,9 +2443,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_image_sizes()
         #          rest_client.get_image_sizes(rest_options_object)
-        def get_image_sizes(query_obj=nil)
+        def get_image_sizes(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Sizes")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         # Create image Sizes.
@@ -2513,9 +2513,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_text_rewrites()
         #          rest_client.get_text_rewrites(rest_options_object)
-        def get_text_rewrites(query_obj=nil)
+        def get_text_rewrites(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/TextRewrites")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         #########
@@ -2532,9 +2532,9 @@ module OpenAsset
         # @example 
         #          rest_client.get_users()
         #          rest_client.get_users(rest_options_object)
-        def get_users(query_obj=nil)
+        def get_users(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Users")
-            results = get(uri,query_obj)
+            results = get(uri,query_obj,with_nested_resources)
         end
 
         ############################
