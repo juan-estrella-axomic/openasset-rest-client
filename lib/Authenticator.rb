@@ -49,7 +49,16 @@ class Authenticator
         @signature = ''
     end
 
-    
+    def wait_and_try_again
+        logger.warn("Initial Connection failed. Retrying in 15 seconds.")
+        15.times do |num|
+            printf("\rRetrying in %-2.0d",(15-num)) 
+            sleep(1)
+        end
+        printf("\rRetrying NOW        \n")
+        logger.warn("Re-attempting request. Please wait.")
+    end
+
     def get_credentials(attempts=0)
 
         if attempts.eql?(3) 
@@ -96,6 +105,7 @@ class Authenticator
         token_creation_data = '{"name" : "rest-client-r"}'
         resonse = nil
         begin
+            attempts ||= 1
             response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
                 request = Net::HTTP::Post.new(uri.request_uri,'Content-Type' => 'application/json') 
                 request.basic_auth(@username,@password)
@@ -103,7 +113,12 @@ class Authenticator
                 http.request(request)  
             end
         rescue Exception => e 
-            logger.error("Connection failed: #{e}")
+            if attempts.eql?(1)
+                wait_and_try_again()
+                attempts += 1
+                retry                
+            end
+            logger.error("Connection failed. The server is not responding. - #{e}")
             exit(-1)
         end
         
@@ -160,6 +175,7 @@ class Authenticator
         token_auth_string = "OAT #{key_id}:#{@signature}"     
         response = nil
         begin
+            attempts ||= 1
             response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
                 request = Net::HTTP::Get.new(uri.request_uri,{'User-Agent' => @user_agent})
                 request['Authorization'] = token_auth_string #By using the signature, you indirectly check if token is valid
@@ -167,7 +183,12 @@ class Authenticator
                 http.request(request) 
             end
         rescue Exception => e
-            logger.error("Connection failed: #{e}")
+            if attempts.eql?(1)
+                wait_and_try_again()
+                attempts += 1
+                retry                
+            end
+            logger.error("Connection failed. The server is not responding. - #{e}")
             exit(-1)
         end
         
@@ -225,13 +246,19 @@ class Authenticator
         uri = URI.parse(@uri + '/Headers')
         resonse = nil
         begin
+            attempts ||= 1
             response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
                 request = Net::HTTP::Get.new(uri.request_uri)
                 request.add_field('X-SessionKey',@session_key)       
                 http.request(request)
             end
         rescue Exception => e 
-            logger.error("Connection failed: #{e}")
+            if attempts.eql?(1)
+                wait_and_try_again()
+                attempts += 1
+                retry                
+            end
+            logger.error("Connection failed. The server is not responding. - #{e}")
             exit(-1)
         end
         #puts "In session_valid? - after req"

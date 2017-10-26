@@ -785,6 +785,17 @@ module OpenAsset
         end
 
         # @!visibility private
+        def wait_and_try_again
+            logger.warn("Initial Connection failed. Retrying in 15 seconds.")
+            15.times do |num|
+                printf("\rRetrying in %-2.0d",(15-num)) 
+                sleep(1)
+            end
+            printf("\rRetrying NOW        \n")
+            logger.warn("Re-attempting request. Please wait.")
+        end
+
+        # @!visibility private
         def get(uri,options_obj,with_nested_resources=false)
             resource = uri.to_s.split('/').last
             options = options_obj || RestOptions.new
@@ -892,17 +903,13 @@ module OpenAsset
             
                     http.request(request) 
                 end
-            rescue Exception => e 
-                attempts += 1
-                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
-                if attempts.eql?(1)
-                    15.times do |num|
-                        printf("\rRetrying in %-2.0d",(15-num)) 
-                        sleep(1)
-                    end
-                    retry
+            rescue Exception => e
+                if attempts < 3
+                    wait_and_try_again()
+                    attempts += 1
+                    retry                
                 end
-                logger.error("Connection failed: #{e}")
+                logger.error("Connection failed. The server is not responding. - #{e}")
                 exit(-1)
             end
 
@@ -977,17 +984,13 @@ module OpenAsset
                     
                     http.request(request)
                 end
-            rescue Exception => e 
-                attempts += 1
-                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
-                if attempts.eql?(1)
-                    15.times do |num|
-                        printf("\rRetrying in %-2.0d",(15-num)) 
-                        sleep(1)
-                    end
-                    retry
+            rescue Exception => e
+                if attempts < 3
+                    wait_and_try_again()
+                    attempts += 1
+                    retry                
                 end
-                logger.error("Connection failed: #{e}")
+                logger.error("Connection failed. The server is not responding. - #{e}")
                 exit(-1)
             end
 
@@ -1048,16 +1051,12 @@ module OpenAsset
                     http.request(request)
                 end
             rescue Exception => e 
-                attempts += 1
-                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
-                if attempts.eql?(1)
-                    15.times do |num|
-                        printf("\rRetrying in %-2.0d",(15-num)) 
-                        sleep(1)
-                    end
-                    retry
+                if attempts < 3
+                    wait_and_try_again()
+                    attempts += 1
+                    retry                
                 end
-                logger.error("Connection failed: #{e}")
+                logger.error("Connection failed. The server is not responding. - #{e}")
                 exit(-1)
             end
 
@@ -1120,16 +1119,12 @@ module OpenAsset
                     http.request(request)
                 end
             rescue Exception => e 
-                attempts += 1
-                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
-                if attempts.eql?(1)
-                    15.times do |num|
-                        printf("\rRetrying in %-2.0d",(15-num)) 
-                        sleep(1)
-                    end
-                    retry
+                if attempts < 3
+                    wait_and_try_again()
+                    attempts += 1
+                    retry                
                 end
-                logger.error("Connection failed: #{e}")
+                logger.error("Connection failed. The server is not responding. - #{e}")
                 exit(-1)
             end
 
