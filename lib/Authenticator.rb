@@ -122,9 +122,14 @@ class Authenticator
             exit(-1)
         end
         
-        if response.kind_of? Net::HTTPSuccess 
-            @token[:id] = JSON.parse(response.body)['id'].to_s
-            @token[:value] = JSON.parse(response.body)['token'].to_s
+        if response.kind_of? Net::HTTPSuccess
+            begin 
+                @token[:id] = JSON.parse(response.body)['id'].to_s
+                @token[:value] = JSON.parse(response.body)['token'].to_s
+            rescue JSON::ParserError => e
+                logger.error("JSON Parser Error: #{e.message}")
+                exit(-1)
+            end
             msg = 'Token created successfully!'
             logger.info(msg)
             create_signature()

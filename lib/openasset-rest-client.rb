@@ -356,7 +356,12 @@ module OpenAsset
             name = (resource == 'Files') ? '@filename' : '@name'
 
             # Bug in rest api where deleting a file twice returns the wrong message
-            jsonBody = JSON.parse(res.body)
+            begin
+                jsonBody = JSON.parse(res.body)
+            rescue JSON::ParserError => e 
+                logger.error("JSON Parser Error: #{e.message}")
+            end
+
             if !jsonBody.is_a?(Array)
                 jsonBody = [jsonBody]
             end
@@ -420,7 +425,8 @@ module OpenAsset
 
             unless json.empty?
 
-                # Single object requests may return this
+                # Dynamically infer the the class needed to create objects by using the request_uri REST endpoint
+                # returns the Class constant so we can dynamically set it below
                 inferred_class = Object.const_get(resource_type)
               
                 # Create array of JSON Converted to objects => this can include Nouns AND Error objects
@@ -799,6 +805,7 @@ module OpenAsset
         def get(uri,options_obj,with_nested_resources=false)
             resource = uri.to_s.split('/').last
             options = options_obj || RestOptions.new
+            json_body = []
 
             if with_nested_resources
             # Ensures File resource query returns all nested resources
@@ -925,17 +932,17 @@ module OpenAsset
 
             Validator::process_http_response(response,@verbose,resource,'GET')
 
-            response.body = response.body.encode(@char_encoding, @char_encoding) # Ensure data is encoded according to web server
-
             return unless response.kind_of?(Net::HTTPSuccess)
-                
-            #Dynamically infer the the class needed to create objects by using the request_uri REST endpoint
-            #returns the Class constant so we can dynamically set it below
 
-            inferred_class = Object.const_get(resource)
+            response.body = response.body.encode(@char_encoding, @char_encoding) # Ensure data is encoded according to web server
             
-            objects_array = JSON.parse(response.body).map { |item| inferred_class.new(item) }
-            
+            begin
+                json_body = JSON.parse(response.body)
+            rescue JSON::ParserError => e
+                logger.error("Error parsing JSON: #{e.message}")
+                return []
+            end
+            return generate_objects_from_json_response_body(json_body, resource)
         end
 
         # @!visibility private
