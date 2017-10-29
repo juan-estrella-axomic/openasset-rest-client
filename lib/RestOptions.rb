@@ -29,7 +29,7 @@ class RestOptions
             str_array = value.to_s.split(',') #spilt it
             str_array = str_array.uniq     #remove duplicates    
             str_array = str_array.reject {|value| value.strip.length == 0} #remove empty values
-            str       = str_array.map {|value| value.strip }.uniq.join(',') #remove duplicates                                                                         #rebuild the string
+            str       = str_array.join(',') # rebuild string 
         elsif value.is_a?(Array)
             #make sure only Integers or Strings are in the Array
             value.each do |val|
@@ -42,9 +42,11 @@ class RestOptions
                 end
             end
             #build clean string from array
-            str = value.map { |value| value.to_s.strip }.join(',')
-        end
-        return str 
+            str_array = value.map { |val| val.to_s.strip }       # Trim whitespace from each element
+            str_array = str_array..reject { |val| val.eql?('')}  # Remove any empty strings
+            str = str_array.join(',').gsub(/[\[\]]/,'')          # Turn array into string and remove the braces '[]' bc it causes 
+        end                                                      # the first result of the generated query to not be returned by the server
+        return str                                               # The ERB::Util.url_encode turns braces '[]' into %5b and %5D respectively instead of ignoring them
     end
 
     public
