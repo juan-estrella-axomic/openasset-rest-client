@@ -43,7 +43,7 @@ class RestOptions
             end
             #build clean string from array
             str_array = value.map { |val| val.to_s.strip }       # Trim whitespace from each element
-            str_array = str_array..reject { |val| val.eql?('')}  # Remove any empty strings
+            str_array = str_array..reject { |val| val.eql?('')}  # Remove any empty strings 
             str = str_array.join(',').gsub(/[\[\]]/,'')          # Turn array into string and remove the braces '[]' bc it causes 
         end                                                      # the first result of the generated query to not be returned by the server
         return str                                               # The ERB::Util.url_encode turns braces '[]' into %5b and %5D respectively instead of ignoring them
