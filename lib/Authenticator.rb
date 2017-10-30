@@ -103,7 +103,7 @@ class Authenticator
         get_credentials(attempts)
         uri = URI.parse(@token_endpoint)
         token_creation_data = '{"name" : "rest-client-r"}'
-        resonse = nil
+       
         begin
             attempts ||= 1
             response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|

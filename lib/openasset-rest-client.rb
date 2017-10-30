@@ -4163,8 +4163,8 @@ module OpenAsset
             else 
                 msg = "Error: Expected one of the following: " +
                       "\n    1. Valid Fields object." +
-                      "\n    2. Field id."
-                      "\n    3. Field name."
+                      "\n    2. Field id." +
+                      "\n    3. Field name." +
                       "\nfor second argument in #{__callee__} method." +
                       "\nInstead got #{project_field.inspect}."
                 logger.error(msg)
