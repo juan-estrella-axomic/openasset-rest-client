@@ -1,8 +1,6 @@
 require_relative 'Version/version'
 require_relative 'Authenticator'
 require_relative 'RestOptions'
-require_relative 'Helpers'
-require_relative 'Validator'
 require_relative 'MyLogger'
 require_relative 'Error'
 

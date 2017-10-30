@@ -10,7 +10,7 @@ class Security
         cipher.pkcs5_keyivgen("Thequickbrownfoxjumpedoverthelazy#{Socket.gethostname}on#{RUBY_PLATFORM}")
         enc_p = cipher.update(val)
         enc_p << cipher.final
-        b64_enc_p2 = Base64.encode64(enc_p)
+        Base64.encode64(enc_p)
     end
 
     def self.decrypt(val)

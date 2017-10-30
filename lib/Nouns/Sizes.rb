@@ -70,8 +70,8 @@ class Sizes
         @use_for_power_point = json_obj['use_for_power_point']
         @use_for_zip = json_obj['use_for_zip']
         @width = json_obj['width']
-        x_resolution = json_obj['x_resolution']
-        y_resolution = json_obj['y_resolution']
+        @x_resolution = json_obj['x_resolution']
+        @y_resolution = json_obj['y_resolution']
     end
 
     def json

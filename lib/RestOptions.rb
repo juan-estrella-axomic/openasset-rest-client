@@ -28,7 +28,7 @@ class RestOptions
         if value.is_a?(String) || value.is_a?(Integer)
             str_array = value.to_s.split(',') #spilt it
             str_array = str_array.uniq     #remove duplicates    
-            str_array = str_array.reject {|value| value.strip.length == 0} #remove empty values
+            str_array = str_array.reject { |val| val.strip.length == 0 } #remove empty values
             str       = str_array.join(',') # rebuild string 
         elsif value.is_a?(Array)
             #make sure only Integers or Strings are in the Array
