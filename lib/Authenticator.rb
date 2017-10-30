@@ -43,8 +43,8 @@ class Authenticator
         @uri = @url + @@API_CONST + @@VERSION_CONST
         @token_endpoint = @url + @@API_CONST + @@VERSION_CONST + @@SERVICE_CONST
         @token = {:id => nil, :value => nil}
-        @session_key 
-        @http_date 
+        @session_key = ''
+        @http_date = ''
         @user_agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0'
         @signature = ''
     end
@@ -249,7 +249,6 @@ class Authenticator
 
     def session_valid?
         uri = URI.parse(@uri + '/Headers')
-        resonse = nil
         begin
             attempts ||= 1
             response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
@@ -337,7 +336,7 @@ class Authenticator
                 @session_key   = Security::decrypt(enc_session_key)
                 @token[:value] = Security::decrypt(enc_token)
                 @token[:id]    = token_id
-            rescue Exception => e
+            rescue Exception
                 msg = "Unable to retrieve stored session data."
                 logger.warn(msg.yellow)
             end    

@@ -358,8 +358,8 @@ module OpenAsset
             # Bug in rest api where deleting a file twice returns the wrong message
             begin
                 jsonBody = JSON.parse(res.body)
-            rescue JSON::ParserError => e 
-                logger.error("JSON Parser Error: #{e.message}")
+            rescue JSON::ParserError => err
+                logger.error("JSON Parser Error: #{err.message}")
             end
 
             if !jsonBody.is_a?(Array)
@@ -873,7 +873,7 @@ module OpenAsset
                             if post_parameters.has_key?(key) # then update it otherwise perform new insert
                                 # Check if value for corresponding key is an array -> ex. ?id=[1,2,3] instead of ?id=1,2,3
                                 existing_data = post_parameters[key]
-                                match         = existing_data =~ /^(\[)([\w\d\s,]+)(\])$/  
+                                match         = existing_data =~ /^(\[[\w\s,]+\])$/  
 
                                 if match
                                     begin
@@ -1024,7 +1024,6 @@ module OpenAsset
         def put(uri,data,generate_objects)
 
             resource = uri.to_s.split('/').last
-            name     = (resource == 'Files') ? '@filename' : '@name'
             
             json_body = Validator::validate_and_process_request_data(data)
                  
@@ -1091,9 +1090,8 @@ module OpenAsset
         def delete(uri,data)
 
             resource  = uri.to_s.split('/').last
-            name      = (resource == 'Files') ? '@filename' : '@name'
             
-            json_object = Validator::validate_and_process_delete_body(data)
+            json_body = Validator::validate_and_process_delete_body(data)
 
             unless json_body
                 msg = "No data in json_body being sent for DELETE request."
@@ -1112,7 +1110,6 @@ module OpenAsset
                     else
                         @session = @authenticator.get_session
                         request.add_field('X-SessionKey',@session)
-                    
                     end
                     
                     begin
@@ -1207,7 +1204,7 @@ module OpenAsset
         #          rest_client.get_access_levels(rest_options_object)
         def get_access_levels(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/AccessLevels")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         ##########
@@ -1315,7 +1312,7 @@ module OpenAsset
         #          rest_client.get_aspect_ratios(rest_options_object)
         def get_aspect_ratios(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/AspectRatios")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         ##############
@@ -1351,7 +1348,7 @@ module OpenAsset
         #          rest_client.update_categories(categories_obj_array,true)    
         def update_categories(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Categories")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         #####################
@@ -1387,7 +1384,7 @@ module OpenAsset
         #          rest_client.create_copyright_holders(copyright_holders_obj_array,true)    
         def create_copyright_holders(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/CopyrightHolders")
-            results = post(uri,data,generate_objects)
+            post(uri,data,generate_objects)
         end
 
         # Modify CopyrightHolders.
@@ -1423,7 +1420,7 @@ module OpenAsset
         #          rest_client.get_copyright_policies(rest_options_object)
         def get_copyright_policies(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/CopyrightPolicies")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         # Create CopyrightPolicies.
@@ -1457,7 +1454,7 @@ module OpenAsset
         #          rest_client.update_copyright_policies(copyright_policies_obj_array,true)    
         def update_copyright_policies(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/CopyrightPolicies")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         # Disables CopyrightPolicies.
@@ -1493,7 +1490,7 @@ module OpenAsset
         #          rest_client.get_fields(rest_options_object)
         def get_fields(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Fields")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         # Create fields.
@@ -1527,7 +1524,7 @@ module OpenAsset
         #          rest_client.update_fields(fields_obj_array,true)    
         def update_fields(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Fields")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         # Disable fields.
@@ -1565,8 +1562,8 @@ module OpenAsset
         def get_field_lookup_strings(field=nil,query_obj=nil,with_nested_resources=false)
             id = Validator::validate_field_lookup_string_arg(field)
             
-            uri = URI.parse(@uri + '/Fields' + "/#{id}" +'/FieldLookupStrings')
-            results = get(uri,query_obj,with_nested_resources)
+            uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
+            get(uri,query_obj,with_nested_resources)
         end
 
         # creates options for Fixed Suggestion, Suggestion, and Option field types.
@@ -1585,7 +1582,7 @@ module OpenAsset
         def create_field_lookup_strings(field=nil,data=nil,generate_objects=false)
             id = Validator::validate_field_lookup_string_arg(field)
             
-            uri = URI.parse(@uri + '/Fields' + "/#{id}" +'/FieldLookupStrings')
+            uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
             results = post(uri,data,generate_objects)
         end
 
@@ -1605,8 +1602,8 @@ module OpenAsset
         def update_field_lookup_strings(field=nil,data=nil,generate_objects=false)
             id = Validator::validate_field_lookup_string_arg(field)
             
-            uri = URI.parse(@uri + '/Fields' + "/#{id}" +'/FieldLookupStrings')
-            results = put(uri,data,generate_objects)
+            uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
+            put(uri,data,generate_objects)
         end
 
         # Delete an item and/or option for Fixed Suggestion, Suggestion, and Option field types.
@@ -1626,7 +1623,7 @@ module OpenAsset
 
             id = Validator::validate_field_lookup_string_arg(field)
             
-            uri = URI.parse(@uri + '/Fields' + "/#{id}" +'/FieldLookupStrings')
+            uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
             results = delete(uri,data) #data parameter validated in private delete method
         end
 
@@ -1648,7 +1645,7 @@ module OpenAsset
         #          rest_client.get_files(nil,true) => Gets 10 files including all nested fields and image sizes
         def get_files(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Files")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         # Uploads a file to OpenAsset.
@@ -1952,7 +1949,7 @@ module OpenAsset
         #          rest_client.delete_files('1')
         def delete_files(data=nil)
             uri = URI.parse(@uri + "/Files")
-            results = delete(uri,data)
+            delete(uri,data)
         end
         
         ##########
@@ -1990,7 +1987,7 @@ module OpenAsset
         #          rest_client.get_keywords(rest_options_object)
         def get_keywords(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Keywords")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         # Create new file Keywords in OpenAsset.
@@ -2024,7 +2021,7 @@ module OpenAsset
         #          rest_client.update_keywords(keywords_obj_array,true)
         def update_keywords(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Keywords")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         # Delete Keywords.
@@ -2060,7 +2057,7 @@ module OpenAsset
         #          rest_client.get_keyword_categories(rest_options_object)
         def get_keyword_categories(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/KeywordCategories")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         # Create file keyword categories.
@@ -2094,7 +2091,7 @@ module OpenAsset
         #          rest_client.update_keyword_categories(keyword_categories_obj_array,true)
         def update_keyword_categories(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/KeywordCategories")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         # Delete Keyword Categories.
@@ -2111,7 +2108,7 @@ module OpenAsset
         #          rest_client.delete_keyword_categories('1')
         def delete_keyword_categories(data=nil)
             uri = URI.parse(@uri + "/KeywordCategories")
-            results = delete(uri,data)
+            delete(uri,data)
         end
 
         #################
@@ -2147,7 +2144,7 @@ module OpenAsset
         #          rest_client.create_photographers(photographers_obj_array,true)
         def create_photographers(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Photographers")
-            results = post(uri,data,generate_objects)
+            post(uri,data,generate_objects)
         end
 
         # Modify Photographers.
@@ -2164,7 +2161,7 @@ module OpenAsset
         #          rest_client.update_photographers(photographers_obj_array,true)
         def update_photographers(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Photographers")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         ############
@@ -2183,7 +2180,7 @@ module OpenAsset
         #          rest_client.get_projects(rest_options_object)
         def get_projects(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Projects")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         # Create Projects.
@@ -2200,7 +2197,7 @@ module OpenAsset
         #          rest_client.create_projects(projects_obj_array,true)    
         def create_projects(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Projects")
-            results = post(uri,data,generate_objects)
+            post(uri,data,generate_objects)
         end
 
         # Modify Projects.
@@ -2218,7 +2215,7 @@ module OpenAsset
         #          rest_client.update_projects(projects_obj_array,true)
         def update_projects(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Projects")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         # Delete Projects.
@@ -2235,7 +2232,7 @@ module OpenAsset
         #          rest_client.delete_projects('1')
         def delete_projects(data=nil)
             uri = URI.parse(@uri + "/Projects")
-            results = delete(uri,data)
+            delete(uri,data)
         end
 
         ####################
@@ -2254,7 +2251,7 @@ module OpenAsset
         #          rest_client.get_project_keywords(rest_options_object)
         def get_project_keywords(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/ProjectKeywords")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         # Create Project Keywords.
@@ -2271,7 +2268,7 @@ module OpenAsset
         #          rest_client.create_project_keywords(project_keywords_obj_array,true)
         def create_project_keywords(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/ProjectKeywords")
-            results = post(uri,data,generate_objects)
+            post(uri,data,generate_objects)
         end
 
         # Modify Project Keywords.
@@ -2288,7 +2285,7 @@ module OpenAsset
         #          rest_client.update_project_keywords(project_keywords_obj_array,true)
         def update_project_keywords(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/ProjectKeywords")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         # Delete Project Keywords.
@@ -2305,7 +2302,7 @@ module OpenAsset
         #          rest_client.delete_project_keywords('1')
         def delete_project_keywords(data=nil)
             uri = URI.parse(@uri + "/ProjectKeywords")
-            results = delete(uri,data)
+            delete(uri,data)
         end
 
         ##############################
@@ -2324,7 +2321,7 @@ module OpenAsset
         #          rest_client.get_project_keyword_categories(rest_options_object)
         def get_project_keyword_categories(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         # Create project keyword categories.
@@ -2341,7 +2338,7 @@ module OpenAsset
         #          rest_client.create_project_keyword_categories(project_keyword_categories_obj_array,true)    
         def create_project_keyword_categories(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
-            results = post(uri,data,generate_objects)
+            post(uri,data,generate_objects)
         end
 
         # Modify project keyword categories.
@@ -2358,7 +2355,7 @@ module OpenAsset
         #          rest_client.update_project_keyword_categories(project_keyword_categories_obj_array,true)
         def update_project_keyword_categories(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         # Delete Project Keyword Categories.
@@ -2375,7 +2372,7 @@ module OpenAsset
         #          rest_client.delete_project_keyword_categories('1')
         def delete_project_keyword_categories(data=nil)
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
-            results = delete(uri,data)
+            delete(uri,data)
         end
 
         ############
@@ -2394,7 +2391,7 @@ module OpenAsset
         #          rest_client.get_searches(rest_options_object)
         def get_searches(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Searches")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         # Create Searches.
@@ -2411,7 +2408,7 @@ module OpenAsset
         #          rest_client.create_searches(searches_obj_array,true)    
         def create_searches(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Searches")
-            results = post(uri,data,generate_objects)
+            post(uri,data,generate_objects)
         end
 
         # Modify Searches.
@@ -2428,7 +2425,7 @@ module OpenAsset
         #          rest_client.update_searches(searches_obj_array,true)
         def update_searches(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Searches")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         #########
@@ -2447,7 +2444,7 @@ module OpenAsset
         #          rest_client.get_image_sizes(rest_options_object)
         def get_image_sizes(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Sizes")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         # Create image Sizes.
@@ -2464,7 +2461,7 @@ module OpenAsset
         #          rest_client.create_image_sizes(image_sizes_obj_array,true)    
         def create_image_sizes(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Sizes")
-            results = post(uri,data,generate_objects)
+            post(uri,data,generate_objects)
         end
 
         # Modify image Sizes.
@@ -2481,7 +2478,7 @@ module OpenAsset
         #          rest_client.update_image_sizes(image_sizes_obj_array,true)    
         def update_image_sizes(data=nil,generate_objects=false)
             uri = URI.parse(@uri + "/Sizes")
-            results = put(uri,data,generate_objects)
+            put(uri,data,generate_objects)
         end
 
         # Delete Image Sizes.
@@ -2498,7 +2495,7 @@ module OpenAsset
         #          rest_client.delete_image_sizes('1')
         def delete_image_sizes(data=nil)
             uri = URI.parse(@uri + "/Sizes")
-            results = delete(uri,data)
+            delete(uri,data)
         end
 
         #################
@@ -2517,7 +2514,7 @@ module OpenAsset
         #          rest_client.get_text_rewrites(rest_options_object)
         def get_text_rewrites(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/TextRewrites")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         #########
@@ -2536,7 +2533,7 @@ module OpenAsset
         #          rest_client.get_users(rest_options_object)
         def get_users(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Users")
-            results = get(uri,query_obj,with_nested_resources)
+            get(uri,query_obj,with_nested_resources)
         end
 
         ############################
@@ -2785,7 +2782,7 @@ module OpenAsset
                 end
 
                 # Now that we know the option is available, we can update the File we are currently working with
-                index = current_file.fields.find_index { |nested_field| nested_field.id.to_s == current_field.id.to_s }
+                index = current_file.fields.find_index { |nstd_field| nstd_field.id.to_s == current_field.id.to_s }
 
                 if index
                     current_file.fields[index].values = [current_value]
@@ -4436,7 +4433,6 @@ module OpenAsset
             project_field_found            = nil
             project_keyword_category_found = nil
             project_keywords               = nil
-            project_keyword_ids            = ''
             total_project_count            = 0
             iterations                     = 0
             offset                         = 0
@@ -4518,7 +4514,7 @@ module OpenAsset
                   (target_project_field.is_a?(Integer) && !target_project_field.zero?)
 
                 op.add_option('id',target_project_field)
-                project_field_found    = get_fields(op).first
+                project_field_found = get_fields(op).first
 
                 unless project_field_found
                     msg = "Field with id #{target_project_field.inspect} not found in OpenAsset."
@@ -4548,8 +4544,8 @@ module OpenAsset
             else 
                 msg = "Error: Expected one of the following: " +
                       "\n    1. Valid Fields object." +
-                      "\n    2. Field id."
-                      "\n    3. Field name."
+                      "\n    2. Field id." +
+                      "\n    3. Field name." +
                       "\nfor second argument in #{__callee__} method." +
                       "\nInstead got #{target_project_field.inspect}."
                 logger.error(msg)
@@ -4725,7 +4721,6 @@ module OpenAsset
             target_field_found            = args.source_field
             album_found                   = args.container
 
-            built_in                      = nil
             file_ids                      = nil
             file_keyword_ids              = []
             file_keyword_category_ids     = []
@@ -5006,7 +5001,7 @@ module OpenAsset
                 files = get_files(op)
 
                 # Move the file keywords to specified field
-                processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
+                move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
 
                 # Perform file update
                 msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
@@ -5175,7 +5170,7 @@ module OpenAsset
                 files = get_files(op)
 
                 # Move the file keywords to specified field
-                processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
+                move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
 
                 # Perform file update
                 msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
