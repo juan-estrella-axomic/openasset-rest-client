@@ -43,8 +43,8 @@ class Authenticator
         @uri = @url + @@API_CONST + @@VERSION_CONST
         @token_endpoint = @url + @@API_CONST + @@VERSION_CONST + @@SERVICE_CONST
         @token = {:id => nil, :value => nil}
-        @session_key = ''
-        @http_date = ''
+        @session_key = nil
+        @http_date = nil
         @user_agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0'
         @signature = ''
     end
