@@ -3470,7 +3470,7 @@ module OpenAsset
                                                        target_keyword_category,
                                                        source_field,
                                                        field_separator,
-                                                         batch_size)
+                                                       batch_size)
             
             category_found              = args.container
             file_keyword_category_found = args.target_keyword_category
@@ -3711,7 +3711,7 @@ module OpenAsset
                                                        target_keyword_category,
                                                        source_field,
                                                        field_separator,
-                                                         batch_size)
+                                                       batch_size)
 
             project_found               = args.container
             file_keyword_category_found = args.target_keyword_category
@@ -4057,7 +4057,6 @@ module OpenAsset
             total_projects_updated         = 0
             batch_size                     = batch_size.to_i.abs
             limit                          = batch_size
-            nested_proj_keyword            = Struct.new(:id)
             op                             = RestOptions.new
 
             # Validate input:
@@ -4377,7 +4376,7 @@ module OpenAsset
                             msg = "Tagging project #{project.code.inspect} with => #{value.inspect}."
                             logger.info(msg.green)
 
-                            project.project_keywords.push(nested_proj_keyword.new(proj_keyword_obj.id)) unless already_tagged
+                            project.project_keywords.push(NestedProjectKeywordItems.new(proj_keyword_obj.id)) unless already_tagged
                         else
                             msg = "Unable to retrieve previously created keyword! => #{value}"
                             logger.fatal(msg)
