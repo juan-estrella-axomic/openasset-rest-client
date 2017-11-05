@@ -366,15 +366,15 @@ module OpenAsset
             
             data = [data] unless data.is_a?(Array)
 
-            if resource.downcase == 'files' && !res.code.to_s.eql?('204') && res.body
+            if resource.downcase == 'files' && res.body # && !res.code.to_s.eql?('204')
                 jsonBody.each_with_index do |obj,index|
                     if obj.is_a?(Hash) && obj.has_key?("error_message")
                         err                     = Hash.new
-                        err['id']               = data[index].id
-                        err['resource_name']    = data[index].instance_variable_get(name)
+                        err['id']               = data[index].id    unless data[index].nil?
+                        err['resource_name']    = data[index].instance_variable_get(name)    unless data[index].nil?
                         err['resource_type']    = resource  # Determined by api endpoint
                         err['http_status_code'] = obj["http_status_code"]
-                        err['error_message']    = 'Resource has already been deleted.'
+                        err['error_message']    = obj['error_message'] # 'Resource has already been deleted.'
         
                         errors << err
                         json_obj_collection << err
@@ -420,7 +420,7 @@ module OpenAsset
         
         # @!visibility private
         def generate_objects_from_json_response_body(json,resource_type)    
-
+            
             unless json.empty?
 
                 # Dynamically infer the the class needed to create objects by using the request_uri REST endpoint
@@ -1757,8 +1757,14 @@ module OpenAsset
             Validator::process_http_response(response,@verbose,'Files','POST')
 
             if generate_objects
-                
-                generate_objects_from_json_response_body(response,'Files')
+                        
+                data = Files.new
+                data.id = 'n/a'
+                data.filename = File.basename(file)
+
+                res = process_errors(data,response,'Files','Create')
+
+                generate_objects_from_json_response_body(res,'Files')
 
             else
                 # JSON Object
