@@ -49,25 +49,18 @@ class Projects
         @albums = []
 
         if json_obj['projectKeywords'].is_a?(Array) && !json_obj['projectKeywords'].empty?
-            #convert each of the nested project keywords into objects
-            #This is not a Fields noun. Its just a C struct holding the
-            #data we need for the nested resource
-            #proj_keyword = Struct.new(:id)
             @project_keywords = json_obj['projectKeywords'].map do |item|
                 NestedProjectKeywordItems.new(item['id'])
             end
         end
 
         if json_obj['fields'].is_a?(Array) && !json_obj['fields'].empty?
-            #You get the idea...
-            #field = Struct.new(:id, :values)
             @fields = json_obj['fields'].map do |item|
                 NestedFieldItems.new(item['id'], item['values'])
             end
         end
 
         if json_obj['albums'].is_a?(Array) && !json_obj['albums'].empty?
-            #nested_album = Struct.new(:id)
             @albums = json_obj['albums'].map do |item|
                 NestedAlbumItems.new(item['id'])
             end
@@ -81,7 +74,7 @@ class Projects
         json_data[:code] = @code                                 unless @code.nil?
         json_data[:code_alias_1] = @code_alias_1                 unless @code_alias_1.nil?
         json_data[:code_alias_2] = @code_alias_2                 unless @code_alias_2.nil?
-        json_data[:id]= @id                                      unless @id.nil?
+        json_data[:id] = @id                                     unless @id.nil?
         json_data[:name] = @name                                 unless @name.nil?
         json_data[:name_alias_1] = @name_alias_1                 unless @name_alias_1.nil?
         json_data[:name_alias_2] = @name_alias_2                 unless @name_alias_2.nil?
