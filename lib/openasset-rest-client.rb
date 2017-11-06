@@ -84,6 +84,7 @@ module OpenAsset
 
                 elsif container.is_a?(String) # Album name
                     op.add_option('name',container)
+                    op.add_option('textMatching','exact')
                     container_found = get_albums(op)
 
                     if container_found.length > 1
@@ -134,8 +135,9 @@ module OpenAsset
                         abort
                     end
                     
-                elsif container.is_a?(String) # Album name
+                elsif container.is_a?(String) # project name
                     op.add_option('name',container)
+                    op.add_option('textMatching','exact')
                     container_found = get_projects(op)
 
                     if container_found.length > 1
@@ -183,6 +185,7 @@ module OpenAsset
                 elsif container.is_a?(String) # Category name
 
                     op.add_option('name',container)
+                    op.add_option('textMatching','exact')
                     container_found = get_categories(op)
 
                     if container_found.length > 1
@@ -496,7 +499,6 @@ module OpenAsset
         # @!visibility private
         def move_keywords_to_fields(objects,keywords,field,field_separator,mode)
             
-            nested_field = Struct.new(:id,:values)
             existing_field_lookup_strings = nil
             object_type = objects.first.class.to_s.chop # Projects => Project | Files => File
 
@@ -677,7 +679,7 @@ module OpenAsset
             
                         if NORMAL_FIELD_TYPES.include?(field.field_display_type)
             
-                            object.fields << nested_field.new(field.id.to_s, [field_string])
+                            object.fields << NestedFieldItems.new(field.id.to_s, [field_string])
             
                             msg = "Inserting #{field_string.inspect} into #{field.name.inspect} field" +
                                   " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
@@ -707,7 +709,7 @@ module OpenAsset
                             end
                             
                             # Insert the value to the field if there is one
-                            object.fields << nested_field.new(field.id,[keyword_data.first.name]) unless keyword_data.empty?
+                            object.fields << NestedFieldItems.new(field.id,[keyword_data.first.name]) unless keyword_data.empty?
                             
                         else
             
@@ -2640,7 +2642,7 @@ module OpenAsset
             end 
             #2.build project json array for request body
             #There are four acceptable combinations for the arguments.
-             project_keyword = Struct.new(:id)
+            project_keyword = Struct.new(:id)
 
             if projects.is_a?(Projects)  
                 if proj_keywords.is_a?(ProjectKeywords) #1. Two Single objects
@@ -2709,7 +2711,6 @@ module OpenAsset
             current_file  = nil
             current_field = nil
             current_value = value.to_s.strip
-            nested_field  = Struct.new(:id,:values)
 
             file_class  = file.class.to_s
             field_class = field.class.to_s
@@ -2785,7 +2786,7 @@ module OpenAsset
                 if index
                     current_file.fields[index].values = [current_value]
                 else
-                    current_file.fields << nested_field.new(current_field.id,[current_value])
+                    current_file.fields << NestedFieldItems.new(current_field.id,[current_value])
                 end
 
                 update_files(current_file,false)
@@ -2997,7 +2998,7 @@ module OpenAsset
                 if index
                     current_project.fields[index].values = [value]
                 else
-                    current_project.fields << nested_field.new(current_field.id,[value])
+                    current_project.fields << NestedFieldItems.new(current_field.id,[value])
                 end
 
                 update_projects(current_project,false)
@@ -4132,7 +4133,7 @@ module OpenAsset
                 (project_field.is_a?(Integer) && !project_field.zero?)
 
                 op.add_option('id',project_field)
-                project_field_found    = get_fields(op).first
+                project_field_found = get_fields(op).first
 
                 unless project_field_found
                     msg = "Field with id #{project_field.inspect} not found in OpenAsset."
@@ -4146,7 +4147,7 @@ module OpenAsset
                 op.add_option('textMatching','exact')
                 project_field_found = get_fields(op)
 
-                unless project_field_found
+                if project_field_found.empty?
                     msg = "Field with name #{project_field.inspect} not found in OpenAsset."
                     logger.error(msg)
                     abort
@@ -4240,6 +4241,8 @@ module OpenAsset
 
                 op.add_option('limit','0')
                 op.add_option('id',ids)
+                op.add_option('projectKeywords','all')
+                op.add_option('fields','all')
 
                 msg = "Batch #{num} of #{iterations} => Retrieving projects."
                 logger.info(msg.green)
@@ -4274,10 +4277,13 @@ module OpenAsset
                         next if field_data.nil? || field_data == ''
                     else
                         field_obj_found = project.fields.find { |f| f.id == project_field_found.id }
+                       
                         if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first.strip == ''
                             next
                         end
+                       
                         field_data = field_obj_found.values.first
+                        
                     end
 
                     # split the string using the specified separator and remove empty strings
@@ -4519,13 +4525,13 @@ module OpenAsset
                     abort
                 end
 
-            elsif target_project_field.is_a?(String) # Name
+            elsif target_project_field.is_a?(String) # Field Name
 
                 op.add_option('name',target_project_field)
                 op.add_option('textMatching','exact')
                 project_field_found = get_fields(op)
 
-                unless project_field_found
+                if project_field_found.empty?
                     msg = "Field with name #{target_project_field.inspect} not found in OpenAsset."
                     logger.error(msg)
                     abort
