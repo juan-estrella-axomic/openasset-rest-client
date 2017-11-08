@@ -350,13 +350,12 @@ module OpenAsset
         def process_errors(data=nil,res=nil,resource=nil,operation='')
             
             return unless data && res && resource
-        
+
             json_obj_collection = Array.new
             errors              = Array.new
             
             name = (resource == 'Files') ? '@filename' : '@name'
 
-            # Bug in rest api where deleting a file twice returns the wrong message
             begin
                 jsonBody = JSON.parse(res.body)
             rescue JSON::ParserError => err
@@ -416,9 +415,8 @@ module OpenAsset
                     logger.error("HTTP Status Code: #{c}")
                 end
             end
- 
-            json_obj_collection
-        
+
+            json_obj_collection 
         end
         
         # @!visibility private
@@ -2779,7 +2777,7 @@ module OpenAsset
                 # request error saying that it couldn't find the string value for the restricted field specified 
                 # when making a PUT request on the FILES resource you are currently working on
                 unless lookup_string_exists
-                    data = {:value => current_value}
+                    data = {:value => current_value }
                     response = post(lookup_string_endpoint,data,false)
                     unless response.kind_of?(Net::HTTPSuccess)
                         return

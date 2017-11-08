@@ -1,5 +1,6 @@
 require 'uri'
 require 'colorize'
+require 'json'
 
 require_relative 'MyLogger'
 
@@ -74,12 +75,16 @@ class Validator
             Logging::logger.error(msg)
             return response
         else
-            #msg = "Error #{err_header} resource.\n\tMETHOD: #{http_method}\n\tCODE: #{response.code}" + 
-            #      "\n\tMESSAGE: #{response.message} #{response.body}\n\tRESOURCE: #{resource}"
-            msg = ''
-            if response.code.eql?('403')
-                msg = "Don't let the error fool you. The image size specified is no longer available in S3. Go see the Wizard (aka Justin)."
-                Logging::logger.error(msg)
+            if response.body.include?('<title>OpenAsset - Something went wrong!</title>') && 
+               !http_method.upcase.eql?('GET')
+                    response.body = {'error_message' => 'Possibly unsupported file type: NGINX Error - OpenAsset - Something went wrong!','http_status_code' => "#{response.code}"}.to_json
+                    return response
+                      
+            elsif response.code.eql?('403') && http_method.upcase.eql?('GET') &&
+               response.body.include?('<title>OpenAsset - Something went wrong!</title>')
+                    msg = "Don't let the error fool you. The image size specified is no longer available in S3. Go see the Wizard (aka Justin)."
+                    Logging::logger.error(msg)
+                    return response
             end
                  
         end
