@@ -15,15 +15,15 @@ class AccessLevels
     #         access_level = AccessLevels.new
     def initialize(data=nil)
         json_obj = Validator.validate_argument(data,'AccessLevels')
-        @id = json_obj['id']                    
-        @label = json_obj['label']
+        @id      = json_obj['id']                    
+        @label   = json_obj['label']
     end                
 
     # @!visibility private
     def json
         json_data = Hash.new
-        json_data[:id] = @id         unless @id.nil?
-        json_data[:label] = @label   unless @label.nil?
+        json_data[:id]    = @id     unless @id.nil?
+        json_data[:label] = @label  unless @label.nil?
 
         return json_data
     end

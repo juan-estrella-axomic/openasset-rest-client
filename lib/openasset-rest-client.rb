@@ -1687,7 +1687,7 @@ module OpenAsset
                 return false
             end
 
-            unless project.is_a?(Projects) || project.to_i > 0 || project.nil?
+            unless project.is_a?(Projects) || project.to_i > 0 || project.to_s.strip.eql?('')
                 msg = "Argument Error for upload_files method: Invalid project id passed to third argument.\n" +
                       "Acceptable arguments: Projects object, a non-zero numeric String or Integer, " +
                       "or no argument.\nInstead got a(n) #{project.class} with value => #{project.inspect}...Bailing out."
