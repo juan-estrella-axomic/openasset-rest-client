@@ -2837,7 +2837,7 @@ module OpenAsset
                     end
                     
                     current_file.instance_variable_set('@'+field_name, value)
-                    put(files_endpoint,current_file)
+                    put(files_endpoint,current_file,false)
                 else    #For regular non-built in fields
 
                     data = {:id => current_field.id, :values => [value.to_s]}
@@ -3061,7 +3061,7 @@ module OpenAsset
                     #update the project
                     current_project.instance_variable_set('@'+field_name, value)
                     #Make the update request
-                    put(projects_endpoint,current_project)                 
+                    put(projects_endpoint,current_project,false)                 
 
                 else                                                        #For regular non-built in fields
                     data = {:id => current_field.id, :values => [value.to_s]}
