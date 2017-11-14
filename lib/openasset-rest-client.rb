@@ -353,11 +353,12 @@ module OpenAsset
 
             json_obj_collection = Array.new
             errors              = Array.new
+            json_body           = Array.new
             
             name = (resource == 'Files') ? '@filename' : '@name'
 
             begin
-                jsonBody = JSON.parse(res.body.to_s) 
+                jsonBody = JSON.parse(res.body) if res.body
             rescue JSON::ParserError => err
                 logger.error("JSON Parser Error: #{err.message}")
             end
@@ -1611,12 +1612,12 @@ module OpenAsset
         # @return [JSON object] HTTP response JSON object.
         #
         # @example 
-        #          rest_client.delete_fields_lookup_strings(field_obj, field_lookup_strings_obj)
-        #          rest_client.delete_fields_lookup_strings(field_obj, field_lookup_strings_obj_array)
-        #          rest_client.delete_fields_lookup_strings(field_obj, [1,2,3])
-        #          rest_client.delete_fields_lookup_strings(field_obj, ['1','2','3'])
-        #          rest_client.delete_fields_lookup_strings(field_obj, 1)
-        #          rest_client.delete_fields_lookup_strings(field_obj, '1')
+        #          rest_client.delete_field_lookup_strings(field_obj, field_lookup_strings_obj)
+        #          rest_client.delete_field_lookup_strings(field_obj, field_lookup_strings_obj_array)
+        #          rest_client.delete_field_lookup_strings(field_obj, [1,2,3])
+        #          rest_client.delete_field_lookup_strings(field_obj, ['1','2','3'])
+        #          rest_client.delete_field_lookup_strings(field_obj, 1)
+        #          rest_client.delete_field_lookup_strings(field_obj, '1')
         def delete_field_lookup_strings(field=nil,data=nil)
 
             id = Validator::validate_field_lookup_string_arg(field)
