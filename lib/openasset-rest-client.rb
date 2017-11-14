@@ -944,7 +944,7 @@ module OpenAsset
         end
 
         # @!visibility private
-        def post(uri,data,generate_objects)
+        def post(uri,data,generate_objects=false)
 
             data = [data] unless data.is_a?(Array)
             resource = ''
@@ -1019,7 +1019,7 @@ module OpenAsset
         end
 
         # @!visibility private
-        def put(uri,data,generate_objects)
+        def put(uri,data,generate_objects=false)
 
             resource = uri.to_s.split('/').last
             
@@ -2592,7 +2592,7 @@ module OpenAsset
                         files.keywords << NestedKeywordItems.new(keyword.id)
                     end  
                     uri = URI.parse(@uri + "/Files")
-                    put(uri,files)
+                    put(uri,files,false)
                 end
             else        
                 if keywords.is_a?(Array)    #3. Two arrays
