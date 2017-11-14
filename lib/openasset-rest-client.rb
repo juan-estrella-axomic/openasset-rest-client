@@ -357,7 +357,7 @@ module OpenAsset
             name = (resource == 'Files') ? '@filename' : '@name'
 
             begin
-                jsonBody = JSON.parse(res.body)
+                jsonBody = JSON.parse(res.body.to_s) 
             rescue JSON::ParserError => err
                 logger.error("JSON Parser Error: #{err.message}")
             end
