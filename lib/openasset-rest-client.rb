@@ -348,7 +348,7 @@ module OpenAsset
 
         # @!visibility private
         def process_errors(data=nil,res=nil,resource=nil,operation='')
-            
+
             return unless data && res && resource
 
             json_obj_collection = Array.new
@@ -1672,8 +1672,9 @@ module OpenAsset
         #          rest_client.upload_file('/path/to/file', category_obj, nil, true)
         #          rest_client.upload_file('/path/to/file','2', nil, true)
         #          rest_client.upload_file('/path/to/file', 2, nil, true)
-        def upload_file(file=nil, category=nil, project=nil, generate_objects=false) 
-        
+        def upload_file(file=nil, category=nil, project=nil, generate_objects=false,read_timeout=120) 
+            timeout = read_timeout.to_i.abs
+            timeout = timeout > 0 ? timeout : 120 # 60 sec is the default
             unless File.exists?(file.to_s)
                 msg = "The file #{file.inspect} does not exist...Bailing out."
                 logger.error(msg)
@@ -1720,9 +1721,10 @@ module OpenAsset
             msg = "Uploading File: => {\"original_filename\":\"#{File.basename(file)}\",\"category_id\":\"#{category_id}\",\"project_id\":\"#{project_id}\"}"
             logger.info(msg.white)
             
+            # upload waits up to 15 min to complete before timing out
             begin
                 attempts ||= 1
-                response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+                response = Net::HTTP.start(uri.host, uri.port, :read_timeout => timeout, :use_ssl => uri.scheme == 'https') do |http|
                     request = Net::HTTP::Post.new(uri.request_uri)
                     if @session
                         request.add_field('X-SessionKey',@session)
