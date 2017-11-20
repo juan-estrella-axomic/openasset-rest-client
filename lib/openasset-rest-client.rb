@@ -1079,7 +1079,7 @@ module OpenAsset
                 return generate_objects_from_json_response_body(res,resource)
 
             else  # Raw JSON object
-
+            
                 return response
 
             end    
@@ -2772,7 +2772,7 @@ module OpenAsset
         # @example 
         #          rest_client.file_add_field_data(files_object,fields_object,'data to be inserted')
         def file_add_field_data(file=nil,field=nil,value=nil)
-
+            
             #validate class types
             unless file.is_a?(Files) || (file.is_a?(String) && (file.to_i != 0)) || file.is_a?(Integer)
                 warn "Argument Error: Invalid type for first argument in \"file_add_field_data\" method.\n" +
@@ -2795,6 +2795,7 @@ module OpenAsset
                 return            
             end
 
+            res           = nil
             current_file  = nil
             current_field = nil
             current_value = value.to_s.strip
@@ -2876,7 +2877,7 @@ module OpenAsset
                     current_file.fields << NestedFieldItems.new(current_field.id,[current_value])
                 end
 
-                update_files(current_file,false)
+                res = update_files(current_file,false)
 
             elsif current_field.field_display_type == "date"
                 #make sure we get the right date format
@@ -2899,7 +2900,7 @@ module OpenAsset
 
                 #Apply the date to our current Files resource
                 data = {:id => current_field.id, :values => [value.to_s]}
-                put(files_endpoint,data,false)
+                res = put(files_endpoint,data,false)
 
 
             elsif NORMAL_FIELD_TYPES.include?(current_field.field_display_type)
@@ -2920,11 +2921,12 @@ module OpenAsset
                     end
                     
                     current_file.instance_variable_set('@'+field_name, value)
-                    put(files_endpoint,current_file,false)
+                    res = put(files_endpoint,current_file,false)
                 else    #For regular non-built in fields
 
                     data = {:id => current_field.id, :values => [value.to_s]}
-                    put(files_endpoint,data,false)
+                    endpoint = URI.parse(@uri + "/Files" + "/#{current_file.id}" + "/Fields")
+                    res = put(endpoint,data,false)
                     
                 end
 
@@ -2957,10 +2959,9 @@ module OpenAsset
                     end
                     
                 end
-                #udatte current variable for verbose statement
-                current_value = bool_val
+                
                 #Actually do the update
-                put(files_endpoint,current_file,false)
+                res = put(files_endpoint,current_file,false)
             else
                 msg = "The field specified does not have a valid field_display_type." +
                       "Value provided => #{field.field_display_type.inspect}"
@@ -2973,6 +2974,7 @@ module OpenAsset
                       "for file => #{current_file.filename}"
                 logger.info(msg.green)
             end
+            return res
         end
 
         # Add data to ANY Project field (built-in or custom).
@@ -3015,7 +3017,7 @@ module OpenAsset
 
             project_class  = project.class.to_s
             field_class    = field.class.to_s
-
+            res            = nil
             #set up objects
             if project_class == 'Projects'
                 current_project = project
@@ -3044,11 +3046,11 @@ module OpenAsset
                 unless current_field
                     warn "ERROR: Could not find Field with matching id of \"#{field.to_s}\"\n" +
                          "=> Hint: It either doesn't exist or it's disabled."
-                    return false
+                    return 
                 end
                 unless current_field.field_type == "project"
                     warn "ERROR: Expected a Project field. The field provided is a \"#{current_field.field_type}\" field."
-                    return false
+                    return 
                 end        
             else
                 warn "Unknown Error retrieving field. Exiting."
@@ -3088,7 +3090,7 @@ module OpenAsset
                     current_project.fields << NestedFieldItems.new(current_field.id,[value])
                 end
 
-                update_projects(current_project,false)
+                res = update_projects(current_project,false)
 
                 #data = {:id => current_field.id, :values => [value.to_s]}
                 #put(projects_endpoint,data,false)
@@ -3098,7 +3100,6 @@ module OpenAsset
                           "for project => #{current_project.code} - #{current_project.name}"
                     logger.info(msg.green)
                 end
-
 
             elsif current_field.field_display_type == "date"
                 #make sure we get the right date format
@@ -3123,15 +3124,15 @@ module OpenAsset
 
                 #Apply the date to our current Files resource
                 data = {:id => current_field.id, :values => [value.to_s]}
-                put(projects_endpoint,data,false) #Make the update
+                res = put(projects_endpoint,data,false) #Make the update
+              
 
-                
             elsif NORMAL_FIELD_TYPES.include?(current_field.field_display_type) #For regular fields
                 #some fields are built into Projects so they can't be inserted into
                 #the Projects nested fields resource. We get around this by using the
                 #name of the field object to access the corresponding built-in field attribute
                 #inside the Projects object.
-                
+              
                 if current_field.built_in.to_s == "1"  #For built in fields
                     projects_endpoint =  URI.parse(@uri + '/Projects') #change endpoint bc field is built_in
                     field_name = current_field.name.downcase.gsub(' ','_')
@@ -3139,17 +3140,18 @@ module OpenAsset
                     unless current_project.instance_variable_defined?('@'+field_name)
                         warn "ERROR: The specified attirbute \"#{field_name}\" does not" + 
                              " exist in the Project. Exiting."
-                        exit
+                        exit(-1)
                     end
                     #update the project
                     current_project.instance_variable_set('@'+field_name, value)
                     #Make the update request
-                    put(projects_endpoint,current_project,false)                 
+                    res = put(projects_endpoint,current_project,false)                 
 
                 else                                                        #For regular non-built in fields
                     data = {:id => current_field.id, :values => [value.to_s]}
-                    put(projects_endpoint,data,false)
+                    res = put(projects_endpoint,data,false)
                 end
+               
             elsif current_field.field_display_type == 'boolean'
 
                 #validate value
@@ -3183,7 +3185,8 @@ module OpenAsset
                 current_value = bool_val
 
                 #Acutally perform the update request
-                put(projects_endpoint,current_project,false)
+                res = put(projects_endpoint,current_project,false)
+                
             else
                 warn "Error: The field specified does not have a valid field_display_type." +
                      "Value provided => #{field.field_display_type.inspect}"
@@ -3194,6 +3197,7 @@ module OpenAsset
                       "for project => #{current_project.code} - #{current_project.name}"
                 logger.info(msg.green)
             end
+            return res
         end
         
         # Move file field data to keywords BY ALBUM for ANY File field (built-in or custom) and tag associated files.
