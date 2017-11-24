@@ -4,6 +4,8 @@ require 'base64'
 require 'socket'
 
 class Security
+
+    # @!visibility private
     def self.encrypt(val)
         cipher=OpenSSL::Cipher.new('DES-EDE3-CBC')
         cipher.encrypt
@@ -13,6 +15,7 @@ class Security
         Base64.encode64(enc_p)
     end
 
+    # @!visibility private
     def self.decrypt(val)
         decipher=OpenSSL::Cipher.new('DES-EDE3-CBC')
         decipher.decrypt
