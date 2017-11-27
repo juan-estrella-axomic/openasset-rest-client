@@ -21,7 +21,7 @@ Download it using the link below and run the gem install command from the folder
 
 ## Usage
 
-http://192.168.4.198
+http://192.168.4.198/docs/OpenAsset/RestClient
 
 
 ## License
