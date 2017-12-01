@@ -130,6 +130,12 @@ class Authenticator
                 logger.error("JSON Parser Error: #{e.message}")
                 exit(-1)
             end
+            # It's an On-Prem Codebase! No token was returned even though the authentication was successful!
+            if @token[:id].to_s.empty? || @token[:value].to_s.empty?
+                msg = 'It looks like you are using an outdated On-premise codebase. OpenAsset Cloud codebase 10.3.12 or higher required.'
+                logger.error(msg.yellow)
+                exit(-1)
+            end
             msg = 'Token created successfully!'
             logger.info(msg)
             create_signature()
