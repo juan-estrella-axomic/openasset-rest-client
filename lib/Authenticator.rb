@@ -235,7 +235,8 @@ class Authenticator
     end
 
     def validate_token #for code readability
-        token_valid?
+       res = token_valid?
+       create_token() if res == false
     end
 
     def setup_authentication
@@ -388,7 +389,7 @@ class Authenticator
         enc_session_key = Security::encrypt(@session_key)
 
         #Load and edit the data from the yaml config file
-        yml_file = File.join(Dir.pwd,"configuration","config.yml")
+        yml_file = File.join(File.dirname(__FILE__),"configuration","config.yml")
         conf = YAML::load_file(yml_file)
 
         #return if there is no session to edit
