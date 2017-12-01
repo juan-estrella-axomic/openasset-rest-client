@@ -235,8 +235,7 @@ class Authenticator
     end
 
     def validate_token #for code readability
-       res = token_valid?
-       create_token() if res == false
+        token_valid?
     end
 
     def setup_authentication
@@ -365,7 +364,9 @@ class Authenticator
         #puts @session_key || "empty session_key"  #For debugging
         
         if @session_key == 'INVALIDATED SESSION KEY'     #check for session manually invalidated by the user NOT DUE TO EXPIRY 
-            validate_token()             # <- this method renews the session
+            unless token_valid?             # <- this method renews the session
+                setup_authentication()
+            end
         elsif  @session_key.nil?         #check for uninitialized session -> @session = nil
             setup_authentication()
         elsif !session_valid?             #check for exired session
