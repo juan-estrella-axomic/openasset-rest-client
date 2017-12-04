@@ -1,6 +1,8 @@
 require 'logger'
 require 'colorize'
 
+STDOUT.sync = true
+
 module Logging
     def logger
         Logging.logger
