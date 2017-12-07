@@ -1768,15 +1768,7 @@ module OpenAsset
                     sleep(180)
                 else
                     logger.fatal("Made 3 failed attempts. Apache may be down or took way too long to respond. (NGINX ERROR PAGE RETURNED)")
-<<<<<<< HEAD
-<<<<<<< HEAD
                     logger.fatal("Exiting current thread => #{Thread.current.inspect}")
-=======
-                    logger.fatal("Exiting current thread => #{Thread.current.exit}")
->>>>>>> b83d3c4b1eacd2f43bb12f4a40ec2bf168a0043d
-=======
-                    logger.fatal("Exiting current thread => #{Thread.current.exit}")
->>>>>>> b83d3c4b1eacd2f43bb12f4a40ec2bf168a0043d
                     Thread.current.exit
                 end
             else
