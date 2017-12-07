@@ -1776,8 +1776,8 @@ module OpenAsset
                 attempts += 1
                 logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
                 if attempts.eql?(1)
-                    15.times do |num|
-                        printf("\rRetrying in %-2.0d",(15-num)) 
+                    20.times do |num|
+                        printf("\rRetrying in %-2.0d",(20-num)) 
                         sleep(1)
                     end
                     retry
@@ -1785,15 +1785,15 @@ module OpenAsset
                 logger.error("Connection failed: #{e}")
                 Thread.current.exit
             end
-
-            if response.body.include?('<title>OpenAsset - Something went wrong!</title>')
+=begin
+            if response.body.include?('<title>OpenAsset - Something went wrong!</title>') && response
                 if tries < 3 
                     tries += 1
                     response.body = {
                                       'error_message' => 'Possibly unsupported file type: NGINX Error - OpenAsset - Something went wrong!',
                                       'http_status_code' => "#{response.code}" }.to_json
-                    logger.error("Apache fell behind and NGINX is returning it's infamous error. Waiting 3 minutes before trying again.")
-                    sleep(180)
+                    logger.error("Apache fell behind and NGINX is returning it's infamous error. Waiting 60 minutes before trying again.")
+                    sleep(60)
                 else
                     logger.fatal("Made 3 failed attempts. Apache may be down or took way too long to respond. (NGINX ERROR PAGE RETURNED)")
                     logger.fatal("Exiting current thread => #{Thread.current.inspect}")
@@ -1802,6 +1802,8 @@ module OpenAsset
             else
                 Validator::process_http_response(response,@verbose,'Files','POST')
             end
+=end           
+            Validator::process_http_response(response,@verbose,'Files','POST')
 
             if generate_objects
                         
