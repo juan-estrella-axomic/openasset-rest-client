@@ -40,7 +40,7 @@ module OpenAsset
             @session       = @authenticator.get_session
             @uri           = @authenticator.uri
             @verbose       = false
-            @char_encoding = "windows-1252"
+            @char_encoding = "UTF-8"
 
         end
 
@@ -64,7 +64,7 @@ module OpenAsset
 
                 if container.is_a?(Albums) # Object
                     op.add_option('id',container.id)
-                    container_found = get_albums(op,true).first
+                    container_found = get_albums(op).first
 
                     unless container_found
                         msg = "Album id #{album.id} not found in OpenAsset. Aborting."
@@ -74,10 +74,10 @@ module OpenAsset
 
                 elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
                     op.add_option('id',container)
-                    container_found = get_albums(op,true).first
+                    container_found = get_albums(op).first
 
                     unless container_found
-                        msg = "Album id #{container.inspect} not found in OpenAsset. Aborting"
+                        msg = "Album id #{album.inspect} not found in OpenAsset. Aborting"
                         logger.error(msg)
                         abort
                     end
@@ -85,7 +85,7 @@ module OpenAsset
                 elsif container.is_a?(String) # Album name
                     op.add_option('name',container)
                     op.add_option('textMatching','exact')
-                    container_found = get_albums(op,true)
+                    container_found = get_albums(op)
 
                     if container_found.length > 1
                         msg = "Multiple #{scope} found named #{container.inspect}. Specify an id instead."
@@ -125,7 +125,7 @@ module OpenAsset
                         abort
                     end
 
-                elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # project id
+                elsif (container.is_a?(String) && container.to_i > 0) || container.is_a?(Integer) # Album id
                     op.add_option('id',container)
                     container_found = get_projects(op).first
 
@@ -1235,7 +1235,7 @@ module OpenAsset
         # @example
         #          rest_client.create_albums(albums_obj)
         #          rest_client.create_albums(albums_obj_array)
-        #          rest_client.create_albums(albums_obj,true)
+        #            rest_client.create_albums(albums_obj,true)
         #          rest_client.create_albums(albums_obj_array,true)
         def create_albums(data=nil,generate_objects=false)
             uri = URI.parse(@uri + '/Albums')
@@ -1657,8 +1657,8 @@ module OpenAsset
         # FOR PROJECT UPLOADS
         # @example 
         #          rest_client.upload_file('/path/to/file', category_obj, project_obj)
-        #          rest_client.upload_file('/path/to/file','2','10')
-        #          rest_client.upload_file('/path/to/file', 2, 10)
+        #             rest_client.upload_file('/path/to/file','2','10')
+        #            rest_client.upload_file('/path/to/file', 2, 10)
         #          rest_client.upload_file('/path/to/file', category_obj, project_obj, true)
         #          rest_client.upload_file('/path/to/file','2','10', true)
         #          rest_client.upload_file('/path/to/file', 2, 10, true)
@@ -3210,7 +3210,7 @@ module OpenAsset
         # @return [nil] nil.
         #
         # @example 
-        #          rest_client.move_file_field_data_to_keywords_by_album(Albums object,KeywordCategories object,Fields object,';',250)
+        #          rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';',250)
         #          rest_client.move_file_field_data_to_keywords_by_album("myalbum","keyword_category_name","file_field_name",';',250)
         #          rest_client.move_file_field_data_to_keywords_by_album("9","1","7",';',250)
         #          rest_client.move_file_field_data_to_keywords_by_album(9,1,7,';',250)
@@ -3226,11 +3226,10 @@ module OpenAsset
                                                        target_keyword_category,
                                                        source_field,
                                                        field_separator,
-                                                       batch_size,
-                                                       true)
+                                                       batch_size)
 
             album_found                 = args.container
-            file_keyword_category_found = args.target_keyword_category.first
+            file_keyword_category_found = args.target_keyword_category
             source_field_found          = args.source_field
 
             total_file_count            = nil
@@ -3281,7 +3280,7 @@ module OpenAsset
             # Check if any of the system categories found in the album DO NOT CONTAIN 
             # the target_keyword_category name and create it
             keyword_file_category_ids = existing_keyword_categories.reject do |obj| 
-                obj.name.downcase != file_keyword_category_found.name.downcase 
+                obj.name.downcase != file_keyword_category_found.name 
             end.map do |obj| 
                 obj.category_id.to_s 
             end.uniq
@@ -3352,13 +3351,12 @@ module OpenAsset
                 ids = file_ids[start_index...end_index].join(',')
 
                 op.add_option('id', ids)
-                op.add_option('limit',0)
-
+                
                 # Get current batch of files => body length used to track total files updated
                 msg = "Batch #{num} of #{iterations} => Retrieving files."
                 logger.info(msg.green)
 
-                files = get_files(op,true)
+                files = get_files(op)
 
                 op.clear
 
@@ -3382,10 +3380,10 @@ module OpenAsset
                         next if field_data.nil? || field_data == ''
                     else
                         field_obj_found = file.fields.find { |f| f.id == source_field_found.id }
-                        if field_obj_found.nil? || field_obj_found.values.first.to_s == ''
+                        if field_obj_found.nil? || field_obj_found.values.first.nil? || field_obj_found.values.first.strip == ''
                             next
                         end
-                        field_data = field_obj_found.values.first.to_s
+                        field_data = field_obj_found.values.first
                     end
 
                     # Split the string using the specified separator and remove empty strings
