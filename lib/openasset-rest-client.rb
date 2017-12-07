@@ -983,8 +983,20 @@ module OpenAsset
                     begin
                         request.body = json_body.to_json
                     rescue
-                        # TO DO: Loop through each key value pair and encode the value into UTF-8
-                        json_body.each { |key,val| json_body[key].encode!(@char_encoding, invalid: :replace, undef: :replace)}
+                        # Loop through each json object and encode the values into UTF-8 or whatever encoding the initial get requests saw
+                        json_body.each do |key,val|
+                            if json_body[key].is_a?(Array) ## It's a nested field
+                                json_body[key].each do |nested_key,nested_value| 
+                                    if nested_value.is_a?(Array) # It's a field value
+                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@char_encoding, invalid: :replace, undef: :replace) }
+                                    else # Just a regular nested object key value pair
+                                        json_body[key][nested_key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                                    end
+                                end
+                            else
+                                json_body[key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                            end 
+                        end
                         request.body = json_body.to_json
                     rescue Exception => e
                         logger.error(e.message)
@@ -1051,7 +1063,19 @@ module OpenAsset
                         request.body = json_body.to_json
                     rescue
                         # TO DO: Loop through each key value pair and encode the value into UTF-8
-                        json_body.each { |key,val| json_body[key].encode!(@char_encoding, invalid: :replace, undef: :replace)}
+                        json_body.each do |key,val|
+                            if json_body[key].is_a?(Array) ## It's a nested field
+                                json_body[key].each do |nested_key,nested_value| 
+                                    if nested_value.is_a?(Array) # It's a field value
+                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@char_encoding, invalid: :replace, undef: :replace) }
+                                    else # Just a regular json key value pair
+                                        json_body[key][nested_key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                                    end
+                                end
+                            else
+                                json_body[key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                            end 
+                        end
                         request.body = json_body.to_json
                     rescue Exception => e
                         logger.error(e.message)
