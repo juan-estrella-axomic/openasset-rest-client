@@ -983,7 +983,9 @@ module OpenAsset
                     begin
                         request.body = json_body.to_json
                     rescue
-                        request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+                        # TO DO: Loop through each key value pair and encode the value into UTF-8
+                        json_body.each { |key,val| json_body[key].encode!(@char_encoding, invalid: :replace, undef: :replace)}
+                        request.body = json_body.to_json
                     rescue Exception => e
                         logger.error(e.message)
                     end
@@ -1048,7 +1050,9 @@ module OpenAsset
                     begin
                         request.body = json_body.to_json
                     rescue
-                        request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
+                        # TO DO: Loop through each key value pair and encode the value into UTF-8
+                        json_body.each { |key,val| json_body[key].encode!(@char_encoding, invalid: :replace, undef: :replace)}
+                        request.body = json_body.to_json
                     rescue Exception => e
                         logger.error(e.message)
                     end
@@ -1897,8 +1901,8 @@ module OpenAsset
                 attempts += 1
                 logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
                 if attempts.eql?(1)
-                    15.times do |num|
-                        printf("\rRetrying in %-2.0d",(15-num)) 
+                    180.times do |num|
+                        printf("\rRetrying in %-2.0d seconds",(180-num)) 
                         sleep(1)
                     end
                     retry
