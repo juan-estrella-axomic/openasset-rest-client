@@ -1672,9 +1672,10 @@ module OpenAsset
         #          rest_client.upload_file('/path/to/file', category_obj, nil, true)
         #          rest_client.upload_file('/path/to/file','2', nil, true)
         #          rest_client.upload_file('/path/to/file', 2, nil, true)
-        def upload_file(file=nil, category=nil, project=nil, generate_objects=false,read_timeout=120) 
+        def upload_file(file=nil, category=nil, project=nil, generate_objects=false,read_timeout=600) 
             timeout = read_timeout.to_i.abs
-            timeout = timeout > 0 ? timeout : 120 # 60 sec is the default
+            timeout = timeout > 0 ? timeout : 120 # 120 sec is the default
+            tries   = 1
             unless File.exists?(file.to_s)
                 msg = "The file #{file.inspect} does not exist...Bailing out."
                 logger.error(msg)
@@ -1754,10 +1755,33 @@ module OpenAsset
                     retry
                 end
                 logger.error("Connection failed: #{e}")
-                exit(-1)
+                Thread.current.exit
             end
 
-            Validator::process_http_response(response,@verbose,'Files','POST')
+            if response.body.include?('<title>OpenAsset - Something went wrong!</title>')
+                if tries < 3 
+                    tries += 1
+                    response.body = {
+                                      'error_message' => 'Possibly unsupported file type: NGINX Error - OpenAsset - Something went wrong!',
+                                      'http_status_code' => "#{response.code}" }.to_json
+                    logger.error("Apache fell behind and NGINX is returning it's infamous error. Waiting 3 minutes before trying again.")
+                    sleep(180)
+                else
+                    logger.fatal("Made 3 failed attempts. Apache may be down or took way too long to respond. (NGINX ERROR PAGE RETURNED)")
+<<<<<<< HEAD
+<<<<<<< HEAD
+                    logger.fatal("Exiting current thread => #{Thread.current.inspect}")
+=======
+                    logger.fatal("Exiting current thread => #{Thread.current.exit}")
+>>>>>>> b83d3c4b1eacd2f43bb12f4a40ec2bf168a0043d
+=======
+                    logger.fatal("Exiting current thread => #{Thread.current.exit}")
+>>>>>>> b83d3c4b1eacd2f43bb12f4a40ec2bf168a0043d
+                    Thread.current.exit
+                end
+            else
+                Validator::process_http_response(response,@verbose,'Files','POST')
+            end
 
             if generate_objects
                         
