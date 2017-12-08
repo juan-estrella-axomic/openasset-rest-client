@@ -981,9 +981,8 @@ module OpenAsset
                     end
                     
                     begin
-                        request.body = json_body.to_json
-                    rescue
-                        # Loop through each json object and encode the values into UTF-8 or whatever encoding the initial get requests saw
+                        request.body = json_body.to_json.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                    rescue JSON::ParserError => json_err
                         json_body.each do |key,val|
                             if json_body[key].is_a?(Array) ## It's a nested field
                                 json_body[key].each do |nested_key,nested_value| 
@@ -1060,9 +1059,8 @@ module OpenAsset
                     end
                     
                     begin
-                        request.body = json_body.to_json
-                    rescue
-                        # TO DO: Loop through each key value pair and encode the value into UTF-8
+                        request.body = json_body.to_json.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                    rescue JSON::ParserError => json_err
                         json_body.each do |key,val|
                             if json_body[key].is_a?(Array) ## It's a nested field
                                 json_body[key].each do |nested_key,nested_value| 
@@ -1140,9 +1138,22 @@ module OpenAsset
                     end
                     
                     begin
+                        request.body = json_body.to_json.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                    rescue JSON::ParserError => json_err
+                        json_body.each do |key,val|
+                            if json_body[key].is_a?(Array) ## It's a nested field
+                                json_body[key].each do |nested_key,nested_value| 
+                                    if nested_value.is_a?(Array) # It's a field value
+                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@char_encoding, invalid: :replace, undef: :replace) }
+                                    else # Just a regular json key value pair
+                                        json_body[key][nested_key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                                    end
+                                end
+                            else
+                                json_body[key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                            end 
+                        end
                         request.body = json_body.to_json
-                    rescue
-                        request.body = json_body.to_json.encode(@char_encoding, @char_encoding)
                     rescue Exception => e
                         logger.error(e.message)
                     end
@@ -1704,6 +1715,8 @@ module OpenAsset
             timeout = read_timeout.to_i.abs
             timeout = timeout > 0 ? timeout : 120 # 120 sec is the default
             tries   = 1
+            response = nil
+           
             unless File.exists?(file.to_s)
                 msg = "The file #{file.inspect} does not exist...Bailing out."
                 logger.error(msg)
@@ -1750,63 +1763,63 @@ module OpenAsset
             msg = "Uploading File: => {\"original_filename\":\"#{File.basename(file)}\",\"category_id\":\"#{category_id}\",\"project_id\":\"#{project_id}\"}"
             logger.info(msg.white)
             
-            # upload waits up to 15 min to complete before timing out
-            begin
-                attempts ||= 1
-                response = Net::HTTP.start(uri.host, uri.port, :read_timeout => timeout, :use_ssl => uri.scheme == 'https') do |http|
-                    request = Net::HTTP::Post.new(uri.request_uri)
-                    if @session
-                        request.add_field('X-SessionKey',@session)
-                    else
-                        @session = @authenticator.get_session
-                        request.add_field('X-SessionKey',@session)
+            # upload waits up to 15 sec to complete before timing out
+            loop do
+                begin
+                    attempts ||= 1
+                    response = Net::HTTP.start(uri.host, uri.port, :read_timeout => timeout, :use_ssl => uri.scheme == 'https') do |http|
+                        request = Net::HTTP::Post.new(uri.request_uri)
+                        if @session
+                            request.add_field('X-SessionKey',@session)
+                        else
+                            @session = @authenticator.get_session
+                            request.add_field('X-SessionKey',@session)
+                        end
+                        request["cache-control"] = 'no-cache'
+                        request["content-type"] = 'multipart/form-data; boundary=----WebKitFormBoundary' + boundary
+                        body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"_jsonBody\"" 
+                        body << "\r\n\r\n[{\"original_filename\":\"#{File.basename(file)}\",\"category_id\":#{category_id},\"project_id\":\"#{project_id}\"}]\r\n"
+                        body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"file\";"
+                        body << "filename=\"#{File.basename(file)}\"\r\nContent-Type: #{MIME::Types.type_for(file)}\r\n\r\n"
+                        body << IO.binread(file)
+                        body << "\r\n------WebKitFormBoundary#{boundary}--"
+                        request.body = body.join
+                        http.request(request)
+                    end 
+                rescue Exception => e 
+                    attempts += 1
+                    logger.warn("Initial Connection failed. Retrying in 20 seconds.") if attempts.eql?(1)
+                    if attempts.eql?(1)
+                        20.times do |num|
+                            printf("\rRetrying in %-2.0d",(20-num)) 
+                            sleep(1)
+                        end
+                        retry
                     end
-                    request["cache-control"] = 'no-cache'
-                    request["content-type"] = 'multipart/form-data; boundary=----WebKitFormBoundary' + boundary
-                    body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"_jsonBody\"" 
-                    body << "\r\n\r\n[{\"original_filename\":\"#{File.basename(file)}\",\"category_id\":#{category_id},\"project_id\":\"#{project_id}\"}]\r\n"
-                    body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"file\";"
-                    body << "filename=\"#{File.basename(file)}\"\r\nContent-Type: #{MIME::Types.type_for(file)}\r\n\r\n"
-                    body << IO.binread(file)
-                    body << "\r\n------WebKitFormBoundary#{boundary}--"
-                    request.body = body.join
-                    http.request(request)
-                end 
-            rescue Exception => e 
-                attempts += 1
-                logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
-                if attempts.eql?(1)
-                    20.times do |num|
-                        printf("\rRetrying in %-2.0d",(20-num)) 
-                        sleep(1)
-                    end
-                    retry
-                end
-                logger.error("Connection failed: #{e}")
-                Thread.current.exit
-            end
-=begin
-            if response.body.include?('<title>OpenAsset - Something went wrong!</title>') && response
-                if tries < 3 
-                    tries += 1
-                    response.body = {
-                                      'error_message' => 'Possibly unsupported file type: NGINX Error - OpenAsset - Something went wrong!',
-                                      'http_status_code' => "#{response.code}" }.to_json
-                    logger.error("Apache fell behind and NGINX is returning it's infamous error. Waiting 60 minutes before trying again.")
-                    sleep(60)
-                else
-                    logger.fatal("Made 3 failed attempts. Apache may be down or took way too long to respond. (NGINX ERROR PAGE RETURNED)")
-                    logger.fatal("Exiting current thread => #{Thread.current.inspect}")
+                    logger.error("Connection failed: #{e}")
                     Thread.current.exit
                 end
-            else
+
+                if response.body.include?('<title>OpenAsset - Something went wrong!</title>') && response.code != '403' 
+                    response.body = {
+                        'error_message' => 'Possible Gateway timeout: NGINX Error - OpenAsset - Something went wrong!',
+                        'http_status_code' => "#{response.code}" }.to_json
+                    if tries < 3 
+                        tries += 1
+                        logger.error("Apache fell behind and NGINX is returning it's infamous error. Waiting 30 seconds before trying again.")
+                        sleep(30)
+                        redo
+                    else
+                        logger.error("Made 3 failed attempts. Apache may be down or took way too long to respond. (NGINX ERROR PAGE RETURNED)")
+                    end
+                end
+
                 Validator::process_http_response(response,@verbose,'Files','POST')
+                break   
             end
-=end           
-            Validator::process_http_response(response,@verbose,'Files','POST')
 
             if generate_objects
-                        
+                
                 data = Files.new
                 data.id = 'n/a'
                 data.filename = File.basename(file)
@@ -1818,8 +1831,7 @@ module OpenAsset
             else
                 # JSON Object
                 response
-
-            end    
+            end
         end
 
         # Replace a file in OpenAsset.
