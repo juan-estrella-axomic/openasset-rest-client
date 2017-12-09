@@ -60,34 +60,29 @@ class Validator
         if response.kind_of? Net::HTTPSuccess 
             msg = "Success: HTTP => #{response.code} #{response.message}"
             Logging::logger.info(msg.green)
-            return response
         elsif response.kind_of? Net::HTTPRedirection 
             location = response['location']
             msg      = "Unexpected Redirect to #{location}"
             Logging::logger.error(msg.yellow) 
-            return response
         elsif response.kind_of? Net::HTTPUnauthorized 
-            msg = "Error: #{response.message}: invalid credentials."
+            msg = "Error: #{response.message}: Invalid Credentials."
             Logging::logger.error(msg) 
-            return response
         elsif response.kind_of? Net::HTTPServerError 
-            msg = "Error: #{response.message}: Try again later."
+            code = "Code: #{response.code}"
+            msg  = "Message: #{response.message}: Try again later."
+            Logging::logger.error(code)
             Logging::logger.error(msg)
-            return response
         else
             if response.body.include?('<title>OpenAsset - Something went wrong!</title>') && 
                !http_method.upcase.eql?('GET')
                     response.body = {'error_message' => 'Possibly unsupported file type: NGINX Error - OpenAsset - Something went wrong!','http_status_code' => "#{response.code}"}.to_json
-                    return response
-                      
             elsif response.code.eql?('403') && http_method.upcase.eql?('GET') &&
                response.body.include?('<title>OpenAsset - Something went wrong!</title>')
-                    msg = "Don't let the error fool you. The image size specified is no longer available in S3. Go see the Wizard (aka Justin)."
+                    msg = "Don't let the error fool you. The image size specified is no longer available in S3. Go see the Wizard."
                     Logging::logger.error(msg)
-                    return response
-            end
-                 
+            end        
         end
+        return response
     end
 
     def self.validate_field_lookup_string_arg(field)

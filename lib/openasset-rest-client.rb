@@ -1814,7 +1814,7 @@ module OpenAsset
                     end
                 end
 
-                Validator::process_http_response(response,@verbose,'Files','POST')
+                response = Validator::process_http_response(response,@verbose,'Files','POST')
                 break   
             end
 
