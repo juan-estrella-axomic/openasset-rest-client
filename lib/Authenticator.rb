@@ -72,11 +72,12 @@ class Authenticator
 
         while u == '' || p == ''
             if u.empty?
+                puts "REMINDER: Some actions require administrative rights."
                 print "Enter username: "
-                u=gets.chomp
+                u=gets.strip.chomp
             end
             print "Enter password: "
-            p=STDIN.noecho(&:gets).chomp
+            p=STDIN.noecho(&:gets).strip.chomp
             puts ''
             puts "Invalid username."  if u == ''
             puts "Invalid password."  if p == ''
@@ -102,7 +103,7 @@ class Authenticator
         
         get_credentials(attempts)
         uri = URI.parse(@token_endpoint)
-        token_creation_data = '{"name" : "rest-client-r"}'
+        token_creation_data = '{"name" : "rest-client-ruby"}'
        
         begin
             attempts ||= 1
@@ -149,7 +150,7 @@ class Authenticator
             @uri = uri.scheme + '://' + uri.host + @@API_CONST + @@VERSION_CONST
             create_token()
         elsif response.kind_of? Net::HTTPUnauthorized 
-            msg = "#{response.message}: invalid credentials.\n\n"
+            msg = "#{response.message}: Invalid Credentials.\n\n"
             logger.error(msg)
             @username = ''
             @password = ''
@@ -163,6 +164,7 @@ class Authenticator
             logger.error(msg)
             abort
         end
+        return true
     end
 
     def create_signature #Runs SECOND
@@ -221,7 +223,7 @@ class Authenticator
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}" 
             logger.error(msg)
-            return false
+            return create_token() # Returns true or program exits after 3 failed login attempts
         elsif response.kind_of? Net::HTTPServerError 
             msg = "#{response.message}: Try again later."
             logger.error(msg)
