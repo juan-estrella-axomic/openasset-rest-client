@@ -56,7 +56,7 @@ module CSVHelper
                 #Create csv header and filter out nested resources
                 csv_header = object_variables.map do |obj_var|
                     unless object.instance_variable_get(obj_var).is_a?(Array)                  
-                         obj_var.to_s.gsub('@','').upcase 
+                         obj_var.to_s.gsub('@','').upcase.encode!("UTF-8", invalid: :replace, undef: :replace)
                     end 
                 end 
              
@@ -75,7 +75,7 @@ module CSVHelper
                             data = noun_obj.instance_variable_get('@' + variable_name.downcase)
                             #we only want built in attributes
                             unless data.is_a?(Array)
-                                csv_values << data
+                                csv_values << data.encode!("UTF-8", invalid: :replace, undef: :replace)
                             end
                         end
                         
@@ -88,11 +88,13 @@ module CSVHelper
                 #loop through each of the strings
                 self.each do |str|
                     #write values to the spreadsheet
+                    str = str..encode!("UTF-8", invalid: :replace, undef: :replace)
                     csv << [str]
                 end
             elsif self.first.is_a?(Array)
                 self.each do |arr|
                     #write values to the spreadsheet
+                    arr.each { |val| val.to_s.encode!("UTF-8", invalid: :replace, undef: :replace) }
                     csv << arr
                 end
             else
