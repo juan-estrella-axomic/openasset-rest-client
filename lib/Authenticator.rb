@@ -108,7 +108,7 @@ class Authenticator
         begin
             attempts ||= 1
             response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Post.new(uri.request_uri,'Content-Type' => 'application/json') 
+                request = Net::HTTP::Post.new(uri.request_uri,{'Content-Type' => 'application/json','User-Agent' => @user_agent}) 
                 request.basic_auth(@username,@password)
                 request.body = token_creation_data        
                 http.request(request)  

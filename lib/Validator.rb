@@ -115,13 +115,15 @@ class Validator
             abort
         end
 
-        uri_with_protocol    = Regexp::new('(^https:\/\/|http:\/\/)[\w-]+\.openasset\.(com)$', true)
-        uri_without_protocol = Regexp::new('^[\w-]+\.openasset\.(com)$', true)
-        uri_is_ip_address    = Regexp::new('(http(s)?:\/\/)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})',true)
+        uri_with_protocol = Regexp::new('(^https:\/\/|http:\/\/)[\w-]+\.[\w-]+\.(com)$', true)
+
+        uri_without_protocol = Regexp::new('^[\w-]+\.[\w-]+\.(com)$', true)
+
+        uri_is_ip_address = Regexp::new('(http(s)?:\/\/)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})',true)
 
         if (uri_with_protocol =~ uri) == 0 #check for valid url and that protocol is specified
             uri
-        elsif (uri_without_protocol =~ uri) == 0 
+        elsif (uri_without_protocol =~ uri) == 0
             uri = "https://" + uri               
         elsif (uri_is_ip_address =~ uri) == 0
             unless uri.to_s.include?('http://') || uri.to_s.include?('https://')
