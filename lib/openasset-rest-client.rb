@@ -1017,10 +1017,11 @@ module OpenAsset
                 @session = response['X-SessionKey']
             end
             
-            Validator::process_http_response(response,@verbose,resource,'POST')
+            # This method overwrites the response body and adds usefull 
+            response = Validator::process_http_response(response,@verbose,resource,'POST')
            
             # Check each object for error during update
-            res = process_errors(data,response,resource,'Create')
+            res = process_errors(data,res,resource,'Create')
 
             if generate_objects == true
 
@@ -1095,7 +1096,7 @@ module OpenAsset
                 @session = response['X-SessionKey']
             end
             
-            Validator::process_http_response(response,@verbose,resource,'PUT')
+            response = Validator::process_http_response(response,@verbose,resource,'PUT')
 
             # Check each object for error during update
             res = process_errors(data,response,resource,'Update')
@@ -1174,7 +1175,7 @@ module OpenAsset
                 @session = response['X-SessionKey']
             end        
 
-            Validator::process_http_response(response,@verbose,resource,'DELETE')
+            response = Validator::process_http_response(response,@verbose,resource,'DELETE')
 
             res = process_errors(data,response,resource,'Delete')
 
