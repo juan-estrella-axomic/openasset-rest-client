@@ -67,9 +67,23 @@ class Validator
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "Error: #{response.message}: Invalid Credentials."
             Logging::logger.error(msg) 
-        elsif response.kind_of? Net::HTTPServerError 
+        elsif response.kind_of? Net::HTTPServerError
+            
             code = "Code: #{response.code}"
-            msg  = "Message: #{response.message}: Try again later."
+            msg  = "Message: #{response.message}"
+
+            if response.code.eql?('500') # Internal Server Error
+                msg += ": Try again later."
+                response.body = {'error_message' => "#{response.message}: Web Server Error - No idea what happened here.",'http_status_code' => "#{response.code}"}.to_json
+            elsif response.code.eql?('502') # Bad Gateway
+                response.body = {'error_message' => "#{response.message}: The server received an invalid response from the upstream server",
+                                 'http_status_code' => "#{response.code}"}.to_json
+            elsif response.code.eql?('503') # Service Unavailable => Web Server overloaded or temporarily down
+                response.body = {'error_message' => "#{response.message}: The server is currently unavailable (because it is overloaded or down for maintenance)",
+                                 'http_status_code' => "#{response.code}"}.to_json
+            else
+                response.body = {'error_message' => "#{response.message.to_s.gsub(/[<>/]+/,'')}",'http_status_code' => "#{response.code}"}.to_json
+            end
             Logging::logger.error(code)
             Logging::logger.error(msg)
         else
