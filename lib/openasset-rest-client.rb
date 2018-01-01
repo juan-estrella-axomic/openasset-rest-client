@@ -4568,7 +4568,7 @@ module OpenAsset
         #
         # @example 
         #          rest_client.move_project_keywords_to_field(ProjectKeywordCategories object,Fields object,';','append',250)
-        #           rest_client.move_project_keywords_to_field(ProjectKeywordCategories object,Fields object,';','overwrite',250)
+        #          rest_client.move_project_keywords_to_field(ProjectKeywordCategories object,Fields object,';','overwrite',250)
         #          rest_client.move_project_keywords_to_field("project keyword category name","project field name",';','append',250)
         #          rest_client.move_project_keywords_to_field("project keyword category name","project field name",';','overwrite',250)
         #          rest_client.move_project_keywords_to_field("9","1","7",';','append',250)
@@ -4843,7 +4843,7 @@ module OpenAsset
         #
         # @example 
         #          rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','append',250) 
-        #           rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','overwrite',250) 
+        #          rest_client.move_file_keywords_to_field_by_album(Albums object,KeywordCategories object,Fields object,';','overwrite',250) 
         #          rest_client.move_file_keywords_to_field_by_album("album name","keyword category name","project field name",';','append',250)
         #          rest_client.move_file_keywords_to_field_by_album("album name","keyword category name","project field name",';','overwrite',250)
         #          rest_client.move_file_keywords_to_field_by_album("9","1","7",';','append',250)
@@ -5011,7 +5011,7 @@ module OpenAsset
         #
         # @example 
         #          rest_client.move_file_keywords_to_field_by_project(Projects object,KeywordCategories object,Fields object,';','append',250)
-        #           rest_client.move_file_keywords_to_field_by_project(Projects object,KeywordCategories object,Fields object,';','overwrite',250)
+        #          rest_client.move_file_keywords_to_field_by_project(Projects object,KeywordCategories object,Fields object,';','overwrite',250)
         #          rest_client.move_file_keywords_to_field_by_project("project name","keyword category name","project field name",';','append',250)
         #          rest_client.move_file_keywords_to_field_by_project("project name","keyword category name","project field name",';','overwrite',250)
         #          rest_client.move_file_keywords_to_field_by_project("9","1","7",';','append',250)
@@ -5181,7 +5181,7 @@ module OpenAsset
         #
         # @example 
         #          rest_client.move_file_keywords_to_field_by_category(Categories object,KeywordCategories object,Fields object,';','append',250)
-        #           rest_client.move_file_keywords_to_field_by_category(Categories object,ProjectKeywordCategories object,Fields object,';','overwrite',250)
+        #          rest_client.move_file_keywords_to_field_by_category(Categories object,ProjectKeywordCategories object,Fields object,';','overwrite',250)
         #          rest_client.move_file_keywords_to_field_by_category("category name","keyword category name","project field name",';','append',250)
         #          rest_client.move_file_keywords_to_field_by_category("category name","keyword category name","project field name",';','overwrite',250)
         #          rest_client.move_file_keywords_to_field_by_category("9","1","7",';','append',250)
