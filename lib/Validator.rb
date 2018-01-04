@@ -82,7 +82,7 @@ class Validator
                 response.body = {'error_message' => "#{response.message}: The server is currently unavailable (because it is overloaded or down for maintenance)",
                                  'http_status_code' => "#{response.code}"}.to_json
             else
-                response.body = {'error_message' => "#{response.message.to_s.gsub(/[<>/]+/,'')}",'http_status_code' => "#{response.code}"}.to_json
+                response.body = {'error_message' => "#{response.message.to_s.gsub(/[<>]+/,'')}",'http_status_code' => "#{response.code}"}.to_json
             end
             Logging::logger.error(code)
             Logging::logger.error(msg)
