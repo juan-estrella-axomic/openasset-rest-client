@@ -1021,7 +1021,7 @@ module OpenAsset
             response = Validator::process_http_response(response,@verbose,resource,'POST')
            
             # Check each object for error during update
-            res = process_errors(data,res,resource,'Create')
+            res = process_errors(data,response,resource,'Create')
 
             if generate_objects == true
 
