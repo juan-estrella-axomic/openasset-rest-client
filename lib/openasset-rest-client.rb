@@ -734,6 +734,7 @@ module OpenAsset
             scope    = payload.first.class.to_s.downcase
             res      = nil
             attempts = 0
+            results_count = 0
 
             # Perform the update => 3 tries MAX with 5,10,15 second waits between retries
             loop do
@@ -766,11 +767,12 @@ module OpenAsset
                     end
                         
                     if res.kind_of? Net::HTTPSuccess
-                        total_objects_updated = res['X-Full-Results-Count'].to_i + total_objects_updated
+                        results_count = res['X-Full-Results-Count'].to_i
+                        total_objects_updated = results_count + total_objects_updated
                         msg = ""
                         msg += "Successfully " if total_objects_updated > 0
                         msg += "Updated #{total_objects_updated.inspect} #{scope}."
-                        logger.info(msg.green)
+                        logger.info(msg)
                         break
                     else
                         Validator::process_http_response(res,@verbose,scope.capitalize,'PUT')
@@ -785,7 +787,7 @@ module OpenAsset
                 end
             end
 
-            return total_objects_updated
+            return results_count
             
         end
 
@@ -3410,7 +3412,8 @@ module OpenAsset
                 ids = file_ids[start_index...end_index].join(',')
 
                 op.add_option('id', ids)
-                
+                op.add_option('keywords','all')
+                op.add_option('fields','all')
                 # Get current batch of files => body length used to track total files updated
                 msg = "Batch #{num} of #{iterations} => Retrieving files."
                 logger.info(msg.green)
@@ -3458,7 +3461,7 @@ module OpenAsset
 
                     keywords_to_append.each do |val|
         
-                        val = val.strip
+                        val = val.strip.gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
 
                         # Check if the value exists in existing keywords
                         keyword_found_in_existing = existing_keywords.find do |k|
@@ -3498,7 +3501,9 @@ module OpenAsset
                     # Append the returned keyword objects to the existing keywords array
                     if new_keywords
                         if new_keywords.is_a?(Array) && !new_keywords.empty?     
-                            new_keywords.each { |item| existing_keywords.push(item) }
+                            new_keywords.each do |item| 
+                                existing_keywords.push(item) unless item.is_a?(Error)
+                            end
                         else
                             msg = "An error occured creating keywords in #{__callee__}"
                             logger.error(msg)
@@ -3515,6 +3520,8 @@ module OpenAsset
                 files.each do | file |
                     #puts "In files tag before using instance_variable_get 2"
                     field_data = nil
+                    file.original_filename = nil
+                    file.caption.to_s.gsub!(/\n+/,' ')
 
                     # Look for the field and check if the field has any data in it
                     if built_in
@@ -3549,16 +3556,14 @@ module OpenAsset
 
                         # Loop through the keywords and tag the file
                         keywords.each do |value|
-                            # Trim leading & trailing whitespace
-                            value = value.strip
+                            # Trim leading & trailing whitespace => OA also removes newlines and double spaces during creation
+                            value = value.strip.gsub(/[\n\s]+/,' ').gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
                             # Find the string in existing keywords
                             keyword_obj = existing_keywords.find do |item| 
-                                begin
-                                    
-                                    item.name.downcase == value.downcase && associated_kwd_cat.id.to_s == item.keyword_category_id.to_s
-                                    
+                                begin           
+                                    item.name.downcase == value.downcase && associated_kwd_cat.id.to_s == item.keyword_category_id.to_s     
                                 rescue
-                                        item.name == value && associated_kwd_cat.id.to_s == item.keyword_category_id.to_s
+                                    item.name == value && associated_kwd_cat.id.to_s == item.keyword_category_id.to_s
                                 end
                             end
 
@@ -3573,7 +3578,7 @@ module OpenAsset
                                     file.keywords.push(NestedKeywordItems.new(keyword_obj.id))
                                 end 
                             else
-                                msg = "Unable to retrieve previously created keyword! => #{value}"
+                                msg = "Unable to retrieve previously created keyword! => #{value.inspect} in #{__callee__}"
                                 logger.fatal(msg)
                                 abort
                             end
@@ -3686,6 +3691,8 @@ module OpenAsset
                 
                 op.add_option('id',ids)
                 op.add_option('limit','0')
+                op.add_option('keywords','all')
+                op.add_option('fields','all')
                 # Get current batch of files
                 msg = "[INFO] Batch #{num} of #{iterations} => Retrieving files."
                 logger.info(msg.green)
@@ -3724,7 +3731,7 @@ module OpenAsset
                     keywords_to_append.each do |val|
 
                         # Remove leading and trailing white space
-                        val = val.strip
+                        val = val.strip.gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
 
                         # Check if the value exists in existing keywords
                         keyword_found_in_existing = existing_keywords.find do |k|
@@ -3757,7 +3764,11 @@ module OpenAsset
                     # Append the returned keyword objects to the existing keywords array
                     if new_keywords
                         if new_keywords.is_a?(Array) && !new_keywords.empty?
-                            new_keywords.each { |item| existing_keywords.push(item) }
+                            # new keywords may contain error objects due to duplicates.
+                            # Only add non error objects to the collection.
+                            new_keywords.each do |item| 
+                                existing_keywords.push(item) unless item.is_a?(Error)
+                            end
                         else
                             msg = "An error occured creating keywords in #{__callee__}"
                             logger.error(msg)
@@ -3771,7 +3782,8 @@ module OpenAsset
 
                 # Loop though the files again and tag them with the newly created keywords.
                 files.each do | file |
-
+                    file.original_filename = nil
+                    file.caption.to_s.gsub!(/\n+/,' ') # Prevents 400 error when making update
                     field_data = nil
 
                     #9. Look for the field and check if the field has any data in it
@@ -3795,8 +3807,8 @@ module OpenAsset
 
                         # Loop through the keywords and tag the file
                         keywords.each do |value|
-                            # Trim leading & trailing whitespace
-                            value = value.strip
+                            # Trim leading & trailing whitespace and encode it to the same encoding used to create it
+                            value = value.strip.gsub(/[\n\s]+/,' ').gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
                             #find the string in existing keywords
                             keyword_obj = existing_keywords.find do |item| 
                                 begin
@@ -3817,7 +3829,7 @@ module OpenAsset
                                     file.keywords.push(NestedKeywordItems.new(keyword_obj.id))
                                 end
                             else
-                                msg = "Unable to retrieve previously created keyword in #{__callee__}"
+                                msg = "Unable to retrieve previously created keyword #{value.inspect} in #{__callee__}"
                                 logger.fatal(msg)
                                 abort
                             end        
@@ -3830,7 +3842,7 @@ module OpenAsset
 
                 # Update files
                 updated_obj_count = run_smart_update(files,total_files_updated)
-
+                
                 total_files_updated += updated_obj_count
 
                 offset += limit
@@ -3986,7 +3998,8 @@ module OpenAsset
 
                 op.add_option('id', ids)
                 op.add_option('limit','0')
-                
+                op.add_option('keywords','all')
+                op.add_option('fields','all')
                 # Get current batch of files => body length of response used to track total files updated
                 msg = "Batch #{num} of #{iterations} => Retrieving files."
                 logger.info(msg.green)
@@ -4038,7 +4051,7 @@ module OpenAsset
                     keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
 
                     keywords_to_append.each do |val|
-
+                        val = val.gsub(/[\n\s]+/,' ').gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
                         # Check if the value exists in existing keywords
                         keyword_found_in_existing = existing_keywords.find do |k|
 
@@ -4082,7 +4095,9 @@ module OpenAsset
                     # Append the returned keyword objects to the existing keywords array
                     if new_keywords
                         if new_keywords.is_a?(Array) && !new_keywords.empty?     
-                            new_keywords.each { |item| existing_keywords.push(item) }
+                            new_keywords.each do |item| 
+                                existing_keywords.push(item) unless item.is_a?(Error)
+                            end
                         else
                             msg = "An error occured creating keywords in #{__callee__}"
                             logger.error(msg)
@@ -4100,7 +4115,9 @@ module OpenAsset
                     #puts "In files tag before using instance_variable_get 2"
                     field_data      = nil
                     field_obj_found = nil
-
+                    file.caption.to_s.gsub!(/\n+/,' ') # Prevents 400 error caused by newlines in caption field
+                    file.original_filename = nil # Prevents 400 error when the filename extension and 
+                                                 # original filename extension don't match.
                     # Look for the field and check if the field has any data in it
                     if built_in
                         field_name = source_field_found.name.downcase.gsub(' ','_')
@@ -4137,8 +4154,9 @@ module OpenAsset
 
                         # Loop through the keywords and tag the file
                         keywords.each do |value|
-                            # Trim leading & trailing whitespace
-                            value = value.strip
+                            # Trim leading/trailing/mutltiple whitespaces and remove newlines
+                            value = value.strip.gsub(/[\n\s]+/,' ').gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
+
                             # Find the string in existing keywords
                             keyword_obj = existing_keywords.find do |item| 
                                 begin
@@ -4156,7 +4174,7 @@ module OpenAsset
                                 # Tag the file
                                 file.keywords.push(NestedKeywordItems.new(keyword_obj.id)) unless already_tagged
                             else
-                                msg = "Unable to retrieve previously created keyword! => #{value}"
+                                msg = "Unable to retrieve previously created keyword! => #{value.inspect} in #{__callee__}"
                                 logger.fatal(msg)
                                 abort
                             end
@@ -4441,7 +4459,7 @@ module OpenAsset
 
                     project_keywords_to_append.each do |val|
                         
-                        val = val.strip
+                        val = val.strip.gsub(/[\n\s]+/,' ').gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
                         # Check if the value exists in existing keywords
                         keyword = existing_project_keywords.find do |k|
 
@@ -4477,7 +4495,9 @@ module OpenAsset
 
                     # Append the returned project keyword objects to the existing keywords array
                     if new_keywords    
-                        new_keywords.each { |item| existing_project_keywords.push(item) }
+                        new_keywords.each do |item| 
+                            existing_project_keywords.push(item) unless item.is_a?(Error)
+                        end
                     end
                 
                 end
@@ -4514,7 +4534,7 @@ module OpenAsset
                     # Loop through the keywords and tag the file
                     keywords.each do |value|
                         # Trim leading & trailing whitespace
-                        value = value.strip
+                        value = value.strip.gsub(/[\n\s]+/,' ').gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
                         # Find the string in existing keywords
                         proj_keyword_obj = existing_project_keywords.find do |item| 
                             begin
@@ -4534,7 +4554,7 @@ module OpenAsset
 
                             project.project_keywords.push(NestedProjectKeywordItems.new(proj_keyword_obj.id)) unless already_tagged
                         else
-                            msg = "Unable to retrieve previously created keyword! => #{value}"
+                            msg = "Unable to retrieve previously created keyword! => #{value.inspect} in #{__callee__}"
                             logger.fatal(msg)
                             abort
                         end
