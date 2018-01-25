@@ -15,7 +15,7 @@
 
 Download it using the link below and run the gem install command from the folder containing the downloaded gem:
 
-    https://www.dropbox.com/s/jbsts2t6u6rtn8l/openasset-rest-client-1.0.5.gem?dl=0
+    https://www.dropbox.com/s/0238y3z8me6vcmd/openasset-rest-client-1.0.5.gem?dl=0
     
     $ gem install openasset-rest-client-1.0.5.gem
 
