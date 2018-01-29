@@ -37,7 +37,7 @@ class Authenticator
 
     private
     def initialize(url,un,pw)
-        @url = Validator::validate_and_process_url(url)
+        @url = Validator.validate_and_process_url(url)
         @username = un.to_s
         @password = pw.to_s
         @uri = @url + @@API_CONST + @@VERSION_CONST

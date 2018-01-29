@@ -17,7 +17,7 @@ class Downloader
             # Perform head request to get the content length to feed the progress bar      
             res = http.request_head(uri)
             file_size = res['content-length'].to_i
-            response = Validator::process_http_response(res,true,resource,'GET')
+            response = Validator.process_http_response(res,true,resource,'GET')
           
             return response unless response.kind_of? Net::HTTPSuccess
 

@@ -36,7 +36,7 @@ module OpenAsset
         #         rest_client = OpenAsset::RestClient.new('se1.openasset.com')
         def initialize(client_url,un='',pw='')
 
-            @authenticator = Authenticator::get_instance(client_url,un,pw)  
+            @authenticator = Authenticator.get_instance(client_url,un,pw)
             @session       = @authenticator.get_session
             @uri           = @authenticator.uri
             @verbose       = false
@@ -487,7 +487,7 @@ module OpenAsset
                 @session = response['X-SessionKey']
             end
 
-            Validator::process_http_response(response,@verbose,resource,'HEAD')
+            Validator.process_http_response(response,@verbose,resource,'HEAD')
 
             return unless response.kind_of?(Net::HTTPSuccess)
 
@@ -746,7 +746,7 @@ module OpenAsset
                 # This code executes if the web server hangs or takes too long 
                 # to respond after the first update is performed => Possible cause can be too large a batch size
                 if attempts == 4
-                    Validator::process_http_response(res,@verbose,scope.capitalize,'HEAD')
+                    Validator.process_http_response(res,@verbose,scope.capitalize,'HEAD')
                     msg = "Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
                           " Try adjusting the batch size."
                     logger.error(msg)
@@ -774,7 +774,7 @@ module OpenAsset
                         logger.info(msg)
                         break
                     else
-                        Validator::process_http_response(res,@verbose,scope.capitalize,'PUT')
+                        Validator.process_http_response(res,@verbose,scope.capitalize,'PUT')
                         abort
                     end
                 else
@@ -930,7 +930,7 @@ module OpenAsset
                 @char_encoding = content_type.split(/=/).last # application/json;charset=windows-1252 => windows-1252
             end
 
-            Validator::process_http_response(response,@verbose,resource,'GET')
+            Validator.process_http_response(response,@verbose,resource,'GET')
 
             return unless response.kind_of?(Net::HTTPSuccess)
 
@@ -960,7 +960,7 @@ module OpenAsset
 
             name = (resource == 'Files') ? '@filename' : '@name'
 
-            json_body = Validator::validate_and_process_request_data(data)
+            json_body = Validator.validate_and_process_request_data(data)
 
             unless json_body
                 msg = "No data in json_body in POST request."
@@ -1019,7 +1019,7 @@ module OpenAsset
             end
             
             # This method overwrites the response body and adds usefull 
-            response = Validator::process_http_response(response,@verbose,resource,'POST')
+            response = Validator.process_http_response(response,@verbose,resource,'POST')
            
             # Check each object for error during update
             res = process_errors(data,response,resource,'Create')
@@ -1039,7 +1039,7 @@ module OpenAsset
 
             resource = uri.to_s.split('/').last
             
-            json_body = Validator::validate_and_process_request_data(data)
+            json_body = Validator.validate_and_process_request_data(data)
                  
             unless json_body
                 msg = "No data in json_body in PUT request."
@@ -1097,7 +1097,7 @@ module OpenAsset
                 @session = response['X-SessionKey']
             end
             
-            response = Validator::process_http_response(response,@verbose,resource,'PUT')
+            response = Validator.process_http_response(response,@verbose,resource,'PUT')
 
             # Check each object for error during update
             res = process_errors(data,response,resource,'Update')
@@ -1118,7 +1118,7 @@ module OpenAsset
 
             resource  = uri.to_s.split('/').last
             
-            json_body = Validator::validate_and_process_delete_body(data)
+            json_body = Validator.validate_and_process_delete_body(data)
 
             unless json_body
                 msg = "No data in json_body being sent for DELETE request."
@@ -1176,7 +1176,7 @@ module OpenAsset
                 @session = response['X-SessionKey']
             end        
 
-            response = Validator::process_http_response(response,@verbose,resource,'DELETE')
+            response = Validator.process_http_response(response,@verbose,resource,'DELETE')
 
             res = process_errors(data,response,resource,'Delete')
 
@@ -1600,7 +1600,7 @@ module OpenAsset
         #          rest_client.get_field_lookup_strings()
         #          rest_client.get_field_lookup_strings(rest_options_object)
         def get_field_lookup_strings(field=nil,query_obj=nil,with_nested_resources=false)
-            id = Validator::validate_field_lookup_string_arg(field)
+            id = Validator.validate_field_lookup_string_arg(field)
             
             uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
             get(uri,query_obj,with_nested_resources)
@@ -1620,7 +1620,7 @@ module OpenAsset
         #          rest_client.create_field_lookup_strings(field_obj,field_lookup_strings_obj_array)
         #          rest_client.create_field_lookup_strings(field_obj,field_lookup_strings_obj_array,true)    
         def create_field_lookup_strings(field=nil,data=nil,generate_objects=false)
-            id = Validator::validate_field_lookup_string_arg(field)
+            id = Validator.validate_field_lookup_string_arg(field)
             
             uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
             post(uri,data,generate_objects)
@@ -1640,7 +1640,7 @@ module OpenAsset
         #          rest_client.update_field_lookup_strings(field_obj,field_lookup_strings_obj_array)
         #          rest_client.update_field_lookup_strings(field_obj,field_lookup_strings_obj_array,true)    
         def update_field_lookup_strings(field=nil,data=nil,generate_objects=false)
-            id = Validator::validate_field_lookup_string_arg(field)
+            id = Validator.validate_field_lookup_string_arg(field)
             
             uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
             put(uri,data,generate_objects)
@@ -1661,7 +1661,7 @@ module OpenAsset
         #          rest_client.delete_field_lookup_strings(field_obj, '1')
         def delete_field_lookup_strings(field=nil,data=nil)
 
-            id = Validator::validate_field_lookup_string_arg(field)
+            id = Validator.validate_field_lookup_string_arg(field)
             
             uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
             delete(uri,data) #data parameter validated in private delete method
@@ -1816,7 +1816,7 @@ module OpenAsset
                     end
                 end
 
-                response = Validator::process_http_response(response,@verbose,'Files','POST')
+                response = Validator.process_http_response(response,@verbose,'Files','POST')
                 break   
             end
 
@@ -1951,7 +1951,7 @@ module OpenAsset
                 exit(-1)
             end
 
-            Validator::process_http_response(response,@verbose,'Files', 'PUT')
+            Validator.process_http_response(response,@verbose,'Files', 'PUT')
 
             if generate_objects
                 
