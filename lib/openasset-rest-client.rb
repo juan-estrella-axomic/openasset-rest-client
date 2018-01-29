@@ -106,7 +106,6 @@ module OpenAsset
                     abort
                 end
 
-                # Get files in the album
                 unless container_found && !container_found.files.empty?
                     msg = "Album #{container_found.name.inspect} is empty"
                     logger.warn(msg.yellow)
