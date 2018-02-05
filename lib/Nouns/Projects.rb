@@ -28,7 +28,7 @@ class Projects
                 warn "Argument Error:\n\tExpected either\n\t1. No Arguments\n\t2. A Hash\n\t" + 
                      "3. Two separate string arguments." +
                      " e.g. Projects.new(name,code) in that order." + 
-                     "\n\tInstead got #{args.inspect} => Creating empty ProjectKeywords object."
+                     "\n\tInstead got #{args.inspect} => Creating empty Projects object."
             else
                 #grab the first two agruments and set up the json object
                 json_obj = {"name" => args[0].to_s, "code" => args[1].to_s}

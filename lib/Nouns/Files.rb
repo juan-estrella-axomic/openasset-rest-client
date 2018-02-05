@@ -20,7 +20,7 @@ class Files
     # @!parse attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes, :albums
     attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes, :albums
 
-    # Creates an Files object
+    # Creates a Files object
     #
     # @param args [Hash, String Argument list, nil] Takes a JSON object/Hash or no argument 
     # @return [Files object]

@@ -1,7 +1,19 @@
 class NestedFieldItems
     
+    # @!parse attr_accessor :id, :values
     attr_accessor :id, :values
 
+    # Creates an NestedFieldItems object
+    #
+    # @param arg1 [Hash, Integer, String, nil] Takes a Hash, Integer, String argument or nil
+    # @param arg2 [Integer, String, Array] Takes an Array, Integer, or String argument 
+    # @return [NestedFieldItems object]
+    #
+    # @example 
+    #          nstd_fld_item = NestedFieldItems.new => Empty obj
+    #          nstd_fld_item = NestedFieldItems.new({:id => 14, :values => ["data"]})
+    #          nstd_fld_item = NestedFieldItems.new("14","data")
+    #          nstd_fld_item = NestedFieldItems.new("14",["data"])
     def initialize(arg1=nil,arg2=nil)
 
         json_obj = nil

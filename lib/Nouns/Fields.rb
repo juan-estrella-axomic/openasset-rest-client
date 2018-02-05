@@ -10,13 +10,15 @@ class Fields
     # @!parse attr_accessor :field_type, :id, :include_on_info, :include_on_search, :name, :protected, :built_in
     attr_accessor :field_type, :id, :include_on_info, :include_on_search, :name, :protected, :built_in
 
-    # Creates an Fields object
+    # Creates a Fields object
     #
-    # @param args [Hash, nil] Takes a JSON object/Hash or no argument 
+    # @param args [Hash,3 Strings, nil] Takes a Hash, 3 separate strings, or no argument 
     # @return [Fields object]
     #
     # @example 
     #         field = Fields.new
+    #         field = Fields.new({:name => "myfield", :field_type => "image", :field_display_type => "multiLine"})
+    #         field = Fields.new("myfield","image","multiLine")
     def initialize(*args)
         json_obj = {}
         len = args.length

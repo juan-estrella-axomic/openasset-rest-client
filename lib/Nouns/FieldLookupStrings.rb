@@ -6,7 +6,7 @@ class FieldLookupStrings
     # @!parse attr_accessor :id, :display_order, :value
     attr_accessor :id, :display_order, :value
 
-    # Creates an FieldLookupStrings object
+    # Creates a FieldLookupStrings object
     #
     # @param data [Hash, nil] Takes a JSON object/Hash or no argument 
     # @return [FieldLookupStrings object]

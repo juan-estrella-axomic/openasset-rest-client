@@ -6,7 +6,7 @@ class Groups
     # @!parse attr_accessor :alive, :id, :name
     attr_accessor :alive, :id, :name
 
-    # Creates an Groups object
+    # Creates a Groups object
     #
     # @param data [Hash, nil] Takes a JSON object/Hash or no argument 
     # @return [Groups object]

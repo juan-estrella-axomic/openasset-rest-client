@@ -2,6 +2,16 @@ class Keywords
 
     attr_accessor :id, :keyword_category_id, :name
 
+    # Creates a Keywords object
+    #
+    # @param args [Hash, Integer, String, nil] Takes a Hash, Integer, String, or no argument
+    # @param args [Integer, String, nil] Takes a Hash, Integer, String, or no argument
+    # @return [NestedAlbumItems object]
+    #
+    # @example 
+    #          kwd = Keywords.new => Empty obj
+    #          kwd = Keywords.new({:keyword_category_id => 9, :name => "exterior"})
+    #          kwd = Keywords.new("9","exterior")
     def initialize(*args)
         json_obj = nil
         #This check is specific to the Keywords object

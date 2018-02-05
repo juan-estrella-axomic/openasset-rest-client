@@ -1,7 +1,12 @@
 class NestedSizeItems
     
+    # @!parse attr_accessor :width, :cropped, :watermarked, :relative_path, :y_resolution, :allow_use
     attr_accessor :width, :cropped, :watermarked, :relative_path, :y_resolution, :allow_use
+
+    # @!parse attr_accessor :id, :http_relative_path, :quality, :unc_root, :colourspace, :height
     attr_accessor :id, :http_relative_path, :quality, :unc_root, :colourspace, :height
+
+    # @!parse attr_accessor :http_root, :x_resolution, :filesize, :recreate, :file_format
     attr_accessor :http_root, :x_resolution, :filesize, :recreate, :file_format
 
     def initialize(data=nil)

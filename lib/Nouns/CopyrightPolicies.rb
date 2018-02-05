@@ -6,7 +6,7 @@ class CopyrightPolicies
     # @!parse attr_accessor :code, :description, :id, :name
     attr_accessor :code, :description, :id, :name
 
-    # Creates an CopyrightPolicies object
+    # Creates a CopyrightPolicies object
     #
     # @param data [Hash, nil] Takes a JSON object/Hash or no argument 
     # @return [CopyrightPolicies object]
