@@ -40,7 +40,8 @@ module OpenAsset
             @session       = @authenticator.get_session
             @uri           = @authenticator.uri
             @verbose       = false
-            @char_encoding = "UTF-8"
+            @incoming_encoding = 'windows-1252'
+            @outgoing_encoding = 'utf-8'
 
         end
 
@@ -927,14 +928,14 @@ module OpenAsset
             content_type = response['content-type'] # Identify character encoding
 
             unless content_type.nil? || content_type.eql?('')
-                @char_encoding = content_type.split(/=/).last # application/json;charset=windows-1252 => windows-1252
+                @incoming_encoding = content_type.split(/=/).last # application/json;charset=windows-1252 => windows-1252
             end
 
             Validator.process_http_response(response,@verbose,resource,'GET')
 
             return unless response.kind_of?(Net::HTTPSuccess)
 
-            response.body = response.body.encode(@char_encoding, @char_encoding) # Ensure data is encoded according to web server
+            response.body.encode!(@outgoing_encoding, @incoming_encoding) # Encode returned data into utf-8
             
             begin
                 json_body = JSON.parse(response.body)
@@ -972,7 +973,7 @@ module OpenAsset
                 attempts ||= 1
                 response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
                     request = Net::HTTP::Post.new(uri.request_uri)
-                    request["content-type"] = "application/json;charset=" + @char_encoding
+                    request["content-type"] = "application/json;charset=" + @incoming_encoding
 
                     if @session
                         request.add_field('X-SessionKey',@session)
@@ -982,19 +983,19 @@ module OpenAsset
                     end
                     
                     begin
-                        request.body = json_body.to_json.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                        request.body = json_body.to_json.encode!(@outgoing_encoding,@incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
                     rescue JSON::ParserError => json_err
                         json_body.each do |key,val|
                             if json_body[key].is_a?(Array) ## It's a nested field
                                 json_body[key].each do |nested_key,nested_value| 
                                     if nested_value.is_a?(Array) # It's a field value
-                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@char_encoding, invalid: :replace, undef: :replace) }
+                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?') }
                                     else # Just a regular nested object key value pair
-                                        json_body[key][nested_key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                                        json_body[key][nested_key].to_s.encode!(@incoming_encoding, invalid: :replace, undef: :replace)
                                     end
                                 end
                             else
-                                json_body[key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                                json_body[key].to_s.encode!(@incoming_encoding, invalid: :replace, undef: :replace)
                             end 
                         end
                         request.body = json_body.to_json
@@ -1051,7 +1052,7 @@ module OpenAsset
                 attempts ||= 1
                 response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
                     request = Net::HTTP::Put.new(uri.request_uri)
-                    request["content-type"] = "application/json;charset=" + @char_encoding
+                    request["content-type"] = "application/json;charset=" + @outgoing_encoding
 
                     if @session
                         request.add_field('X-SessionKey',@session)
@@ -1061,19 +1062,19 @@ module OpenAsset
                     end
                     
                     begin
-                        request.body = json_body.to_json.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                        request.body = json_body.to_json.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
                     rescue JSON::ParserError => json_err
                         json_body.each do |key,val|
                             if json_body[key].is_a?(Array) ## It's a nested field
                                 json_body[key].each do |nested_key,nested_value| 
                                     if nested_value.is_a?(Array) # It's a field value
-                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@char_encoding, invalid: :replace, undef: :replace) }
+                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?') }
                                     else # Just a regular json key value pair
-                                        json_body[key][nested_key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                                        json_body[key][nested_key].to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
                                     end
                                 end
                             else
-                                json_body[key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                                json_body[key].to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
                             end 
                         end
                         request.body = json_body.to_json
@@ -1130,7 +1131,7 @@ module OpenAsset
                 attempts ||= 1
                 response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
                     request = Net::HTTP::Delete.new(uri.request_uri) #e.g. when called in keywords => /keywords/id
-                    request["content-type"] = "application/json;charset=" + @char_encoding
+                    request["content-type"] = "application/json;charset=" + @incoming_encoding
 
                     if @session
                         request.add_field('X-SessionKey',@session)
@@ -1140,19 +1141,19 @@ module OpenAsset
                     end
                     
                     begin
-                        request.body = json_body.to_json.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                        request.body = json_body.to_json.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
                     rescue JSON::ParserError => json_err
                         json_body.each do |key,val|
                             if json_body[key].is_a?(Array) ## It's a nested field
                                 json_body[key].each do |nested_key,nested_value| 
                                     if nested_value.is_a?(Array) # It's a field value
-                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@char_encoding, invalid: :replace, undef: :replace) }
+                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?') }
                                     else # Just a regular json key value pair
-                                        json_body[key][nested_key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                                        json_body[key][nested_key].to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
                                     end
                                 end
                             else
-                                json_body[key].to_s.encode!(@char_encoding, invalid: :replace, undef: :replace)
+                                json_body[key].to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
                             end 
                         end
                         request.body = json_body.to_json
@@ -2731,11 +2732,17 @@ module OpenAsset
                     post(uri,{})
                 else                        #2. One File object and an array of Keywords objects
                     #loop through keywords objects and append the new nested keyword to the file
+
+                    simple_file_obj = Files.new
+                    simple_file_obj.id = files.id
+                    simple_file_obj.keywords = files.keywords  # retain existing keyword associations
+
                     keywords.each do |keyword|
-                        files.keywords << NestedKeywordItems.new(keyword.id)
-                    end  
+                        simple_file_obj.keywords << NestedKeywordItems.new(keyword.id)
+                    end
+                     
                     uri = URI.parse(@uri + "/Files")
-                    put(uri,files,false)
+                    put(uri,simple_file_obj,false)
                 end
             else        
                 if keywords.is_a?(Array)    #3. Two arrays
