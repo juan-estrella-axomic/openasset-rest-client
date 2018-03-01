@@ -973,7 +973,7 @@ module OpenAsset
                 attempts ||= 1
                 response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
                     request = Net::HTTP::Post.new(uri.request_uri)
-                    request["content-type"] = "application/json;charset=" + @incoming_encoding
+                    request["content-type"] = "application/json;charset=" + @outgoing_encoding
 
                     if @session
                         request.add_field('X-SessionKey',@session)
@@ -991,11 +991,11 @@ module OpenAsset
                                     if nested_value.is_a?(Array) # It's a field value
                                         json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?') }
                                     else # Just a regular nested object key value pair
-                                        json_body[key][nested_key].to_s.encode!(@incoming_encoding, invalid: :replace, undef: :replace)
+                                        json_body[key][nested_key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
                                     end
                                 end
                             else
-                                json_body[key].to_s.encode!(@incoming_encoding, invalid: :replace, undef: :replace)
+                                json_body[key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
                             end 
                         end
                         request.body = json_body.to_json
@@ -1062,19 +1062,19 @@ module OpenAsset
                     end
                     
                     begin
-                        request.body = json_body.to_json.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
+                        request.body = json_body.to_json.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
                     rescue JSON::ParserError => json_err
                         json_body.each do |key,val|
                             if json_body[key].is_a?(Array) ## It's a nested field
                                 json_body[key].each do |nested_key,nested_value| 
                                     if nested_value.is_a?(Array) # It's a field value
-                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?') }
+                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?') }
                                     else # Just a regular json key value pair
-                                        json_body[key][nested_key].to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
+                                        json_body[key][nested_key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
                                     end
                                 end
                             else
-                                json_body[key].to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
+                                json_body[key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
                             end 
                         end
                         request.body = json_body.to_json
@@ -1131,7 +1131,7 @@ module OpenAsset
                 attempts ||= 1
                 response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
                     request = Net::HTTP::Delete.new(uri.request_uri) #e.g. when called in keywords => /keywords/id
-                    request["content-type"] = "application/json;charset=" + @incoming_encoding
+                    request["content-type"] = "application/json;charset=" + @outgoing_encoding
 
                     if @session
                         request.add_field('X-SessionKey',@session)
@@ -1141,19 +1141,19 @@ module OpenAsset
                     end
                     
                     begin
-                        request.body = json_body.to_json.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
+                        request.body = json_body.to_json.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
                     rescue JSON::ParserError => json_err
                         json_body.each do |key,val|
                             if json_body[key].is_a?(Array) ## It's a nested field
                                 json_body[key].each do |nested_key,nested_value| 
                                     if nested_value.is_a?(Array) # It's a field value
-                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?') }
+                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?') }
                                     else # Just a regular json key value pair
-                                        json_body[key][nested_key].to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
+                                        json_body[key][nested_key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
                                     end
                                 end
                             else
-                                json_body[key].to_s.encode!(@outgoing_encoding, invalid: :replace, undef: :replace, replace: '?')
+                                json_body[key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
                             end 
                         end
                         request.body = json_body.to_json
@@ -1772,6 +1772,7 @@ module OpenAsset
                     attempts ||= 1
                     response = Net::HTTP.start(uri.host, uri.port, :read_timeout => timeout, :use_ssl => uri.scheme == 'https') do |http|
                         request = Net::HTTP::Post.new(uri.request_uri)
+
                         if @session
                             request.add_field('X-SessionKey',@session)
                         else
@@ -1790,14 +1791,19 @@ module OpenAsset
                         http.request(request)
                     end 
                 rescue Exception => e 
-                    attempts += 1
+                    
                     logger.warn("Initial Connection failed. Retrying in 20 seconds.") if attempts.eql?(1)
                     if attempts.eql?(1)
                         20.times do |num|
                             printf("\rRetrying in %-2.0d",(20-num)) 
                             sleep(1)
                         end
+                        attempts += 1
                         retry
+                    end
+                    if e.message.include?("incompatible character encodings")
+                        # This means a bad character was found in the file path
+                        e.message += ". Check file path in the spreadsheet and compare it with the file system."
                     end
                     logger.error("Connection failed: #{e}")
                     Thread.current.exit
@@ -1939,17 +1945,22 @@ module OpenAsset
                     http.request(request)
                 end
             rescue Exception => e
-                attempts += 1
+                
                 logger.warn("Initial Connection failed. Retrying in 15 seconds.") if attempts.eql?(1)
                 if attempts.eql?(1)
                     180.times do |num|
                         printf("\rRetrying in %-2.0d seconds",(180-num)) 
                         sleep(1)
                     end
+                    attempts += 1
                     retry
                 end
+                if e.message.include?("incompatible character encodings")
+                    # This means a bad character was found in the file path
+                    e.message += ". Check file path in the spreadsheet and compare it with the file system."
+                end
                 logger.error("Connection failed: #{e}")
-                exit(-1)
+                Thread.current.exit
             end
 
             Validator.process_http_response(response,@verbose,'Files', 'PUT')
