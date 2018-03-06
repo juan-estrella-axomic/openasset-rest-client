@@ -75,7 +75,7 @@ module CSVHelper
                             data = noun_obj.instance_variable_get('@' + variable_name.downcase)
                             #we only want built in attributes
                             unless data.is_a?(Array)
-                                csv_values << data.encode!("UTF-8", invalid: :replace, undef: :replace)
+                                csv_values << data.to_s.encode!("UTF-8", invalid: :replace, undef: :replace)
                             end
                         end
                         
@@ -88,7 +88,7 @@ module CSVHelper
                 #loop through each of the strings
                 self.each do |str|
                     #write values to the spreadsheet
-                    str = str..encode!("UTF-8", invalid: :replace, undef: :replace)
+                    str = str.to_s.encode!("UTF-8", invalid: :replace, undef: :replace)
                     csv << [str]
                 end
             elsif self.first.is_a?(Array)
