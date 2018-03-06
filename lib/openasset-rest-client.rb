@@ -935,7 +935,7 @@ module OpenAsset
 
             return unless response.kind_of?(Net::HTTPSuccess)
 
-            response.body.encode!(@outgoing_encoding, @incoming_encoding) # Encode returned data into utf-8
+            response.body.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?') # Encode returned data into utf-8
             
             begin
                 json_body = JSON.parse(response.body)
