@@ -377,7 +377,7 @@ module OpenAsset
                         err['resource_name']    = data[index].instance_variable_get(name)    unless data[index].nil?
                         err['resource_type']    = resource  # Determined by api endpoint
                         err['http_status_code'] = obj["http_status_code"]
-                        err['error_message']    = obj['error_message'] # 'Resource has already been deleted.'
+                        err['error_message']    = obj['error_message'] # 'e.g. Resource has already been deleted.'
         
                         errors << err
                         json_obj_collection << err
@@ -385,7 +385,7 @@ module OpenAsset
                         json_obj_collection << obj
                     end
                 end
-            elsif res.body
+            elsif resource.downcase == 'projects' && res.body
                 jsonBody.each_with_index do |obj,index|
                     if obj.is_a?(Hash) && obj.has_key?("error_message")
                         err                     = Hash.new
