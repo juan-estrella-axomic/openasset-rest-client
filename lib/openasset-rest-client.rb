@@ -2816,7 +2816,8 @@ module OpenAsset
                 else                        #2. One Project object and an array of project Keyword objects
                     #loop through Projects objects and append the new nested keyword to them
                     proj_keywords.each do |keyword|
-                        projects.project_keywords << project_keyword.new(keyword.id)  
+                        #projects.project_keywords << project_keyword.new(keyword.id)
+                        projects.project_keywords << NestedProjectKeywordItems.new(keyword.id)  
                     end
                     uri = URI.parse(@uri + "/Projects")
                     put(uri,projects,false)
@@ -2825,14 +2826,16 @@ module OpenAsset
                 if proj_keywords.is_a?(Array)    #3. Two arrays
                     projects.each do |proj|
                         proj_keywords.each do |keyword|
-                            proj.project_keywords << project_keyword.new(keyword.id)
+                            #proj.project_keywords << project_keyword.new(keyword.id)
+                            proj.project_keywords << NestedProjectKeywordItems.new(keyword.id)
                         end
                     end
                     uri = URI.parse(@uri + "/Projects")
                     put(uri,projects,false)
                 else                        #4. Projects array and a single Keywords object
                     projects.each do |proj|
-                        proj.project_keywords << project_keyword.new(proj_keywords.id)
+                        #proj.project_keywords << project_keyword.new(proj_keywords.id)
+                        proj.project_keywords << NestedProjectKeywordItems.new(keyword.id)
                     end    
                     uri = URI.parse(@uri + "/Projects") #/ProjectKeywords/:id/Projects 
                     put(uri,projects,false)                    #shortcut not implemented yet                    
