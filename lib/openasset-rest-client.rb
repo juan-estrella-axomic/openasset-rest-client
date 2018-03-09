@@ -2807,7 +2807,7 @@ module OpenAsset
             end 
             #2.build project json array for request body
             #There are four acceptable combinations for the arguments.
-            project_keyword = Struct.new(:id)
+            #project_keyword = Struct.new(:id)
 
             if projects.is_a?(Projects)  
                 if proj_keywords.is_a?(ProjectKeywords) #1. Two Single objects
@@ -2817,7 +2817,7 @@ module OpenAsset
                     #loop through Projects objects and append the new nested keyword to them
                     proj_keywords.each do |keyword|
                         #projects.project_keywords << project_keyword.new(keyword.id)
-                        projects.project_keywords << NestedProjectKeywordItems.new(keyword.id)  
+                        projects.project_keywords << NestedProjectKeywordItems.new(proj_keywords.id)  
                     end
                     uri = URI.parse(@uri + "/Projects")
                     put(uri,projects,false)
@@ -2827,7 +2827,7 @@ module OpenAsset
                     projects.each do |proj|
                         proj_keywords.each do |keyword|
                             #proj.project_keywords << project_keyword.new(keyword.id)
-                            proj.project_keywords << NestedProjectKeywordItems.new(keyword.id)
+                            proj.project_keywords << NestedProjectKeywordItems.new(proj_keywords.id)
                         end
                     end
                     uri = URI.parse(@uri + "/Projects")
@@ -2835,7 +2835,7 @@ module OpenAsset
                 else                        #4. Projects array and a single Keywords object
                     projects.each do |proj|
                         #proj.project_keywords << project_keyword.new(proj_keywords.id)
-                        proj.project_keywords << NestedProjectKeywordItems.new(keyword.id)
+                        proj.project_keywords << NestedProjectKeywordItems.new(proj_keywords.id)
                     end    
                     uri = URI.parse(@uri + "/Projects") #/ProjectKeywords/:id/Projects 
                     put(uri,projects,false)                    #shortcut not implemented yet                    
