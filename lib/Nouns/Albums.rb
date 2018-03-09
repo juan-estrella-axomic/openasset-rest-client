@@ -3,8 +3,8 @@
 # @author Juan Estrella
 class Albums
 
-    # @!parse attr_accessor :all_users_can_modify, :can_modify, :code, :company_album, :created, :description 
-    attr_accessor :all_users_can_modify, :can_modify, :code, :company_album, :created, :description 
+    # @!parse attr_accessor :all_users_can_modify, :can_modify, :code, :company_album, :created, :description, :approved_company_album 
+    attr_accessor :all_users_can_modify, :can_modify, :code, :company_album, :created, :description, :approved_company_album 
 
     # @!parse attr_accessor :id, :locked, :my_album, :name, :private_image_count, :public_image_count
     attr_accessor :id, :locked, :my_album, :name, :private_image_count, :public_image_count
