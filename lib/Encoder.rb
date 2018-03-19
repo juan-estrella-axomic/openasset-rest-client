@@ -1,6 +1,6 @@
 require 'json'
 
-module MyEncoder
+module Encoder
 
     def encode_json_to_utf8(json_body,enc_out,enc_in)
 
