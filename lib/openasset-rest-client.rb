@@ -371,34 +371,18 @@ module OpenAsset
             
             data = [data] unless data.is_a?(Array)
 
-            if resource.downcase == 'files' && res.body # && !res.code.to_s.eql?('204')
+            if res.body
                 jsonBody.each_with_index do |obj,index|
                     if obj.is_a?(Hash) && obj.has_key?("error_message")
                         err                     = Hash.new
-                        err['id']               = data[index].id    unless data[index].nil?
-                        err['resource_name']    = data[index].instance_variable_get(name)    unless data[index].nil?
-                        err['resource_type']    = resource  # Determined by api endpoint
-                        err['http_status_code'] = obj["http_status_code"]
-                        err['error_message']    = obj['error_message'] # 'e.g. Resource has already been deleted.'
-        
-                        errors << err
-                        json_obj_collection << err
-                    else
-                        json_obj_collection << obj
-                    end
-                end
-            elsif resource.downcase == 'projects' && res.body
-                jsonBody.each_with_index do |obj,index|
-                    if obj.is_a?(Hash) && obj.has_key?("error_message")
-                        err                     = Hash.new
-                        err['id']               = data[index].id
-                        err['resource_name']    = data[index].instance_variable_get(name)
+                        err['id']               = data[index].id  unless data[index].nil?
+                        err['resource_name']    = data[index].instance_variable_get(name)  unless data[index].nil?
                         err['resource_type']    = resource  # Determined by api endpoint
                         err['http_status_code'] = obj['http_status_code']
                         err['error_message']    = obj['error_message']
         
                         errors << err
-                        json_obj_collection << err
+                        #json_obj_collection << err
                     else
                         json_obj_collection << obj
                     end
@@ -1003,10 +987,10 @@ module OpenAsset
                 @session = response['X-SessionKey']
             end
             
-            # This method overwrites the response body and adds usefull 
+            
             response = Validator.process_http_response(response,@verbose,resource,'POST')
            
-            # Check each object for error during update
+            # Check each objects for errors during update
             res = process_errors(data,response,resource,'Create')
 
             if generate_objects == true
