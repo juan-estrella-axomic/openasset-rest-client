@@ -2,6 +2,7 @@ require_relative 'Version/version'
 require_relative 'Authenticator'
 require_relative 'RestOptions'
 require_relative 'MyLogger'
+require_relative 'Encoder'
 require_relative 'Error'
 
 require 'net/http'
@@ -16,6 +17,7 @@ module OpenAsset
 
         # Provides a globally shared singleton logger 
         include Logging
+        include Encoder
         
         RESTRICTED_LIST_FIELD_TYPES   = %w[ suggestion fixedSuggestion option ]
         NORMAL_FIELD_TYPES            = %w[ singleLine multiLine ]
@@ -40,7 +42,7 @@ module OpenAsset
             @session       = @authenticator.get_session
             @uri           = @authenticator.uri
             @verbose       = false
-            @incoming_encoding = 'windows-1252'
+            @incoming_encoding = 'utf-8' #Assume utf-8 unless web server specifies differently
             @outgoing_encoding = 'utf-8'
 
         end
@@ -981,27 +983,9 @@ module OpenAsset
                         @session = @authenticator.get_session
                         request.add_field('X-SessionKey',@session)
                     end
-                    
-                    begin
-                        request.body = json_body.to_json.encode!(@outgoing_encoding,@incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
-                    rescue JSON::ParserError => json_err
-                        json_body.each do |key,val|
-                            if json_body[key].is_a?(Array) ## It's a nested field
-                                json_body[key].each do |nested_key,nested_value| 
-                                    if nested_value.is_a?(Array) # It's a field value
-                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?') }
-                                    else # Just a regular nested object key value pair
-                                        json_body[key][nested_key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
-                                    end
-                                end
-                            else
-                                json_body[key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
-                            end 
-                        end
-                        request.body = json_body.to_json
-                    rescue Exception => e
-                        logger.error(e.message)
-                    end
+
+                    # Logic found in Encoder.rb
+                    request.body = encode_json_to_utf8(json_body,@outgoing_encoding,@incoming_encoding)
                     
                     http.request(request)
                 end
@@ -1061,26 +1045,8 @@ module OpenAsset
                         request.add_field('X-SessionKey',@session)
                     end
                     
-                    begin
-                        request.body = json_body.to_json.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
-                    rescue JSON::ParserError => json_err
-                        json_body.each do |key,val|
-                            if json_body[key].is_a?(Array) ## It's a nested field
-                                json_body[key].each do |nested_key,nested_value| 
-                                    if nested_value.is_a?(Array) # It's a field value
-                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?') }
-                                    else # Just a regular json key value pair
-                                        json_body[key][nested_key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
-                                    end
-                                end
-                            else
-                                json_body[key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
-                            end 
-                        end
-                        request.body = json_body.to_json
-                    rescue Exception => e
-                        logger.error(e.message)
-                    end
+                    # Logic found in Encoder.rb
+                    request.body = encode_json_to_utf8(json_body,@outgoing_encoding,@incoming_encoding)
 
                     http.request(request)
                 end
@@ -1139,27 +1105,9 @@ module OpenAsset
                         @session = @authenticator.get_session
                         request.add_field('X-SessionKey',@session)
                     end
-                    
-                    begin
-                        request.body = json_body.to_json.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
-                    rescue JSON::ParserError => json_err
-                        json_body.each do |key,val|
-                            if json_body[key].is_a?(Array) ## It's a nested field
-                                json_body[key].each do |nested_key,nested_value| 
-                                    if nested_value.is_a?(Array) # It's a field value
-                                        json_body[key][nested_key].each { |text| text.to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?') }
-                                    else # Just a regular json key value pair
-                                        json_body[key][nested_key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
-                                    end
-                                end
-                            else
-                                json_body[key].to_s.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?')
-                            end 
-                        end
-                        request.body = json_body.to_json
-                    rescue Exception => e
-                        logger.error(e.message)
-                    end
+
+                    # Logic found in Encoder.rb
+                    request.body = encode_json_to_utf8(json_body,@outgoing_encoding,@incoming_encoding)
                 
                     http.request(request)
                 end
