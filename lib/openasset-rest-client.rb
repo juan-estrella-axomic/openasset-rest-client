@@ -23,6 +23,9 @@ module OpenAsset
         NORMAL_FIELD_TYPES            = %w[ singleLine multiLine ]
         ALLOWED_BOOLEAN_FIELD_OPTIONS = %w[ enable disable yes no set unset check uncheck tick untick on off true false 1 0]
 
+        IMAGE_BUILT_IN_FIELD_CODES    = [ "_filecopyrightholder", "_filephotographer" ]
+        IMAGE_BUILT_IN_FIELD_NAMES    = [ "copyright holder", "photographer" ]
+
         # @!parse attr_reader :session, :uri
         attr_reader :session, :uri
         
@@ -2860,16 +2863,18 @@ module OpenAsset
 
             #Check the field type -> if its option or fixed suggestion we must make the option
             #available first before we can apply it to the Files resource
-            if RESTRICTED_LIST_FIELD_TYPES.include?(current_field.field_display_type)
+            if RESTRICTED_LIST_FIELD_TYPES.include?(current_field.field_display_type) 
                 
                 lookup_string_endpoint = URI.parse(@uri + "/Fields/#{current_field.id}/FieldLookupStrings")
-
+           
                 #Grab all the available FieldLookupStrings for the specified Fields resource
-                field_lookup_strings = get(lookup_string_endpoint,nil)
-
+                #field_lookup_strings = get(lookup_string_endpoint,nil)
+                op = RestOptions.new
+                op.add_option(limit,0)
+                field_lookup_strings = get_field_lookup_strings(current_field,op)
                 #check if the value in the third argument is currently an available option for the field
                 lookup_string_exists = field_lookup_strings.find { |item| current_value.downcase == item.value.downcase }
-
+          
                 # add the option to the restricted field first if it's not there, otherwise you get a 400 bad 
                 # request error saying that it couldn't find the string value for the restricted field specified 
                 # when making a PUT request on the FILES resource you are currently working on
@@ -2877,6 +2882,7 @@ module OpenAsset
                     data = {:value => current_value }
                     response = post(lookup_string_endpoint,data,false)
                     unless response.kind_of?(Net::HTTPSuccess)
+                        puts "FAILED TO CREATE FIELD LOOKUP STRING => #{current_value}"
                         return
                     end
                 end
@@ -2891,6 +2897,46 @@ module OpenAsset
                 end
 
                 res = update_files(current_file,false)
+
+            elsif IMAGE_BUILT_IN_FIELD_CODES.include?(current_field.code.downcase) ||
+                  IMAGE_BUILT_IN_FIELD_NAMES.include?(current_field.name.downcase)     # This handles copyright holder and photographer fields
+
+                  rest_code = current_field.rest_code
+
+                  op = RestOptions.new
+                  op.add_option('limit',1)
+                  op.add_option('name',current_value)
+                  op.add_option('textMatching','exact')
+
+                  if rest_code == 'copyright_holder_id'
+                    # Create Copyright holder if needed
+                    copyright_holder = get_copyright_holders(op).first 
+                    unless copyright_holder
+                        obj = CopyrightHolders.new(current_value)
+                        copyright_holder = create_copyright_holders(obj,true).first
+                        unless copyright_holder
+                            logger.error("Could not create copyright holder #{current_value} in OpenAsset")
+                            return
+                        end
+                    end
+                    current_file.copyright_holder_id = copyright_holder.id
+                    
+                  elsif rest_code == 'photographer_id'
+                    # Create Photographer if needed
+                    photographer = get_photographers(op).first 
+                    unless photographer
+                        obj = Photographers.new(current_value)
+                        photographer = create_photographers(obj,true).first
+                        unless photographer
+                            logger.error("Could not create photographer #{current_value} in OpenAsset")
+                            return
+                        end
+                    end
+                    current_file.photographer_id = photographer.id
+                  
+                  end
+                  # Update file
+                  update_files(current_file)
 
             elsif current_field.field_display_type == "date"
                 #make sure we get the right date format

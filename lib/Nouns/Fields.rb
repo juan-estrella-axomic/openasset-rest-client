@@ -4,8 +4,8 @@ require_relative 'FieldLookupStrings.rb'
 # @author Juan Estrella
 class Fields 
 
-    # @!parse attr_accessor :alive, :cardinality, :code, :description, :display_order, :field_display_type
-    attr_accessor :alive, :cardinality, :code, :description, :display_order, :field_display_type
+    # @!parse attr_accessor :alive, :cardinality, :code, :rest_code, :description, :display_order, :field_display_type
+    attr_accessor :alive, :cardinality, :code, :rest_code, :description, :display_order, :field_display_type
 
     # @!parse attr_accessor :field_type, :id, :include_on_info, :include_on_search, :name, :protected, :built_in
     attr_accessor :field_type, :id, :include_on_info, :include_on_search, :name, :protected, :built_in
@@ -39,7 +39,8 @@ class Fields
         
         @alive = json_obj['alive']                                
         @cardinality = json_obj['cardinality']                    
-        @code = json_obj['code']                                
+        @code = json_obj['code']
+        @rest_code = json_obj['rest_code']                                
         @description = json_obj['description']                    
         @display_order = json_obj['display_order']                
         @field_display_type = json_obj['field_display_type']     #enumerator
@@ -65,6 +66,7 @@ class Fields
         json_data[:alive] = @alive                                unless @alive.nil?
         json_data[:cardinality] = @cardinality                    unless @cardinality.nil?
         json_data[:code] = @code                                  unless @code.nil?
+        json_data[:rest_code] = @rest_code                        unless @rest_code.nil?
         json_data[:description] = @description                    unless @description.nil?
         json_data[:display_order] = @display_order                unless @display_order.nil?
         json_data[:field_display_type] = @field_display_type      unless @field_display_type.nil?
