@@ -1714,12 +1714,17 @@ module OpenAsset
                             @session = @authenticator.get_session
                             request.add_field('X-SessionKey',@session)
                         end
+
+                        raw_filename = File.basename(file)
+                        encoding = raw_filename.encoding.to_s                     
+                        filename = raw_filename.force_encoding(encoding).encode('UTF-8') # Read string as identifed encoding and convert to utf-8
+                        
                         request["cache-control"] = 'no-cache'
                         request["content-type"] = 'multipart/form-data; boundary=----WebKitFormBoundary' + boundary
                         body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"_jsonBody\"" 
-                        body << "\r\n\r\n[{\"original_filename\":\"#{File.basename(file)}\",\"category_id\":#{category_id},\"project_id\":\"#{project_id}\"}]\r\n"
+                        body << "\r\n\r\n[{\"original_filename\":\"#{filename}\",\"category_id\":#{category_id},\"project_id\":\"#{project_id}\"}]\r\n"
                         body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"file\";"
-                        body << "filename=\"#{File.basename(file)}\"\r\nContent-Type: #{MIME::Types.type_for(file)}\r\n\r\n"
+                        body << "filename=\"#{filename}\"\r\nContent-Type: #{MIME::Types.type_for(file)}\r\n\r\n"
                         body << IO.binread(file)
                         body << "\r\n------WebKitFormBoundary#{boundary}--"
                         request.body = body.join
@@ -1728,6 +1733,7 @@ module OpenAsset
                 rescue Exception => e 
                     
                     logger.warn("Initial Connection failed. Retrying in 20 seconds.") if attempts.eql?(1)
+                    msg = e.message
                     if attempts.eql?(1)
                         20.times do |num|
                             printf("\rRetrying in %-2.0d",(20-num)) 
@@ -1736,11 +1742,12 @@ module OpenAsset
                         attempts += 1
                         retry
                     end
-                    if e.message.include?("incompatible character encodings")
+                    if msg.include?("incompatible character encodings")
                         # This means a bad character was found in the file path
-                        e.message += ". Check file path in the spreadsheet and compare it with the file system."
+                        msg += ". Check file path in the spreadsheet for bad characters." +
+                               "\nReplace the bad characters in the spreadsheet and file system. "
                     end
-                    logger.error("Connection failed: #{e}")
+                    logger.error("Connection failed: #{msg}")
                     Thread.current.exit
                 end
 
