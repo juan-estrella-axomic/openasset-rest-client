@@ -509,7 +509,11 @@ module OpenAsset
             objects.each do |object|
 
                 next if object.instance_variable_get("#{keyword_accessor}").empty?
-        
+                
+                if object.is_a?(Files)
+                    object.original_filename = nil
+                end
+
                 nested_kwd_ids = object.instance_variable_get("#{keyword_accessor}").map { |kwd| kwd.id.to_s }
         
                 # Retrieve the actual keyword objects associated with the nested ids
@@ -524,6 +528,8 @@ module OpenAsset
                 end
         
                 field_string = keyword_data.map(&:name).join(field_separator)
+
+                next if field_string.empty?
                 
                 if built_in
 
@@ -619,9 +625,9 @@ module OpenAsset
                             if NORMAL_FIELD_TYPES.include?(field.field_display_type)
             
                                 object.fields[index].values = [field_string]
-            
-                                msg "Inserting #{field_string.inspect} into #{field.name.inspect} field" +
-                                    " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+
+                                msg = "Inserting #{field_string.inspect} into #{field.name.inspect} field" +
+                                      " for #{object_type} => #{object.instance_variable_get("#{object_name}").to_s.inspect}."
 
                                 logger.info(msg.green)
                             
@@ -668,7 +674,7 @@ module OpenAsset
                         if NORMAL_FIELD_TYPES.include?(field.field_display_type)
             
                             object.fields << NestedFieldItems.new(field.id.to_s, [field_string])
-            
+
                             msg = "Inserting #{field_string.inspect} into #{field.name.inspect} field" +
                                   " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
 
@@ -3419,16 +3425,13 @@ module OpenAsset
             end
 
             # Create update loop using iteration limit and batch size
-            iterations.times do |num|
+            file_ids.each_slice(batch_size).with_index do |subset,num|
 
                 num += 1
                 
                 # More efficient than setting the offset and limit in the query
-                start_index = offset
-                end_index   = offset + limit
-                ids = file_ids[start_index...end_index].join(',')
 
-                op.add_option('id', ids)
+                op.add_option('id', subset)
                 op.add_option('keywords','all')
                 op.add_option('fields','all')
                 # Get current batch of files => body length used to track total files updated
@@ -3609,11 +3612,10 @@ module OpenAsset
                 logger.info(msg.white)
 
                 # Update files
-                updated_obj_count = run_smart_update(files,total_files_updated)
+                run_smart_update(files,total_files_updated)
 
-                total_files_updated += updated_obj_count
+                total_files_updated += subset.length
 
-                offset += limit
             end  
         end
         
@@ -3697,16 +3699,13 @@ module OpenAsset
             end
 
             # Create update loop using iteration limit and batch size
-            iterations.times do |num|
+            file_ids.each_slice(batch_size).with_index do |subset,num|
 
                 num += 1
 
                 # More efficient than setting the offset and limit in the query
-                start_index = offset
-                end_index   = offset + limit
-                ids = file_ids[start_index...end_index].join(',')
                 
-                op.add_option('id',ids)
+                op.add_option('id',subset)
                 op.add_option('limit','0')
                 op.add_option('keywords','all')
                 op.add_option('fields','all')
@@ -3858,11 +3857,10 @@ module OpenAsset
                 logger.info(msg.white)
 
                 # Update files
-                updated_obj_count = run_smart_update(files,total_files_updated)
+                run_smart_update(files,total_files_updated)
                 
-                total_files_updated += updated_obj_count
+                total_files_updated += subset.length
 
-                offset += limit
             end 
         end
         
@@ -4004,16 +4002,13 @@ module OpenAsset
 
             # Set up loop controls
             # Create update loop using iteration limit and batch size
-            iterations.times do |num|
+            file_ids.each_slice(batch_size).with_index do |subset,num|
                 
                 num += 1
                 # More efficient than setting the offset and limit in the query
                 # TO DO: Implement this in the other admin functions
-                start_index = offset
-                end_index   = offset + limit
-                ids = file_ids[start_index...end_index].join(',')
 
-                op.add_option('id', ids)
+                op.add_option('id', subset)
                 op.add_option('limit','0')
                 op.add_option('keywords','all')
                 op.add_option('fields','all')
@@ -4205,11 +4200,10 @@ module OpenAsset
                 logger.info(msg.white)
 
                 # Update files
-                updated_obj_count = run_smart_update(files,total_files_updated)
+                run_smart_update(files,total_files_updated)
 
-                total_files_updated += updated_obj_count
+                total_files_updated += subset.length
 
-                offset += limit
             end  
         end
 
@@ -4416,16 +4410,12 @@ module OpenAsset
                 iterations = total_project_count / batch_size + 1 # To grab remaining
             end
 
-            iterations.times do |num|
+            project_ids.each_slice(batch_size).with_index do |subset,num|
 
                 num += 1
 
-                start_index = offset
-                end_index   = offset + limit
-                ids         = project_ids[start_index...end_index].join(',')
-
                 op.add_option('limit','0')
-                op.add_option('id',ids)
+                op.add_option('id',subset)
                 op.add_option('projectKeywords','all')
                 op.add_option('fields','all')
 
@@ -4584,11 +4574,9 @@ module OpenAsset
                 msg = "Batch #{num} of #{iterations} => Attempting to perform project updates."
                 logger.info(msg.green)
 
-                updated_obj_count = run_smart_update(projects,total_projects_updated)
+                run_smart_update(projects,total_projects_updated)
 
-                total_projects_updated += updated_obj_count
-
-                offset += limit
+                total_projects_updated += subset.length
 
             end            
 
@@ -4826,7 +4814,7 @@ module OpenAsset
                 iterations = total_project_count / batch_size + 1 # To grab remaining
             end
 
-            iterations.times do |num|
+            project_ids.each_slice(batch_size).with_index do |subset,num|
 
                 num += 1
 
@@ -4835,6 +4823,8 @@ module OpenAsset
                 ids         = project_ids[start_index...end_index].join(',')
 
                 op.add_option('limit','0')
+                op.add_option('keywords','all')
+                op.add_option('fields','all')
                 op.add_option('id',ids)
 
                 msg = "Batch #{num} of #{iterations} => Retrieving projects."
@@ -4858,11 +4848,9 @@ module OpenAsset
                 msg = "Batch #{num} of #{iterations} => Attempting to perform project updates."
                 logger.info(msg.green)
 
-                updated_obj_count = run_smart_update(processed_projects,total_projects_updated)
+                run_smart_update(processed_projects,total_projects_updated)
 
-                total_projects_updated += updated_obj_count
-
-                offset += limit
+                total_projects_updated += subset.length
 
             end            
 
@@ -5002,22 +4990,21 @@ module OpenAsset
                 iterations = total_file_count / batch_size + 1 # To grab remaining
             end
 
-            iterations.times do |num|
+            file_ids.each_slice(batch_size).with_index do |subset,num|
 
                 num += 1
 
                 # Get file batch
-                start_index = offset
-                end_index   = offset + limit
-                ids         = file_ids[start_index...end_index].join(',')
-
                 msg = "Batch #{num} of #{iterations} => Retrieving files."
                 logger.info(msg.green)
 
                 op.add_option('limit','0')
-                op.add_option('id',ids)
+                op.add_option('keywords','all')
+                op.add_option('fields','all')
+                op.add_option('id',subset)
 
                 files = get_files(op)
+                op.clear
 
                 # Move the keywords
                 processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
@@ -5026,11 +5013,9 @@ module OpenAsset
                 msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
                 logger.info(msg.white)
 
-                updated_obj_count = run_smart_update(processed_files,total_files_updated)
+                run_smart_update(processed_files,total_files_updated)
 
-                total_files_updated += updated_obj_count
-
-                offset += limit
+                total_files_updated += subset.length
 
             end
             
@@ -5173,23 +5158,21 @@ module OpenAsset
                 iterations = total_file_count / batch_size + 1
             end
 
-            iterations.times do |num|
+            file_ids.each_slice(batch_size).with_index do |subset,num|
 
                 num += 1
 
-                start_index = offset
-                end_index   = limit
-                ids         = file_ids[start_index...end_index].join(',')
-
                 msg = "Batch #{num} of #{iterations} => Retrieving files."
-                logger.info(msg.green)
+                logger.info(msg.green)     
 
                 op.add_option('limit','0')
-                op.add_option('id',ids)
+                op.add_option('keywords','all')
+                op.add_option('fields','all')
+                op.add_option('id',subset)
 
                 # Get current batch of files
                 files = get_files(op)
-
+                op.clear
                 # Move the file keywords to specified field
                 move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
 
@@ -5197,11 +5180,10 @@ module OpenAsset
                 msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
                 logger.info(msg.white)
 
-                updated_obj_count = run_smart_update(files,total_files_updated)
+                run_smart_update(files,total_files_updated)
 
-                total_files_updated += updated_obj_count
+                total_files_updated += subset.length
 
-                offset += limit
             end
 
         end
@@ -5342,23 +5324,23 @@ module OpenAsset
                 iterations = total_file_count / batch_size + 1
             end
 
-            iterations.times do |num|
+            file_ids.each_slice(batch_size).with_index do |subset,num|
 
                 num += 1
-
-                start_index = offset
-                end_index   = limit
-                ids         = file_ids[start_index...end_index].join(',')
 
                 msg = "Batch #{num} of #{iterations} => Retrieving files."
                 logger.info(msg.green)
 
                 op.add_option('limit','0')
-                op.add_option('id',ids)
+                op.add_option('keywords','all')
+                op.add_option('fields','all')
+                op.add_option('id',subset)
 
                 # Get current batch of files
                 files = get_files(op)
+                op.clear
 
+                files.each { |f| f.original_filename = nil } 
                 # Move the file keywords to specified field
                 move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
 
@@ -5366,11 +5348,10 @@ module OpenAsset
                 msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
                 logger.info(msg.white)
                 
-                updated_obj_count = run_smart_update(files,total_files_updated)
+                run_smart_update(files,total_files_updated)
 
-                total_files_updated += updated_obj_count
+                total_files_updated += subset.length
 
-                offset += limit
             end
             
         end
