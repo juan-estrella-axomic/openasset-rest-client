@@ -2863,7 +2863,7 @@ module OpenAsset
 
             #Check the field type -> if its option or fixed suggestion we must make the option
             #available first before we can apply it to the Files resource
-            if RESTRICTED_LIST_FIELD_TYPES.include?(current_field.field_display_type) 
+            if RESTRICTED_LIST_FIELD_TYPES.include?(current_field.field_display_type)
                 
                 lookup_string_endpoint = URI.parse(@uri + "/Fields/#{current_field.id}/FieldLookupStrings")
            
