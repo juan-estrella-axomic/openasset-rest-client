@@ -1716,9 +1716,21 @@ module OpenAsset
                         end
 
                         raw_filename = File.basename(file)
-                        encoding = raw_filename.encoding.to_s                     
-                        filename = raw_filename.force_encoding(encoding).encode('UTF-8') # Read string as identifed encoding and convert to utf-8
+                        encoding = raw_filename.encoding.to_s
                         
+                        begin
+                            filename = raw_filename.force_encoding(encoding).encode('UTF-8', 
+                                                                                    encoding, 
+                                                                                    invalid: :replace, 
+                                                                                    undef: :replace, 
+                                                                                    replace: '?') # Read string as identifed encoding and convert to utf-8
+                        rescue Exception => e
+                            logger.error("Problem converting filename \"#{raw_filename}\" to UTF-8. Error => #{e.message}")
+                            return
+                        end
+
+                        filename.scrub!('?') # Replaces bad bytes with a ? mark
+
                         request["cache-control"] = 'no-cache'
                         request["content-type"] = 'multipart/form-data; boundary=----WebKitFormBoundary' + boundary
                         body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"_jsonBody\"" 
