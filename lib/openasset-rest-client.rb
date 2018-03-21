@@ -2943,7 +2943,7 @@ module OpenAsset
                 #Accepts mm-dd-yyyy, mm-dd-yy, mm/dd/yyyy, mm/dd/yy
                 date_regex = Regexp::new('((\d{2}-\d{2}-(\d{4}|\d{2}))|(\d{2}\/\d{2}\/(\d{4}|\d{2})))')
                 unless (value =~ date_regex) == 0
-                    warn "ERROR: Invalid date format. Expected => \"mm-dd-yyyy\" or \"mm-dd-yy\""
+                    warn "ERROR: Invalid date format. Expected one of the following => \"mm-dd-yyyy\" | \"mm-dd-yy\" | \"mm/dd/yyyy\" | \"mm/dd/yy\""
                     return
                 end
 
