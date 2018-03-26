@@ -1,4 +1,9 @@
+require_relative 'Constants'
+
 module KeywordMover
+
+    include Constants
+    
 	# @!visibility private
 	def move_keywords_to_fields(objects,keywords,field,field_separator,mode)
         objects_to_update = []

@@ -1,4 +1,8 @@
+require_relative 'Constants'
+
 module FileMoveKeywordsToFieldByAlbum
+    
+    include Constants
 
 	def __move_file_keywords_to_field_by_album(album,
                                                keyword_category,

@@ -1,5 +1,9 @@
+require_relative 'Constants'
+
 module FileAddFieldData
 
+    include Constants
+    
 	def __file_add_field_data(file=nil,field=nil,value=nil)
             
             #validate class types
