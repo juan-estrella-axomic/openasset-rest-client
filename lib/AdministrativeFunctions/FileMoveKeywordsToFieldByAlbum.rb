@@ -1,7 +1,7 @@
 require_relative 'Constants'
 
 module FileMoveKeywordsToFieldByAlbum
-    
+
     include Constants
 
 	def __move_file_keywords_to_field_by_album(album,
@@ -68,7 +68,7 @@ module FileMoveKeywordsToFieldByAlbum
         end
 
         unless ['append','overwrite'].include?(insert_mode.to_s)
-            msg = "Argument Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
+            msg = "Argument Error: Expected \"append\" or \"overwrite\" for fifth argument \"insert_mode\" in #{__callee__}. " +
                   "Instead got #{insert_mode.inspect}"
             logger.error(msg)
             abort

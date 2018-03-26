@@ -3,7 +3,7 @@ require_relative 'Constants'
 module FileMoveKeywordsToFieldByCategory
 
     include Constants
-    
+
     def __move_file_keywords_to_field_by_category(category,
 	                                              keyword_category,
 	                                              target_field,
@@ -61,7 +61,7 @@ module FileMoveKeywordsToFieldByCategory
         end
 
         unless ['append','overwrite'].include?(insert_mode.to_s)
-            msg = "Argument Error: Expected \"append\" or \"overwrite\" for fourth argument \"insert_mode\" in #{__callee__}. " +
+            msg = "Argument Error: Expected \"append\" or \"overwrite\" for fifth argument \"insert_mode\" in #{__callee__}. " +
                   "Instead got #{insert_mode.inspect}"
             logger.error(msg)
             abort
