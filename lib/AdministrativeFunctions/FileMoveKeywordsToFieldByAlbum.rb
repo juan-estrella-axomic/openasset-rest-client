@@ -110,40 +110,14 @@ module FileMoveKeywordsToFieldByAlbum
         end
 
         # Set up iterations loop
-        if total_file_count % batch_size == 0
-            iterations = total_file_count / batch_size
-        else
-            iterations = total_file_count / batch_size + 1 # To grab remaining
-        end
+        iterations, remainder = total_file_count.divmod(batch_size)
+        iterations += 1 unless remainder.zero?
 
-        file_ids.each_slice(batch_size).with_index do |subset,num|
+        file_ids.each_slice(batch_size).with_index(1) do |subset,num|
 
-            num += 1
-
-            # Get file batch
-            msg = "Batch #{num} of #{iterations} => Retrieving files."
-            logger.info(msg.green)
-
-            op.add_option('limit','0')
-            op.add_option('keywords','all')
-            op.add_option('fields','all')
-            op.add_option('id',subset)
-
-            files = get_files(op)
-            op.clear
-
-            # Move the keywords
-            processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
-
-            # Perform file update
-            msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
-            logger.info(msg.white)
-
-            run_smart_update(processed_files,total_files_updated)
-
+            move_keywords_to_fields_and_update_oa(subset,num,iterations,op,total_files_updated)
             total_files_updated += subset.length
 
-        end
-        
+        end   
     end
 end

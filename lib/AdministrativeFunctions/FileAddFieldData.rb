@@ -228,8 +228,7 @@ module FileAddFieldData
                 current_file.fields.each do |obj| 
                     if obj.id == current_field.id
                         obj.values[0] = bool_val
-                    end
-                    
+                    end  
                 end
                 
                 #Actually do the update

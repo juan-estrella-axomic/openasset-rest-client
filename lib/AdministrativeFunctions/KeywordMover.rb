@@ -1,7 +1,7 @@
 module KeywordMover
 	# @!visibility private
 	def move_keywords_to_fields(objects,keywords,field,field_separator,mode)
-            
+        objects_to_update = []
         existing_field_lookup_strings = nil
         object_type = objects.first.class.to_s.chop # Projects => Project | Files => File
 
@@ -134,8 +134,9 @@ module KeywordMover
         
             end
             logger.info(msg)
+            objects_to_update << object
         end   
-        objects
+        objects_to_update
     end
 
     def create_missing_field_lookup_strings(keyword_data,existing)
@@ -150,5 +151,28 @@ module KeywordMover
             end     
         end
         collection
+    end
+
+    def move_keywords_to_fields_and_update_oa(subset,batch_number,iterations,query_options,updated_count)
+        msg = "Batch #{num} of #{iterations} => Retrieving files."
+        logger.info(msg)
+
+        query_options.add_option('limit','0')
+        query_options.add_option('keywords','all')
+        query_options.add_option('fields','all')
+        query_options.add_option('id',subset)
+
+        # Get current batch of files
+        files = get_files(query_options)
+        query_options.clear
+
+        # Move the file keywords to specified field
+        processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
+
+        # Perform file update
+        msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
+        logger.info(msg.white)
+        
+        run_smart_update(processed_files,updated_count)
     end
 end
