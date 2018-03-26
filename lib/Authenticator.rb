@@ -14,7 +14,7 @@ require 'colorize'
 require 'yaml'  #for storing data locally
 
 
-require_relative 'Helpers'
+require_relative 'ArrayHelpers'
 require_relative 'Validator'
 require_relative 'Security'
 require_relative 'MyLogger'
@@ -223,7 +223,8 @@ class Authenticator
         elsif response.kind_of? Net::HTTPUnauthorized 
             msg = "#{response.message}" 
             logger.error(msg)
-            return create_token() # Returns true or program exits after 3 failed login attempts
+            #return create_token() # Returns true or program exits after 3 failed login attempts
+            return false
         elsif response.kind_of? Net::HTTPServerError 
             msg = "#{response.message}: Try again later."
             logger.error(msg)
@@ -371,8 +372,11 @@ class Authenticator
             end
         elsif  @session_key.nil?         #check for uninitialized session -> @session = nil
             setup_authentication()
-        elsif !session_valid?             #check for exired session
-             validate_token()
+        elsif !session_valid?             #check for expired session
+            if !token_valid?
+                create_token()
+                validate_token()
+            end
         else
             logger.info("Retrieved stored session.")
         end

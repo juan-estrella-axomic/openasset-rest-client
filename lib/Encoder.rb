@@ -49,7 +49,7 @@ module Encoder
             logger.error(e.message)
         end
         
-        enc_json_str.scrub!('?') # Replaces invalid byte sequence with '?'
+        enc_json_str.scrub!('') # Replaces invalid byte sequence with ''
     end
       
 end
