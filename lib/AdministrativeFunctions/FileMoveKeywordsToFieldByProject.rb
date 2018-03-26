@@ -121,7 +121,7 @@ module FileMoveKeywordsToFieldByProject
 
         file_ids.each_slice(batch_size).with_index(1) do |subset,num|
 
-            move_keywords_to_fields_and_update_oa(subset,num,iterations,op,total_files_updated)
+            move_keywords_to_fields_and_update_oa(subset,keywords,target_field_found,field_separator,insert_mode,num,iterations,op,total_files_updated)
             total_files_updated += subset.length
 
         end    

@@ -3,11 +3,13 @@ require_relative 'Constants'
 module KeywordMover
 
     include Constants
-    
+ 
 	# @!visibility private
 	def move_keywords_to_fields(objects,keywords,field,field_separator,mode)
         objects_to_update = []
-        existing_field_lookup_strings = nil
+        existing_field_lookup_strings = []
+        existing_photographers = []
+        existing_copyright_holders = []
         object_type = objects.first.class.to_s.chop # Projects => Project | Files => File
 
         # Allows dynamic access to nested keywords for both files and projects
@@ -20,10 +22,16 @@ module KeywordMover
         built_in = (field.built_in == '1') ? true : false
 
         # Retrieve existing field lookup strings if the field is a restricted field type
-        if RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
+        if RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type) || ['photographer_id','copyright_holder_id'].include?(field.rest_code)
             op = RestOptions.new
             op.add_option('limit','0')
-            existing_field_lookup_strings = get_field_lookup_strings(field,op)
+            if field.rest_code == 'photographer_id'
+                existing_photographers = get_photographers(op)
+            elsif field.rest_code == 'copyright_holder_id'
+                existing_copyright_holders = get_copyright_holders(op)
+            else
+                existing_field_lookup_strings = get_field_lookup_strings(field,op)
+            end
         end
         
         objects.each do |object|
@@ -45,20 +53,60 @@ module KeywordMover
             next if field_string.empty?
             msg = ''
             if built_in
-
+                data = ''
                 field_name = field.name.downcase.gsub(' ','_')
 
                 if mode == 'append'
-                    data = file.instance_variable_get("#{field_name}").to_s.strip
-                    data += field_separator + field_string
+                    data = object.instance_variable_get("@#{field_name}").to_s.strip
+                    data += field_string
                 elsif mode == 'overwrite'
                     data = field_string
                 end
 
-                object.instance_variable_set("@#{field_name}",data)
+                if IMAGE_BUILT_IN_FIELD_CODES.include?(field.code.downcase) ||
+                    IMAGE_BUILT_IN_FIELD_NAMES.include?(field.name.downcase)     # This handles copyright holder and photographer fields
+
+                    names = keyword_data.map(&:name).reverse # So top keyword in UI shows in field
+
+                    rest_code = field.rest_code
+
+                    op = RestOptions.new
+
+                    names.each do |value|
+                
+                        current_value = value.to_s.strip
+                        if rest_code == 'copyright_holder_id'
+                            # Create Copyright holder if needed
+                            copyright_holder = existing_copyright_holders.find { |cp| cp.name == current_value }
+                         
+                            unless copyright_holder
+                                obj = CopyrightHolders.new(current_value)
+                                copyright_holder = create_copyright_holders(obj,true).first
+                                unless copyright_holder
+                                    logger.error("Could not create copyright holder #{current_value} in OpenAsset")
+                                    abort
+                                end
+                            end
+                            object.copyright_holder_id = copyright_holder.id       
+                        elsif rest_code == 'photographer_id'
+                            # Create Photographer if needed
+                            photographer = existing_photographers.find { |ph| ph.name == current_value }
+                            unless photographer
+                                obj = Photographers.new(current_value)
+                                photographer = create_photographers(obj,true).first
+                                unless photographer
+                                    logger.error("Could not create photographer #{current_value} in OpenAsset")
+                                    abort
+                                end
+                            end
+                            object.photographer_id = photographer.id
+                        end
+                    end
+                else
+                    object.instance_variable_set("@#{field_name}",data)
+                end
                 msg = "Inserting #{data.inspect} into #{field.name.inspect} field" +
-                      " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."   
-                    
+                      " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
             else # Custom field
                 # Check if there's already a value in the field
                 index = object.fields.find_index { |f_obj| f_obj.id.to_s == field.id.to_s }        
@@ -158,7 +206,7 @@ module KeywordMover
         collection
     end
 
-    def move_keywords_to_fields_and_update_oa(subset,batch_number,iterations,query_options,updated_count)
+    def move_keywords_to_fields_and_update_oa(subset,keywords,field,separator,insert_mode,num,iterations,query_options,updated_count)
         msg = "Batch #{num} of #{iterations} => Retrieving files."
         logger.info(msg)
 
@@ -172,8 +220,8 @@ module KeywordMover
         query_options.clear
 
         # Move the file keywords to specified field
-        processed_files = move_keywords_to_fields(files,keywords,target_field_found,field_separator,insert_mode)
-
+        processed_files = move_keywords_to_fields(files,keywords,field,separator,insert_mode)
+        return if processed_files.empty?
         # Perform file update
         msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
         logger.info(msg.white)
