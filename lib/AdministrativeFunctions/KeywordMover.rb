@@ -32,193 +32,95 @@ module KeywordMover
             nested_kwd_ids = object.instance_variable_get("#{keyword_accessor}").map { |kwd| kwd.id.to_s }
     
             # Retrieve the actual keyword objects associated with the nested ids
-            keyword_data = keywords.find_all do |k_obj| 
-
-                nested_kwd_ids.include?(k_obj.id.to_s) 
-            
-            end.sort do | k1, k2 | 
-                
-                k1.name.downcase <=> k2.name.downcase
-            
-            end
+            keyword_data = keywords.find_all { |k_obj| nested_kwd_ids.include?(k_obj.id.to_s) }
+            keyword_data.sort_by! { |k| k.name.downcase }
     
             field_string = keyword_data.map(&:name).join(field_separator)
 
             next if field_string.empty?
-            
+            msg = ''
             if built_in
 
+                field_name = field.name.downcase.gsub(' ','_')
+
                 if mode == 'append'
-                    
-                    field_name = field.name.downcase.gsub(' ','_')
-                    #puts "Field name: #{field_name}"
-                    data = file.instance_variable_get("#{field_name}")
-
-                    if data.nil? || data.to_s.strip == ''
-                        data = field_string
-                    else
-                        data = data.to_s.strip + field_separator + field_string
-                    end
-
-                    object.instance_variable_set("@#{field_name}",data)
-
-                    msg = "Appending #{data.inspect} into #{field.name.inspect} field" +
-                          " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
-
-                    logger.info(msg.green)
-
+                    data = file.instance_variable_get("#{field_name}").to_s.strip
+                    data += field_separator + field_string
                 elsif mode == 'overwrite'
-
-                    field_name = field.name.downcase.gsub(' ','_')
-                    #puts "Field name: #{field_name}"
                     data = field_string
-
-                    object.instance_variable_set("@#{field_name}",data)
-
-                    msg = "Inserting #{data.inspect} into #{field.name.inspect} field" +
-                          " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
-                    
-                    logger.info(msg.green)
-
                 end
+
+                object.instance_variable_set("@#{field_name}",data)
+                msg = "Inserting #{data.inspect} into #{field.name.inspect} field" +
+                      " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."   
                     
             else # Custom field
-
                 # Check if there's already a value in the field
                 index = object.fields.find_index { |f_obj| f_obj.id.to_s == field.id.to_s }        
         
                 if index # There's data in the field
-                    
                     if mode == 'append'
-        
                         if NORMAL_FIELD_TYPES.include?(field.field_display_type)
-        
-                            object.fields[index].values = 
-                                [object.fields[index].values.first + field_separator + field_string]
-        
+
+                            existing = object.fields[index].values.first
+                            new_data = field_separator + field_string
+                            object.fields[index].values = [existing + new_data]
                             msg = "Appending #{field_string.inspect} into #{field.name.inspect} field" +
                                   " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
-
-                            logger.info(msg.green)
-                        
+                                   
                         elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
         
-                            keyword_data.each do |fk|
-
-                                fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }
-                                
-                                # Create the field lookup string if not found and add to existing
-                                unless fls_found
-                                    data = {:value => fk.name}
-                                    fls_found = create_field_lookup_strings(field,data,true).first
-                                    existing_field_lookup_strings.push(fls_found)
-                                end
-        
-                                #file_add_field_data(file,field,fk.name.to_s) # Easy but SLOW
-        
-                                msg = "Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
-                                      " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
-
-                                logger.info(msg.green)
-        
-                            end
-
+                            existing_field_lookup_strings = create_missing_field_lookup_strings(keyword_data,existing_field_lookup_strings)
+                            value = keyword_data.first.name
+                            msg = "Inserting #{value.inspect} into #{field.name.inspect} field" +
+                                  " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
                             # Assign the value to the field
-                            object.fields[index].values = [keyword_data.first.name]        unless keyword_data.empty?
+                            object.fields[index].values = [value]   unless keyword_data.empty?
                         
-                        else
-        
+                        else      
                             msg = "#{object_type} keyword move operation not allowed to field display type " +
                                   "#{field.field_display_type.inspect}."
                             logger.error(msg)
                             abort
-        
                         end
-        
                     elsif  mode == 'overwrite'
-        
                         if NORMAL_FIELD_TYPES.include?(field.field_display_type)
         
                             object.fields[index].values = [field_string]
-
                             msg = "Inserting #{field_string.inspect} into #{field.name.inspect} field" +
                                   " for #{object_type} => #{object.instance_variable_get("#{object_name}").to_s.inspect}."
-
-                            logger.info(msg.green)
                         
                         elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
-        
-                            keyword_data.each do |fk|
 
-                                fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }
-                                
-                                # Create the field lookup string if not found and add to existing
-                                unless fls_found
-                                    data = {:value => fk.name}
-                                    fls_found = create_field_lookup_strings(field,data,true).first
-                                    existing_field_lookup_strings.push(fls_found)
-                                end
-
-                                # Assign the value to the field
-                                # object.fields[index].values = [fls_found.value]
-                                
-                                #file_add_field_data(file,field,fk.name.to_s) # Easy but SLOW
-        
-                                msg = "Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
-                                      " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
-
-                                logger.info(msg.green)
-        
-                            end
-                    
-                            object.fields[index].values = [keyword_data.first.name]     unless keyword_data.empty?
+                            existing_field_lookup_strings = create_missing_field_lookup_strings(keyword_data,existing_field_lookup_strings)
+                            value = keyword_data.first.name
+                            msg = "Inserting #{value.inspect} into #{field.name.inspect} field" +
+                                  " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
+                            # Assign the value to the field
+                            object.fields[index].values = [value]   unless keyword_data.empty?
                         
                         else
-        
                             msg = "#{object_type} keyword move operation not allowed to field display type " +
                                   "#{field.field_display_type.inspect}."
                             logger.error(msg)
                             abort
-        
-                        end
-        
+                        end 
                     end
-        
                 else # No data in the field
-        
                     if NORMAL_FIELD_TYPES.include?(field.field_display_type)
         
                         object.fields << NestedFieldItems.new(field.id.to_s, [field_string])
-
                         msg = "Inserting #{field_string.inspect} into #{field.name.inspect} field" +
                               " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
-
-                        logger.info(msg.green)
         
                     elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
                         
-                        keyword_data.each do |fk|                
-
-                            fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }
-
-                            # Create the field lookup string if not found and add to existing
-                            unless fls_found
-                                data = {:value => fk.name}
-                                fls_found = create_field_lookup_strings(field,data,true).first
-                                existing_field_lookup_strings.push(fls_found)
-                            end
-                            
-                            #file_add_field_data(file,field,fk.name.to_s) # SLOWWWW
-        
-                            msg = "Inserting #{fk.name.inspect} into #{field.name.inspect} field" +
-                                  " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
-
-                            logger.info(msg.green)
-        
-                        end
-                        
+                        existing_field_lookup_strings = create_missing_field_lookup_strings(keyword_data,existing_field_lookup_strings)
+                        value = keyword_data.first.name
+                        msg = "Inserting #{value.inspect} into #{field.name.inspect} field" +
+                                " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
                         # Insert the value to the field if there is one
-                        object.fields << NestedFieldItems.new(field.id,[keyword_data.first.name]) unless keyword_data.empty?
+                        object.fields << NestedFieldItems.new(field.id,[value]) unless keyword_data.empty?
                         
                     else
         
@@ -226,15 +128,27 @@ module KeywordMover
                               "#{field.field_display_type.inspect}."
                         logger.error(msg)
                         abort
-        
+
                     end
-        
                 end
         
             end
+            logger.info(msg)
+        end   
+        objects
+    end
 
+    def create_missing_field_lookup_strings(keyword_data,existing)
+        collection = existing
+        keyword_data.each do |fk|
+            fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }            
+            # Create the field lookup string if not found and add to existing
+            unless fls_found
+                data = {:value => fk.name}
+                fls_found = create_field_lookup_strings(field,data,true).first
+                collection.push(fls_found)
+            end     
         end
-    
-        return objects
+        collection
     end
 end
