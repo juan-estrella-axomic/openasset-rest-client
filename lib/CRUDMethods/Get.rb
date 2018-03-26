@@ -45,20 +45,22 @@ module Get
                     post_parameters = {}
 
                     # Remove beginning ? mark from query
-                    key_value_pairs = options.get_options.sub(/^\?/,'')
+                    options_str = options.get_options.sub(/^\?/,'')
 
                     # Break down the string and extract key value arguments for the post parameters
-                    key_value_pairs.split(/&/).map do |key_val| 
+                    key_value_pairs = options_str.split(/&/).map do |key_val| 
                         #puts key_val
                         key_val.split(/=/) 
 
-                    end.each do |pair| 
+                    end
+                    
+                    key_value_pairs.each do |key, val| 
                         
-                        key   = pair[0].to_sym
+                        key   = key.to_sym
                         value = nil
 
                         begin
-                            value = URI.decode(pair[1])
+                            value = URI.decode(val)
                         rescue Exception => e
                             require 'pp'
                             pp e
