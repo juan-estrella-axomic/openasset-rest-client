@@ -33,7 +33,7 @@ module ErrorHandler
                     err['error_message']    = obj['error_message']
     
                     errors << err
-                    #json_obj_collection << err
+                    json_obj_collection << err
                 else
                     json_obj_collection << obj
                 end
