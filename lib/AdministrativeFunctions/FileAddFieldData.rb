@@ -1,5 +1,9 @@
+require_relative 'Constants'
+
 module FileAddFieldData
 
+    include Constants
+    
 	def __file_add_field_data(file=nil,field=nil,value=nil)
             
             #validate class types
@@ -228,8 +232,7 @@ module FileAddFieldData
                 current_file.fields.each do |obj| 
                     if obj.id == current_field.id
                         obj.values[0] = bool_val
-                    end
-                    
+                    end  
                 end
                 
                 #Actually do the update

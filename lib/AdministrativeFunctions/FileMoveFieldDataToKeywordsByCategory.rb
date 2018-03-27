@@ -1,5 +1,9 @@
+require_relative 'Constants'
+
 module FileMoveFieldDataToKeywordsByCategory
 
+    include Constants
+    
     def __move_file_field_data_to_keywords_by_category(category=nil,
                                                        target_keyword_category=nil,
                                                 	   source_field=nil,

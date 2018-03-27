@@ -41,7 +41,7 @@ module SmartUpdater
                     
                 if res.kind_of? Net::HTTPSuccess
                     results_count = res['X-Full-Results-Count'].to_i
-                    total_objects_updated = results_count + total_objects_updated
+                    total_objects_updated += results_count
                     msg = ""
                     msg += "Successfully " if total_objects_updated > 0
                     msg += "Updated #{total_objects_updated.inspect} #{scope}."
@@ -58,10 +58,7 @@ module SmartUpdater
                     sleep(1)
                 end
             end
-        end
-
-        return results_count
-        
+        end        
     end
 
     # @!visibility private

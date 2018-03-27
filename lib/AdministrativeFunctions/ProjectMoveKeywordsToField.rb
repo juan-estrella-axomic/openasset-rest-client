@@ -1,4 +1,8 @@
+require_relative 'Constants'
+
 module ProjectMoveKeywordsToField
+
+    include Constants
 
 	def __move_project_keywords_to_field(source_project_keyword_category=nil,
                                          target_project_field=nil,

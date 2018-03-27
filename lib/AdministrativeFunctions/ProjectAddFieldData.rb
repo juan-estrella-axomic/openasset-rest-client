@@ -1,4 +1,8 @@
+require_relative 'Constants'
+
 module ProjectAddFieldData
+
+    include Constants
 
 	def __project_add_field_data(project=nil,field=nil,value=nil)
 
