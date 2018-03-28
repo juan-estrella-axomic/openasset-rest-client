@@ -8,7 +8,7 @@ module ErrorHandler
         errors              = Array.new
         json_body           = Array.new
         
-        name = (resource == 'Files') ? '@filename' : '@name'
+        name = (resource == 'Files') ? 'filename' : 'name'
 
         begin
             jsonBody = JSON.parse(res.body) if res.body
@@ -26,8 +26,8 @@ module ErrorHandler
             jsonBody.each_with_index do |obj,index|
                 if obj.is_a?(Hash) && obj.has_key?("error_message")
                     err                     = Hash.new
-                    err['id']               = data[index].id  unless data[index].nil?
-                    err['resource_name']    = data[index].instance_variable_get(name)  unless data[index].nil?
+                    err['id']               = data[index]['id'] || 'n/a'
+                    err['resource_name']    = data[index][name] || 'n/a'
                     err['resource_type']    = resource  # Determined by api endpoint
                     err['http_status_code'] = obj['http_status_code']
                     err['error_message']    = obj['error_message']
