@@ -1,5 +1,6 @@
 require_relative 'Version/version'
 require_relative 'SmartUpdater'
+require_relative 'ArrayClassExtender'
 require_relative 'ObjectGenerator'
 require_relative 'Authenticator'
 require_relative 'FileUploader'
