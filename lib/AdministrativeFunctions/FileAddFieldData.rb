@@ -5,7 +5,7 @@ module FileAddFieldData
     include Constants
     
 	def __file_add_field_data(file=nil,field=nil,value=nil)
-            
+        
             #validate class types
             unless file.is_a?(Files) || (file.is_a?(String) && (file.to_i != 0)) || file.is_a?(Integer)
                 warn "Argument Error: Invalid type for first argument in \"file_add_field_data\" method.\n" +
@@ -117,7 +117,7 @@ module FileAddFieldData
 
             elsif IMAGE_BUILT_IN_FIELD_CODES.include?(current_field.code.downcase) ||
                   IMAGE_BUILT_IN_FIELD_NAMES.include?(current_field.name.downcase)     # This handles copyright holder and photographer fields
-
+           
                   rest_code = current_field.rest_code
 
                   op = RestOptions.new
@@ -153,7 +153,7 @@ module FileAddFieldData
                   
                   end
                   # Update file
-                  update_files(current_file)
+                  res = update_files(current_file)
 
             elsif current_field.field_display_type == "date"
                 #make sure we get the right date format
