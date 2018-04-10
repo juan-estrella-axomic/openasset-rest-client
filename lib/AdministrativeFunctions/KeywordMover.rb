@@ -82,10 +82,11 @@ module KeywordMover
                             unless copyright_holder
                                 obj = CopyrightHolders.new(current_value)
                                 copyright_holder = create_copyright_holders(obj,true).first
-                                unless copyright_holder
+                                unless copyright_holder.is_a?(CopyrightHolders)
                                     logger.error("Could not create copyright holder #{current_value} in OpenAsset")
                                     abort
                                 end
+                                existing_copyright_holders << copyright_holder
                             end
                             object.copyright_holder_id = copyright_holder.id       
                         elsif rest_code == 'photographer_id'
@@ -94,10 +95,11 @@ module KeywordMover
                             unless photographer
                                 obj = Photographers.new(current_value)
                                 photographer = create_photographers(obj,true).first
-                                unless photographer
+                                unless photographer.is_a?(Photographers)
                                     logger.error("Could not create photographer #{current_value} in OpenAsset")
                                     abort
                                 end
+                                existing_photographers << photographer
                             end
                             object.photographer_id = photographer.id
                         end
