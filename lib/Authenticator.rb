@@ -59,7 +59,7 @@ class Authenticator
         logger.warn("Re-attempting request. Please wait.")
     end
 
-    def get_credentials(attempts=0)
+    def get_credentials(attempts=0,token_validation_failed=false)
 
         if attempts.eql?(3) 
             logger.error("Too many failed login attempts.")
@@ -70,12 +70,17 @@ class Authenticator
         u = @username
         p = @password
 
-        while u == '' || p == ''
+        while u == '' || p == '' || token_validation_failed
             if u.empty?
                 puts "REMINDER: Some actions require administrative rights."
-                print "Enter username: "
-                u=gets.strip.chomp
+            elsif token_validation_failed
+                puts "TOKEN VALIDATION ERROR: Please log in again to recover."
+                token_validation_failed = false
             end
+
+            print "Enter username: "
+            u=gets.strip.chomp
+
             print "Enter password: "
             p=STDIN.noecho(&:gets).strip.chomp
             puts ''
@@ -99,9 +104,9 @@ class Authenticator
         end        
     end
 
-    def create_token(attempts=0) #Runs FIRST
+    def create_token(attempts=0,token_validation_failed=false) #Runs FIRST
         
-        get_credentials(attempts)
+        get_credentials(attempts,token_validation_failed)
         uri = URI.parse(@token_endpoint)
         token_creation_data = '{"name" : "rest-client-ruby"}'
        
@@ -374,7 +379,7 @@ class Authenticator
             setup_authentication()
         elsif !session_valid?             #check for expired session
             if !token_valid?
-                create_token()
+                create_token(0,true)     # seeds the number of login attempts for get_credentials() "0" and sets the failed token validation flag
                 validate_token()
             end
         else
