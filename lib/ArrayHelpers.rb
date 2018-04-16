@@ -43,7 +43,7 @@ module CSVHelper
         #in order for the instance_variables method to work
         if Validator::NOUNS.include?(self.first.class.to_s) #its a NOUN
             noun = true
-            object_variables = self.first.instance_variables #returns an array
+            object_variables = self.first.instance_variables.reject { |value| value.to_s.strip.empty? }.map(&:to_sym) #returns an array
         end
 
         #Create csv file using the clients subdomain name and insert the headers
@@ -57,11 +57,12 @@ module CSVHelper
                 csv_header = object_variables.map do |obj_var|
                     unless object.instance_variable_get(obj_var).is_a?(Array)                  
                          obj_var.to_s.gsub('@','').upcase.encode!("UTF-8", invalid: :replace, undef: :replace)
-                    end 
+                    end
                 end 
-             
+                
+                csv_header.reject! { |v| v.to_s.empty? }
                 csv << csv_header
-              
+
                 #loop through each of the NOUN objects
                 self.each do |noun_obj|
                     abort("noun_obj is nil") unless noun_obj
