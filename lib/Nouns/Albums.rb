@@ -1,6 +1,7 @@
 # Albums class
 # 
 # @author Juan Estrella
+require_relative '../Generic'
 
 class Albums < Generic
 

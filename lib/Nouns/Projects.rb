@@ -1,6 +1,7 @@
 require_relative 'NestedProjectKeywordItems'
 require_relative 'NestedFieldItems'
 require_relative 'NestedAlbumItems'
+require_relative '../Generic'
 
 
 class Projects < Generic

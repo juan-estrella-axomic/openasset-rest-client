@@ -2,6 +2,7 @@ require_relative 'NestedSizeItems'
 require_relative 'NestedFieldItems'
 require_relative 'NestedKeywordItems'
 require_relative 'NestedAlbumItems'
+require_relative '../Generic'
 
 # Files class
 # 
