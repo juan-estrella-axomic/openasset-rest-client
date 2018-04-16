@@ -6,7 +6,7 @@ require_relative 'NestedAlbumItems'
 # Files class
 # 
 # @author Juan Estrella
-class Files < OpenStruct
+class Files < Generic
 
     # @!parse attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
     attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
