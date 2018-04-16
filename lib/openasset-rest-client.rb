@@ -11,6 +11,7 @@ require_relative 'Encoder'
 require_relative 'Error'
 
 require 'net/http'
+require 'ostruct'
 
 
 # Include all the nouns

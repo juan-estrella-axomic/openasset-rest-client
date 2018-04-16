@@ -1,6 +1,7 @@
 # AccessLevels class
 # 
 # @author Juan Estrella
+
 class AccessLevels
 
     # @!parse attr_accessor :id, :label

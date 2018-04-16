@@ -3,7 +3,7 @@ require_relative 'NestedFieldItems'
 require_relative 'NestedAlbumItems'
 
 
-class Projects
+class Projects < OpenStruct
     
     # @!parse attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name
     attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name

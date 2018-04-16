@@ -1,6 +1,7 @@
 #Categories class
 # 
 # @author Juan Estrella
+
 class Categories
 
     # @!parse attr_accessor :alive, :code, :default_access_level, :default_rank, :description, :display_order

@@ -2,7 +2,7 @@ require_relative 'FieldLookupStrings.rb'
 # Fields class
 # 
 # @author Juan Estrella
-class Fields 
+class Fields
 
     # @!parse attr_accessor :alive, :cardinality, :code, :rest_code, :description, :display_order, :field_display_type
     attr_accessor :alive, :cardinality, :code, :rest_code, :description, :display_order, :field_display_type

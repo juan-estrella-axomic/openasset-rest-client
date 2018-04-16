@@ -1,7 +1,8 @@
 # Albums class
 # 
 # @author Juan Estrella
-class Albums
+
+class Albums < OpenStruct
 
     # @!parse attr_accessor :all_users_can_modify, :can_modify, :code, :company_album, :created, :description, :approved_company_album 
     attr_accessor :all_users_can_modify, :can_modify, :code, :company_album, :created, :description, :approved_company_album 

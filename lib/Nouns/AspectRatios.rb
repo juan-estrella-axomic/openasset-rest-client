@@ -1,6 +1,7 @@
 # AspectRatios class
 # 
 # @author Juan Estrella
+
 class AspectRatios
 
     # @!parse attr_accessor :id, :code, :label
