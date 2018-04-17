@@ -43,7 +43,7 @@ module CSVHelper
         #in order for the instance_variables method to work
         if Validator::NOUNS.include?(self.first.class.to_s) #its a NOUN
             noun = true
-            object_variables = self.first.instance_variables.reject { |value| value.to_s.strip.empty? }.map(&:to_sym) #returns an array
+            object_variables = self.first.instance_variables #returns an array
         end
 
         #Create csv file using the clients subdomain name and insert the headers
@@ -132,7 +132,7 @@ module DownloadHelper
         else
             msg = "Creating Directory => #{download_location}"
             Logging::logger.info(msg)
-            download_location = download_location + '_' + DateTime.now.strftime("%Y%m%d%H%M%S")
+            download_location = download_location# + '_' + DateTime.now.strftime("%Y%m%d%H%M%S")
             FileUtils::mkdir_p download_location
             FileUtils.chmod(0777, download_location, :verbose => false)
         end
