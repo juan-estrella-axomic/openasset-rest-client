@@ -2,11 +2,12 @@ require_relative 'NestedSizeItems'
 require_relative 'NestedFieldItems'
 require_relative 'NestedKeywordItems'
 require_relative 'NestedAlbumItems'
+require_relative '../Generic'
 
 # Files class
 # 
 # @author Juan Estrella
-class Files
+class Files < Generic
 
     # @!parse attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
     attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio

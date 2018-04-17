@@ -1,9 +1,10 @@
 require_relative 'NestedProjectKeywordItems'
 require_relative 'NestedFieldItems'
 require_relative 'NestedAlbumItems'
+require_relative '../Generic'
 
 
-class Projects
+class Projects < Generic
     
     # @!parse attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name
     attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name

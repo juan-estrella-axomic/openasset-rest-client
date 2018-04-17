@@ -1,6 +1,7 @@
 # CopyrightHolders class
 # 
 # @author Juan Estrella
+
 class CopyrightHolders
 
     # @!parse attr_accessor :copyright_policy_id, :id, :name

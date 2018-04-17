@@ -1,5 +1,4 @@
 class ProjectKeywordCategories
-
     # @!parse attr_accessor :code, :display_order, :id, :name
     attr_accessor :code, :display_order, :id, :name
     

@@ -7,6 +7,7 @@ require_relative 'FileUploader'
 require_relative 'FileReplacer'
 require_relative 'RestOptions'
 require_relative 'MyLogger'
+require_relative 'Generic'
 require_relative 'Encoder'
 require_relative 'Error'
 

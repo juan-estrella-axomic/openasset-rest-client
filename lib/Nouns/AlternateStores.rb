@@ -1,6 +1,7 @@
 # AlternateStores
 # 
 # @author Juan Estrella
+
 class AlternateStores
 
     # @!parse attr_accessor :id, :name, :storage_name

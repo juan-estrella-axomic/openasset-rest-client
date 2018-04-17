@@ -1,5 +1,4 @@
 class Sizes
-    
     # @!parse attr_accessor :alive, :always_create, :colourspace, :crop_to_fit, :description, :display_order
     attr_accessor :alive, :always_create, :colourspace, :crop_to_fit, :description, :display_order
 

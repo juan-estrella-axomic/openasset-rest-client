@@ -1,6 +1,7 @@
 # CopyrightPolicies class
 # 
 # @author Juan Estrella
+
 class CopyrightPolicies
 
     # @!parse attr_accessor :code, :description, :id, :name

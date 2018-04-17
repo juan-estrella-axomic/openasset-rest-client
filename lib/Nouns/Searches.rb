@@ -1,4 +1,4 @@
-require_relative 'SearchItems.rb'
+require_relative 'SearchItems'
 
 
 class Searches
