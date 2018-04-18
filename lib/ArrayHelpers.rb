@@ -60,7 +60,7 @@ module CSVHelper
                     end
                 end 
                 
-                csv_header.reject! { |v| v.to_s.empty? }
+                csv_header.reject! { |v| v.to_s.empty? }.sort!
                 csv << csv_header
 
                 #loop through each of the NOUN objects
