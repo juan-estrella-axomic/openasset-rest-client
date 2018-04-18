@@ -81,7 +81,7 @@ module FileReplacer
             return
         end 
 
-        filename.scrub!('') # Replaces bad bytes with a ''
+        original_filename.scrub!('') # Replaces bad bytes with a ''
 
         body = Array.new
 
