@@ -12,6 +12,7 @@ module FileReplacer
         uri = URI.parse(@uri + "/Files")
         id = file_object.id.to_s
         original_filename = nil
+        filename = nil
 
         # raise an Error if something other than an file object is passed in. Check the class
         unless file_object.is_a?(Files) 
@@ -38,12 +39,16 @@ module FileReplacer
 
         #verify that both files have the same file extentions otherwise you will
         #get a 400 Bad Request Error
-        if File.extname(file_object.original_filename) != File.extname(replacement_file_path)
-            msg = "File extensions must match! Aborting update\n    " + 
+        if File.extname(file_object.original_filename).downcase != File.extname(replacement_file_path).downcase
+            msg = "File extensions do not match. " +
+                  "Retain original filename in oa flag (3rd argument in replace_file method) must be set to avoid Bad Request Error.\n    " + 
                   "Original file extension => #{File.extname(file_object.original_filename)}\n    " +
                   "Replacement file extension => #{File.extname(replacement_file_path)}"
-            logger.error(msg)
-            return
+            
+            unless retain_original_filename_in_oa == true
+                logger.error(msg)
+                return
+            end
         end
 
         #verify that the original file id is provided
@@ -57,21 +62,22 @@ module FileReplacer
         if retain_original_filename_in_oa == true
             unless file_object.original_filename == nil || file_object.original_filename == ''
 
-                original_filename = File.basename(file_object.original_filename)
+                filename = File.basename(file_object.original_filename) # set filename equal to original filename
+    
             else
                 msg = "No original filename detected in Files object. Aborting update."
                 logger.error(msg)
                 return
             end
         else
-            original_filename = File.basename(replacement_file_path)
+            filename = File.basename(replacement_file_path) # The filename on the disk will be used as original filename
         end
 
-        raw_filename = original_filename
+        raw_filename = filename
         encoding = raw_filename.encoding.to_s
         
         begin
-            original_filename = raw_filename.force_encoding(encoding).encode(@outgoing_encoding, # Default UTF-8 
+            filename = raw_filename.force_encoding(encoding).encode(@outgoing_encoding, # Default UTF-8 
 		                                                                    encoding, 
 		                                                                    invalid: :replace, 
 		                                                                    undef: :replace, 
@@ -81,7 +87,7 @@ module FileReplacer
             return
         end 
 
-        original_filename.scrub!('') # Replaces bad bytes with a ''
+        filename.scrub!('') # Remove any bad bytes
 
         body = Array.new
 
@@ -98,9 +104,9 @@ module FileReplacer
                 end
                 request["cache-control"] = 'no-cache'
                 body << "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"_jsonBody\""  
-                body << "\r\n\r\n[{\"id\":\"#{id}\",\"original_filename\":\"#{original_filename}\"}]\r\n"
+                body << "\r\n\r\n[{\"id\":\"#{id}\",\"original_filename\":\"#{filename}\"}]\r\n"
                 body << "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"file\";" 
-                body << "filename=\"#{original_filename}\"\r\nContent-Type: #{MIME::Types.type_for(original_filename)}\r\n\r\n"
+                body << "filename=\"#{filename}\"\r\nContent-Type: #{MIME::Types.type_for(filename)}\r\n\r\n"
                 body << IO.binread(replacement_file_path)
                 body << "\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--"
                 request.body = body.join
