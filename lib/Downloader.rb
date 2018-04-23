@@ -1,3 +1,4 @@
+require 'uri'
 require 'net/http'
 require 'ruby-progressbar'
 
@@ -9,8 +10,15 @@ class Downloader
 
     def self.download(uri,location)
 
-        resource = uri.to_s.split('/').last
-        filename = location.split('/').last
+        resource                  = uri.to_s.split('/').last               # => Files
+
+        file_path_components      = location.split('/')                    # => ['path','to','tweedle%20dee%20%26%20tweedle%20dum%20%281%29.jpg']
+        folders                   = file_path_components[0..-2]            # => Capture everything but the filename ['path', 'to']
+        folder_path               = folders.join('/')                      # => Folder where file will be saved -> path/to
+
+        possibly_encoded_filename = file_path_components.last              # => tweedle%20dee%20%26%20tweedle%20dum%20%281%29.jpg
+        decoded_filename          = URI.decode(possibly_encoded_filename)  # => tweedle dee & tweedle dum (1).jpg
+        decoded_file_path         = folder_path + '/' + decoded_filename   # /path/to/tweedle dee & tweedle dum (1).jpg
 
         Logging.logger.info( "Downloading file => #{filename}")
 
@@ -31,7 +39,7 @@ class Downloader
                                         :starting_at => 0, 
                                         :total => file_size)
 
-                File.open(location, "wb") do |file|
+                File.open(decoded_file_path, "wb") do |file|
                     
                     http.request_get(uri.request_uri) do |resp|
                         
