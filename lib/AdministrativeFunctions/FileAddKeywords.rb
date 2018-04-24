@@ -40,7 +40,7 @@ module FileAddKeywords
                     simple_file_obj.keywords << NestedKeywordItems.new(keyword.id)
                 end
                 
-                simple_file_obj.uniq! { |nki| nki.id } # Remove duplicate keyword entries
+                simple_file_obj.keywords.uniq! { |nki| nki.id } # Remove duplicate keyword entries
 
                 uri = URI.parse(@uri + "/Files")
                 put(uri,simple_file_obj,false)
