@@ -37,6 +37,7 @@ module ProjectAddKeywords
                     #projects.project_keywords << project_keyword.new(keyword.id)
                     projects.project_keywords << NestedProjectKeywordItems.new(proj_keywords.id)  
                 end
+                projects.project_keywords.uniq! { |npk| npk.id }
                 uri = URI.parse(@uri + "/Projects")
                 put(uri,projects,false)
             end
@@ -47,14 +48,17 @@ module ProjectAddKeywords
                         #proj.project_keywords << project_keyword.new(keyword.id)
                         proj.project_keywords << NestedProjectKeywordItems.new(proj_keywords.id)
                     end
+                    proj.project_keywords.uniq! { |npk| npk.id }
                 end
+
                 uri = URI.parse(@uri + "/Projects")
                 put(uri,projects,false)
             else                        #4. Projects array and a single Keywords object
                 projects.each do |proj|
                     #proj.project_keywords << project_keyword.new(proj_keywords.id)
                     proj.project_keywords << NestedProjectKeywordItems.new(proj_keywords.id)
-                end    
+                end
+                proj.project_keywords.uniq! { |npk| npk.id }    
                 uri = URI.parse(@uri + "/Projects") #/ProjectKeywords/:id/Projects 
                 put(uri,projects,false)                    #shortcut not implemented yet                    
             end

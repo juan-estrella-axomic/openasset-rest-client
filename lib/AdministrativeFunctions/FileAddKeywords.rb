@@ -39,20 +39,25 @@ module FileAddKeywords
                 keywords.each do |keyword|
                     simple_file_obj.keywords << NestedKeywordItems.new(keyword.id)
                 end
-                 
+                
+                simple_file_obj.uniq! { |nki| nki.id } # Remove duplicate keyword entries
+
                 uri = URI.parse(@uri + "/Files")
                 put(uri,simple_file_obj,false)
             end
         else        
             if keywords.is_a?(Array)    #3. Two arrays
+                keywords.uniq! { |k_obj| k_obj.id }
                 keywords.each do |keyword|
                     uri = URI.parse(@uri + "/Keywords/#{keyword.id}/Files")
                     data = files.map { |files_obj| {:id => files_obj.id} }
+                    data.uniq! { |h| h[:id] } # Remove duplicate File entries
                     post(uri,data)
                 end
             else                        #4. Files array and a single Keywords object
                 uri = URI.parse(@uri + "/Keywords/#{keywords.id}/Files")
                 data = files.map { |files_obj| {:id => files_obj.id} }
+                data.uniq! { |h| h[:id] } # Remove duplicate File entries
                 post(uri,data)
             end
         end
