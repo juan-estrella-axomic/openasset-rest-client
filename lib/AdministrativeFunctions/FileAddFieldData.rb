@@ -46,7 +46,7 @@ module FileAddFieldData
                 option.add_option("id",file.to_s)
                 current_file = get(uri,option).first
                 unless current_file
-                    warn "ERROR: Could not find Project with matching id of \"#{file.to_s}\"...Exiting"
+                    warn "ERROR: Could not find File with matching id of \"#{file.to_s}\"...Exiting"
                     return
                 end
             else
@@ -67,7 +67,7 @@ module FileAddFieldData
                     return false
                 end
                 unless current_field.field_type == "image"
-                    warn "ERROR: Expected a Project field. The field provided is a \"#{current_field.field_type}\" field."
+                    warn "ERROR: Expected a File field. The field provided is a \"#{current_field.field_type}\" field."
                     return false
                 end        
             else
