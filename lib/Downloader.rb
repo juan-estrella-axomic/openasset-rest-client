@@ -20,7 +20,7 @@ class Downloader
         decoded_filename          = URI.decode(possibly_encoded_filename)  # => tweedle dee & tweedle dum (1).jpg
         decoded_file_path         = folder_path + '/' + decoded_filename   # /path/to/tweedle dee & tweedle dum (1).jpg
 
-        Logging.logger.info( "Downloading file => #{filename}")
+        Logging.logger.info( "Downloading file => #{decoded_filename}")
 
         begin
 
