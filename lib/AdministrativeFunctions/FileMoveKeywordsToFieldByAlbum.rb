@@ -122,6 +122,7 @@ module FileMoveKeywordsToFieldByAlbum
             move_keywords_to_fields_and_update_oa(subset,keywords,target_field_found,field_separator,insert_mode,num,iterations,op,total_files_updated)
             total_files_updated += subset.length
 
-        end   
+        end
+        logger.info('Done.')   
     end
 end

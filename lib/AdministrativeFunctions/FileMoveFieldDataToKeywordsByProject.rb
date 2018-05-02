@@ -330,6 +330,7 @@ module FileMoveFieldDataToKeywordsByProject
 
             total_files_updated += subset.length
 
-        end  
+        end 
+        logger.info('Done.')   
     end
 end
