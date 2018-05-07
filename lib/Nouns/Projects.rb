@@ -41,6 +41,7 @@ class Projects < Generic
         @code = json_obj['code']
         @code_alias_1 = json_obj['code_alias_1']
         @code_alias_2 = json_obj['code_alias_2']
+        @hero_image_id = json_obj['hero_image_id']
         @id = json_obj['id']
         @name = json_obj['name']
         @name_alias_1 = json_obj['name_alias_1']
@@ -75,6 +76,7 @@ class Projects < Generic
         json_data[:code] = @code                                 unless @code.nil?
         json_data[:code_alias_1] = @code_alias_1                 unless @code_alias_1.nil?
         json_data[:code_alias_2] = @code_alias_2                 unless @code_alias_2.nil?
+        json_data[:hero_image_id] = @hero_image_id               unless @hero_image_id.nil?
         json_data[:id] = @id                                     unless @id.nil?
         json_data[:name] = @name                                 unless @name.nil?
         json_data[:name_alias_1] = @name_alias_1                 unless @name_alias_1.nil?
@@ -98,7 +100,7 @@ class Projects < Generic
             end
         end
 
-        return json_data            
+        json_data            
     end
 
 end

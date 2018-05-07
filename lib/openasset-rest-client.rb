@@ -421,6 +421,26 @@ module OpenAsset
             delete(uri,data)
         end
 
+        #####################
+        #                   #
+        # DATA INTEGRATIONS #
+        #                   #
+        #####################
+
+        # Retrieves DataIntegrations.
+        #
+        # @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
+        # @return [Array] Returns an array of DataIntegrations objects.
+        #
+        # @example 
+        #          rest_client.get_data_integrations()
+        #          rest_client.get_data_integrations(rest_options_object)
+        def get_data_integrations(query_obj=nil,with_nested_resources=false)
+            uri = URI.parse(@uri + "/DataIntegrations")
+            get(uri,query_obj,with_nested_resources)
+        end
+
+
         ##########
         #        #
         # FIELDS #

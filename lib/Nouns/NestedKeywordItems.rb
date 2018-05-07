@@ -27,7 +27,7 @@ class NestedKeywordItems
         json_data = Hash.new
         json_data[:id] = @id    unless @id.nil?
         
-        return json_data
+        json_data
     end
    
 end
