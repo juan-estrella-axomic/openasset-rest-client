@@ -87,7 +87,7 @@ module FileAddFieldData
                 #Grab all the available FieldLookupStrings for the specified Fields resource
                 #field_lookup_strings = get(lookup_string_endpoint,nil)
                 op = RestOptions.new
-                op.add_option(limit,0)
+                op.add_option('limit',0)
                 field_lookup_strings = get_field_lookup_strings(current_field,op)
                 #check if the value in the third argument is currently an available option for the field
                 lookup_string_exists = field_lookup_strings.find { |item| current_value.downcase == item.value.downcase }

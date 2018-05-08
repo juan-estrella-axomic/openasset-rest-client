@@ -21,6 +21,9 @@ class Files < Generic
     # @!parse attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes, :albums
     attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes, :albums
 
+    # @!parse attr_accessor :processing_failures, :replaced_user_id, :video_frames_per_second, :updated, :recheck, :replaced, :rotate_degrees
+    attr_accessor :processing_failures, :replaced_user_id, :video_frames_per_second, :updated, :recheck, :replaced, :rotate_degrees
+
     # Creates a Files object
     #
     # @param args [Hash, String Argument list, nil] Takes a JSON object/Hash or no argument 
@@ -95,12 +98,18 @@ class Files < Generic
         @md5_now = json_obj['md5_now']
         @original_filename = json_obj['original_filename']
         @photographer_id = json_obj['photographer_id']
+        @processing_failures = json_obj['processing_failures']
         @project_id = json_obj['project_id']
         @rank = json_obj['rank']
+        @recheck = json_obj['recheck']
+        @replaced = json_obj['replaced']
+        @replaced_user_id = json_obj['replaced_user_id']
         @rotation_since_upload = json_obj['rotation_since_upload']
         @uploaded = json_obj['uploaded']     
         @user_id = json_obj['user_id']                       
         @rotate_degrees = json_obj['rotate_degrees']
+        @updated = json_obj['updated']
+        @video_frames_per_second = json_obj['video_frames_per_second']
         @keywords = []
         @fields = []
         @sizes = []
@@ -140,29 +149,36 @@ class Files < Generic
     # @!visibility private
     def json
         json_data = Hash.new
-        json_data[:access_level] = @access_level                      unless @access_level.nil?
-        json_data[:alternate_store_id] = @alternate_store_id          unless @alternate_store_id.nil?
-        json_data[:caption] = @caption                                unless @caption.nil?
-        json_data[:category_id] = @category_id                        unless @category_id.nil?
-        json_data[:click_count] = @click_count                        unless @click_count.nil?
-        json_data[:contains_audio] = @contains_audio                  unless @contains_audio.nil?
-        json_data[:contains_video] = @contains_video                  unless @contains_video.nil?
-        json_data[:copyright_holder_id] = @copyright_holder_id        unless @copyright_holder_id.nil?
-        json_data[:created] = @created                                unless @created.nil?
-        json_data[:description] = @description                        unless @description.nil?
-        json_data[:download_count] = @download_count                  unless @download_count.nil?
-        json_data[:duration] = @duration                              unless @duration.nil?
-        json_data[:filename] = @filename                              unless @filename.nil?
-        json_data[:id] = @id                                          unless @id.nil?
-        json_data[:md5_at_upload] = @md5_at_upload                    unless @md5_at_upload.nil?
-        json_data[:md5_now] = @md5_now                                unless @md5_now.nil?
-        json_data[:original_filename] = @original_filename            unless @original_filename.nil?
-        json_data[:photographer_id] = @photographer_id                unless @photographer_id.nil?
-        json_data[:project_id] = @project_id                          unless @project_id.nil?
-        json_data[:rank] = @rank                                      unless @rank.nil?
-        json_data[:rotation_since_upload] = @rotation_since_upload    unless @uploaded.nil?
-        json_data[:uploaded] = @uploaded                              unless @uploaded.nil?
-        json_data[:user_id] = @user_id                                unless @user_id.nil?
+        json_data[:access_level] = @access_level                        unless @access_level.nil?
+        json_data[:alternate_store_id] = @alternate_store_id            unless @alternate_store_id.nil?
+        json_data[:caption] = @caption                                  unless @caption.nil?
+        json_data[:category_id] = @category_id                          unless @category_id.nil?
+        json_data[:click_count] = @click_count                          unless @click_count.nil?
+        json_data[:contains_audio] = @contains_audio                    unless @contains_audio.nil?
+        json_data[:contains_video] = @contains_video                    unless @contains_video.nil?
+        json_data[:copyright_holder_id] = @copyright_holder_id          unless @copyright_holder_id.nil?
+        json_data[:created] = @created                                  unless @created.nil?
+        json_data[:description] = @description                          unless @description.nil?
+        json_data[:download_count] = @download_count                    unless @download_count.nil?
+        json_data[:duration] = @duration                                unless @duration.nil?
+        json_data[:filename] = @filename                                unless @filename.nil?
+        json_data[:id] = @id                                            unless @id.nil?
+        json_data[:md5_at_upload] = @md5_at_upload                      unless @md5_at_upload.nil?
+        json_data[:md5_now] = @md5_now                                  unless @md5_now.nil?
+        json_data[:original_filename] = @original_filename              unless @original_filename.nil?
+        json_data[:photographer_id] = @photographer_id                  unless @photographer_id.nil?
+        json_data[:processing_failures] = @processing_failures          unless @processing_failures.nil?
+        json_data[:project_id] = @project_id                            unless @project_id.nil?
+        json_data[:rank] = @rank                                        unless @rank.nil?
+        json_data[:recheck] = @recheck                                  unless @recheck.nil?
+        json_data[:replaced] = @replaced                                unless @replaced.nil?
+        json_data[:replaced_user_id] = @replaced_user_id                unless @replaced_user_id.nil?
+        json_data[:rotation_since_upload] = @rotation_since_upload      unless @uploaded.nil?
+        json_data[:uploaded] = @uploaded                                unless @uploaded.nil?
+        json_data[:rotate_degrees] = @rotate_degrees                    unless @rotate_degrees.nil?
+        json_data[:user_id] = @user_id                                  unless @user_id.nil?
+        json_data[:updated] = @updated                                  unless @updated.nil?
+        json_data[:video_frames_per_second] = @video_frames_per_second  unless @video_frames_per_second.nil?
 
         unless @sizes.empty?
             #convert every nested sizes object back to a hash/json object
