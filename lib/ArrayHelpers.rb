@@ -170,12 +170,20 @@ module DownloadHelper
             return false
         end
         
+        uri_with_protocol = Regexp::new('^(https:\/\/|http:\/\/)\w+.+\w+.\w+.com$', true)
+
         #loop through objects in the Array
         self.each do |item|
             if item.is_a?(Files)
                 file_path = item.get_image_size_file_path(size)
                 next unless file_path # Skip file if the size hasn't been created
-                url = uri_scheme + "://" + file_path         
+                url = ''
+                if (uri_with_protocol =~ uri_scheme) == 0 # Specify full url in options object for On-Premise client
+                    url = uri_scheme + file_path 
+                else                                      # Cloud
+                    url = uri_scheme + "://" + file_path
+                end
+                url.gsub!(/(?<!:)\/\//,'/') # changes changes // to / but ignores ://      
                 uri = URI.parse(url)
                 filename = url.split('/').last
                 location = download_location + '/' + filename 
@@ -183,11 +191,11 @@ module DownloadHelper
             elsif item.is_a?(String) && item.include?('openasset.com')
                 #remove white space and new line characters
                 url = item.chomp.strip
-                uri_with_protocol = Regexp::new('(^https:\/\/|http:\/\/)\w+.+\w+.openasset.com', true)
                 #check if uri scheme is specified and
                 unless (uri_with_protocol =~ url) == 0 #starting position of regex string
                     url = uri_scheme + "://" + url 
                 end
+                url.gsub!(/(?<!:)\/\//,'/') # changes changes // to / but ignores ://  
                 uri = URI.parse(url) #for the http request in the downloader
                 filename = url.split('/').last  
                 location = download_location + '/' + filename
@@ -195,13 +203,15 @@ module DownloadHelper
             elsif item.is_a?(String) #for non OpenAsset downloads
                 #remove white space and new line characters
                 url = item.chomp.strip
-                url_with_http = Regexp::new('(^https:\/\/|http:\/\/)', true)
+                url_with_http = Regexp::new('^(https:\/\/|http:\/\/)', true)
                 #check if uri scheme is specified and
                 unless (url_with_http =~ url) == 0 #starting position of regex string
                     url = uri_scheme + "://" + url 
-                end
+                end 
                 filename = url.split('/').last  
                 location = download_location + '/' + filename
+                url.gsub!(/(?<!:)\/\//,'/') # changes changes // to / but ignores ://
+                uri = URI.parse(url)
                 begin
                     Downloader::download(uri,location)
                 rescue => exception

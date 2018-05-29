@@ -21,7 +21,6 @@ class Downloader
         decoded_file_path         = folder_path + '/' + decoded_filename   # /path/to/tweedle dee & tweedle dum (1).jpg
 
         Logging.logger.info( "Downloading file => #{decoded_filename}")
-        Logging.logger.info( "Path => #{decoded_file_path}")
 
         begin
 
@@ -60,6 +59,7 @@ class Downloader
         rescue SocketError => e
 
             Logging.logger.warn("Socket Error: #{e}.")
+            Logging.logger.warn( "Path => #{uri}")
             SmartUpdater.wait_and_try_again
             retry if (retries += 1) < 20
             abort(e)
@@ -67,6 +67,7 @@ class Downloader
         rescue Exception => e
 
             Logging.logger.warn("Exception: #{e}.")
+            Logging.logger.warn( "Path => #{uri}")
             SmartUpdater.wait_and_try_again
             retry if (retries += 1) < 5
             abort(e)
