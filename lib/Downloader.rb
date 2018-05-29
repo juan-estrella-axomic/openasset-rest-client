@@ -21,6 +21,7 @@ class Downloader
         decoded_file_path         = folder_path + '/' + decoded_filename   # /path/to/tweedle dee & tweedle dum (1).jpg
 
         Logging.logger.info( "Downloading file => #{decoded_filename}")
+        Logging.logger.info( "Path => #{decoded_file_path}")
 
         begin
 
