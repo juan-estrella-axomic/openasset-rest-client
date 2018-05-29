@@ -228,7 +228,8 @@ class Files < Generic
                      "was created in OpenAsset."
                 return false
             else
-                image.http_root.gsub('//','') + image.http_relative_path
+                #image.http_root.gsub('//','') + image.http_relative_path
+                image.http_root.gsub('//','') + image.relative_path                
             end
         elsif size.is_a?(String)
             #Look for the postfix search_parameter string in the path 

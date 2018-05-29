@@ -59,14 +59,14 @@ class Downloader
         rescue SocketError => e
 
             Logging.logger.warn("Socket Error: #{e}.")
-            wait_and_try_again
+            SmartUpdater.wait_and_try_again
             retry if (retries += 1) < 20
             abort(e)
 
         rescue Exception => e
 
             Logging.logger.warn("Exception: #{e}.")
-            wait_and_try_again
+            SmartUpdater.wait_and_try_again
             retry if (retries += 1) < 5
             abort(e)
 
