@@ -119,9 +119,29 @@ module DownloadHelper
     # @example
     #       files_obj_array = rest_client.get_files()
     #       files_obj_array.download('medium','se1_downloads')
+    #       files_obj_array.download('medium','se1_downloads','http')
+    #       files_obj_array.download({:size => 'medium', :location => 'se1_downloads', :uri_scheme => 'http'})
     #       -- ONE LINER --
-    #       rest_client.get_files().download('medium','se1_downloads') 
-    def download(size='1',download_location='./Rest_Downloads')
+    #       rest_client.get_files().download('medium','se1_downloads')
+    #       rest_client.get_files().download('medium','se1_downloads','http')
+    #       rest_client.get_files().download({:size => 'medium', :location => 'se1_downloads', :uri_scheme => 'http'}) 
+    def download(*args)
+        
+        size = nil
+        download_location = nil
+        uri_scheme = nil
+
+        if args.first.is_a?(Hash)
+            options           = args[0]
+            size              = options[:size] || '1'
+            download_location = options[:location] || './Rest_Downloads'
+            uri_scheme        = options[:uri_scheme] || 'https'
+        else
+            size              = args[0] || '1'
+            download_location = args[1] || './Rest_Downloads'
+            uri_scheme        = args[2] || 'https'
+        end
+
         #Make sure the download location is Valid directory
         if File.exist?(download_location)
             unless File.directory?(download_location)
@@ -155,7 +175,7 @@ module DownloadHelper
             if item.is_a?(Files)
                 file_path = item.get_image_size_file_path(size)
                 next unless file_path # Skip file if the size hasn't been created
-                url = "https://" + file_path         
+                url = uri_scheme + "://" + file_path         
                 uri = URI.parse(url)
                 filename = url.split('/').last
                 location = download_location + '/' + filename 
@@ -166,7 +186,7 @@ module DownloadHelper
                 uri_with_protocol = Regexp::new('(^https:\/\/|http:\/\/)\w+.+\w+.openasset.com', true)
                 #check if uri scheme is specified and
                 unless (uri_with_protocol =~ url) == 0 #starting position of regex string
-                    url = "https://" + url 
+                    url = uri_scheme + "://" + url 
                 end
                 uri = URI.parse(url) #for the http request in the downloader
                 filename = url.split('/').last  
@@ -178,7 +198,7 @@ module DownloadHelper
                 url_with_http = Regexp::new('(^https:\/\/|http:\/\/)', true)
                 #check if uri scheme is specified and
                 unless (url_with_http =~ url) == 0 #starting position of regex string
-                    url = "http://" + url 
+                    url = uri_scheme + "://" + url 
                 end
                 filename = url.split('/').last  
                 location = download_location + '/' + filename
