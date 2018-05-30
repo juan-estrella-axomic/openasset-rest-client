@@ -4,6 +4,8 @@ module SmartUpdater
 	# @!visibility private
     def run_smart_update(payload,total_objects_updated)
 
+        return if payload.empty?
+
         scope    = payload.first.class.to_s.downcase
         res      = nil
         attempts = 0

@@ -209,27 +209,16 @@ module ProjectMoveKeywordsToField
 
         op.clear
 
-        total_project_count = project_ids.length
-
         # Set up iterations loop
-        if total_project_count % batch_size == 0
-            iterations = total_project_count / batch_size
-        else
-            iterations = total_project_count / batch_size + 1 # To grab remaining
-        end
+        iterations, remainder = project_ids.length.divmod(batch_size)
+        iterations += 1 if remainder > 0
 
-        project_ids.each_slice(batch_size).with_index do |subset,num|
-
-            num += 1
-
-            start_index = offset
-            end_index   = offset + limit
-            ids         = project_ids[start_index...end_index].join(',')
+        project_ids.each_slice(batch_size).with_index(1) do |subset,num|
 
             op.add_option('limit','0')
-            op.add_option('keywords','all')
+            op.add_option('projectKeywords','all')
             op.add_option('fields','all')
-            op.add_option('id',ids)
+            op.add_option('id',subset)
 
             msg = "Batch #{num} of #{iterations} => Retrieving projects."
             logger.info(msg.green)

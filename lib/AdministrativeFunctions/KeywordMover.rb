@@ -64,7 +64,8 @@ module KeywordMover
                 end
 
                 if IMAGE_BUILT_IN_FIELD_CODES.include?(field.code.downcase) ||
-                    IMAGE_BUILT_IN_FIELD_NAMES.include?(field.name.downcase)     # This handles copyright holder and photographer fields
+                    IMAGE_BUILT_IN_FIELD_NAMES.include?(field.name.downcase)    # This handles copyright holder and photographer fields
+                    #PROJECT_BUILT_IN_FIELD_NAMES.include?(field.name.downcase)
 
                     names = keyword_data.map(&:name).reverse # So top keyword in UI shows in field
 
