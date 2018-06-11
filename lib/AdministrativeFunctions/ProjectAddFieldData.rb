@@ -11,21 +11,21 @@ module ProjectAddFieldData
             warn "Argument Error: Invalid type for first argument in \"project_add_field_data\" method.\n" +
                  "    Expected Single Projects object, a Numeric string or Integer for a Project id\n" +
                  "    Instead got => #{project.inspect}"
-            return            
-        end 
+            return
+        end
 
         unless field.is_a?(Fields) ||  (field.is_a?(String) && (field.to_i != 0)) || field.is_a?(Integer)
             warn "Argument Error: Invalid type for second argument in \"project_add_field_data\" method.\n" +
                  "    Expected Single Projects object, Numeric string, or Integer for Projects id.\n" +
                  "    Instead got => #{field.inspect}"
-            return            
+            return
         end
 
         unless value.is_a?(String) || value.is_a?(Integer)
             warn "Argument Error: Invalid type for third argument in \"project_add_field_data\" method.\n" +
                  "    Expected a String or an Integer.\n" +
                  "    Instead got => #{value.inspect}"
-            return            
+            return
         end
 
         #NOTE: Date fields use the mm-dd-yyyy format
@@ -39,7 +39,7 @@ module ProjectAddFieldData
         #set up objects
         if project_class == 'Projects'
             current_project = project
-        elsif project_class == 'String' || project_class == 'Integer' 
+        elsif project_class == 'String' || project_class == 'Integer'
             #retrieve Projects object matching id provided
             uri = URI.parse(@uri + "/Projects")
             option = RestOptions.new
@@ -64,12 +64,12 @@ module ProjectAddFieldData
             unless current_field
                 warn "ERROR: Could not find Field with matching id of \"#{field.to_s}\"\n" +
                      "=> Hint: It either doesn't exist or it's disabled."
-                return 
+                return
             end
             unless current_field.field_type == "project"
                 warn "ERROR: Expected a Project field. The field provided is a \"#{current_field.field_type}\" field."
-                return 
-            end        
+                return
+            end
         else
             warn "Unknown Error retrieving field. Exiting."
             return
@@ -81,7 +81,7 @@ module ProjectAddFieldData
         #Check the field type -> if its option or fixed suggestion we must make the option
         #available first before we can apply it to the Files resource
         if RESTRICTED_LIST_FIELD_TYPES.include?(current_field.field_display_type)
-            
+
             lookup_string_endpoint = URI.parse(@uri + "/Fields/#{current_field.id}/FieldLookupStrings")
 
             #Grab all the available FieldLookupStrings for the specified Fields resource
@@ -90,8 +90,8 @@ module ProjectAddFieldData
             #check if the value in the third argument is currently an available option for the field
             lookup_string_exists = field_lookup_strings.find { |item| item.value == value }
 
-            #add the option to the restricted field first if it's not there, otherwise you get a 400 bad 
-            #request error saying that it couldn't find the string value for the restricted field specified 
+            #add the option to the restricted field first if it's not there, otherwise you get a 400 bad
+            #request error saying that it couldn't find the string value for the restricted field specified
             #when making a PUT request on the PROJECTS resource you are currently working on
             unless lookup_string_exists
                 data = {:value => value}
@@ -101,7 +101,7 @@ module ProjectAddFieldData
 
             #Now that we know the option is available, we can update the Project
             index = current_project.fields.find_index { |nested_field| nested_field.id.to_s == current_field.id.to_s }
-            
+
             if index
                 current_project.fields[index].values = [value]
             else
@@ -143,35 +143,35 @@ module ProjectAddFieldData
             #Apply the date to our current Files resource
             data = {:id => current_field.id, :values => [value.to_s]}
             res = put(projects_endpoint,data,false) #Make the update
-          
+
 
         elsif NORMAL_FIELD_TYPES.include?(current_field.field_display_type) #For regular fields
             #some fields are built into Projects so they can't be inserted into
             #the Projects nested fields resource. We get around this by using the
             #name of the field object to access the corresponding built-in field attribute
             #inside the Projects object.
-          
+
             if current_field.built_in.to_s == "1"  #For built in fields
                 projects_endpoint =  URI.parse(@uri + '/Projects') #change endpoint bc field is built_in
                 field_name = current_field.name.downcase.gsub(' ','_')
-                
+
                 unless current_project.instance_variable_defined?('@'+field_name)
-                    warn "ERROR: The specified attirbute \"#{field_name}\" does not" + 
+                    warn "ERROR: The specified attirbute \"#{field_name}\" does not" +
                          " exist in the Project. Exiting."
                     exit(-1)
                 end
                 #update the project
                 current_project.instance_variable_set('@'+field_name, value)
                 #Make the update request
-                res = put(projects_endpoint,current_project,false)                 
+                res = put(projects_endpoint,current_project,false)
 
             else                                                        #For regular non-built in fields
                 data = {:id => current_field.id, :values => [value.to_s]}
                 res = put(projects_endpoint,data,false)
             end
-           
-        elsif current_field.field_display_type == 'boolean'
 
+        elsif current_field.field_display_type == 'boolean'
+            value = value.to_s.downcase.strip
             #validate value
             unless ALLOWED_BOOLEAN_FIELD_OPTIONS.include?(value.to_s.strip)
                 msg = "Error: Invalid value #{value.inspect} for \"On/Off Switch\" field type.\n" +
@@ -179,32 +179,34 @@ module ProjectAddFieldData
                 logger.error(msg)
                 return
             end
-            
+
             #Interpret input
             #Even indicies in the field options array are On and Odd indicies are Off
             bool_val = ""
-            if ALLOWED_BOOLEAN_FIELD_OPTIONS.find_index(value.to_s.strip).even?
+            if ALLOWED_BOOLEAN_FIELD_OPTIONS.find_index(value).even?
                 bool_val = "1"
-            elsif ALLOWED_BOOLEAN_FIELD_OPTIONS.find_index(value.to_s.strip).odd?
+            elsif ALLOWED_BOOLEAN_FIELD_OPTIONS.find_index(value).odd?
                 bool_val = "0"
             end
-            
+
             #Update the object
             projects_endpoint =  URI.parse(@uri + '/Projects')
 
-            current_project.fields.each do |obj| 
-                if obj.id == current_field.id
-                    obj.values[0] = bool_val
-                end
-                #obj
+            #Check if field is populated
+            index = current_project.fields.find_index { |obj| obj.id == current_field.id }
+
+            if index
+                current_project.fields[index].values = [bool_val]
+            else
+                current_project.fields << NestedFieldItems.new(current_field.id,[bool_val])
             end
-            
+
             #Update current value variable for @verbose statement below
             current_value = bool_val
 
             #Acutally perform the update request
             res = put(projects_endpoint,current_project,false)
-            
+
         else
             warn "Error: The field specified does not have a valid field_display_type." +
                  "Value provided => #{field.field_display_type.inspect}"

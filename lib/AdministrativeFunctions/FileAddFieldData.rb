@@ -207,22 +207,21 @@ module FileAddFieldData
                 end
 
             elsif current_field.field_display_type == 'boolean'
-
+                value = value.to_s.downcase.strip
                 #validate value
-                unless ALLOWED_BOOLEAN_FIELD_OPTIONS.include?(value.to_s.strip)
+                unless ALLOWED_BOOLEAN_FIELD_OPTIONS.include?(value)
                     msg = "Invalid value #{value.inspect} for \"On/Off Switch\" field type.\n" +
                           "Acceptable Values => #{ALLOWED_BOOLEAN_FIELD_OPTIONS.inspect}"
                     logger.error(msg)
                     return
                 end
                 
-                
                 #Interpret input
                 #Even indicies in the field options array are On and Odd indicies are Off
                 bool_val = ""
-                if ALLOWED_BOOLEAN_FIELD_OPTIONS.find_index(value.to_s.strip).even?
+                if ALLOWED_BOOLEAN_FIELD_OPTIONS.find_index(value).even?
                     bool_val = "1"
-                elsif ALLOWED_BOOLEAN_FIELD_OPTIONS.find_index(value.to_s.strip).odd?
+                elsif ALLOWED_BOOLEAN_FIELD_OPTIONS.find_index(value).odd?
                     bool_val = "0"
                 end
 
@@ -231,7 +230,7 @@ module FileAddFieldData
 
                 current_file.fields.each do |obj| 
                     if obj.id == current_field.id
-                        obj.values[0] = bool_val
+                        obj.values = [bool_val]
                     end  
                 end
                 
