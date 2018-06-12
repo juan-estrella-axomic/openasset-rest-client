@@ -3,15 +3,25 @@ class Users
     # @!parse attr_accessor :alive, :full_name, :id, :username
     attr_accessor :alive, :full_name, :id, :username
     
-    # Creates a Users object (Only Permits GET requests)
+    # Creates a Users object
     #
-    # @param data [ Hash or nil ] Default => nil
+    # @param args [ Hash, 2 Strings, or nil ] Default => nil
     # @return [ Users object]
     #
     # @example 
     #         user = Users.new
-    def initialize(data=nil)
-        json_obj = Validator::validate_argument(data,'Users')
+    #         user = Users.new("jdoe@contoso.com","John Doe")
+    #         user = Users.new({:username => "jdoe@contoso.com", :full_name => "John Doe"})
+    def initialize(*args)
+        json_obj = {}
+
+        if args.first.is_a?(String) # Assume two string args were passed
+            json_obj['username']  = args[0]
+            json_obj['full_name'] = args[1]
+        else                        # Assume a Hash or nil was passed
+            json_obj = Validator::validate_argument(args.first,'Users')
+        end
+
         @alive = json_obj['alive']
         @full_name = json_obj['full_name']
         @id = json_obj['id']

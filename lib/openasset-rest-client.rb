@@ -1323,6 +1323,57 @@ module OpenAsset
             get(uri,query_obj,with_nested_resources)
         end
 
+        # Create Users.
+        #
+        # @param data [Single Users Object, Array of Users Objects] (Required)
+        # @param generate_objects [Boolean] (Optional) 
+        #        Caution: Hurts performance -> Only use if performing further edits after object creation
+        # @return [JSON object] HTTP response JSON object. Returns ImageSizes objects array if generate_objects flag is set
+        #
+        # @example 
+        #          rest_client.create_users(users_obj)
+        #          rest_client.create_users(users_obj,true)    
+        #          rest_client.create_users(users_obj_array)    
+        #          rest_client.create_users(users_obj_array,true)    
+        def create_users(data=nil,generate_objects=false)
+            uri = URI.parse(@uri + "/Users")
+            post(uri,data,generate_objects)
+        end
+
+        # Update Users.
+        #
+        # @param data [Single Users Object, Array of Users Objects] (Required)
+        # @param generate_objects [Boolean] (Optional) 
+        #        Caution: Hurts performance -> Only use if performing further edits after object creation
+        # @return [JSON object] HTTP response JSON object. Returns ImageSizes objects array if generate_objects flag is set
+        #
+        # @example 
+        #          rest_client.update_users(users_obj)
+        #          rest_client.update_users(users_obj,true)    
+        #          rest_client.update_users(users_obj_array)    
+        #          rest_client.update_users(users_obj_array,true)    
+        def update_users(data=nil,generate_objects=false)
+            uri = URI.parse(@uri + "/Users")
+            put(uri,data,generate_objects)
+        end
+
+        # Delete Users.
+        #
+        # @param data [Single Users Object, Array of Users Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example 
+        #          rest_client.delete_users(users_obj)
+        #          rest_client.delete_users(users_obj_array)
+        #          rest_client.delete_users([1,2,3])
+        #          rest_client.delete_users(['1','2','3'])
+        #          rest_client.delete_users(1)
+        #          rest_client.delete_users('1')
+        def delete_users(data=nil)
+            uri = URI.parse(@uri + "/Users")
+            delete(uri,data)
+        end
+
         ############################
         #                          #
         # Administrative Functions #

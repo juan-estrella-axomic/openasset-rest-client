@@ -39,7 +39,13 @@ class Validator
             Logging::logger.error(msg)
             abort
         end
-        return (arg) ? arg : Hash.new # Return arg or empty hash in case arg is nil
+        if arg.is_a?(Hash)
+            # Convert all keys to strings in case user passes symbols as keys so values can be extracted
+            arg = arg.each_with_object({}) { |pair,hash| hash[pair.first.to_s] = pair.last }
+        else
+            arg = Hash.new
+        end     
+        arg # Return arg or empty hash in case arg is nil
     end
 
     def self.process_http_response(response,verbose=nil,resource='',http_method='')
