@@ -1,3 +1,6 @@
+# Groups class
+# 
+# @author Juan Estrella
 class Users
     
     # @!parse attr_accessor :alive, :full_name, :id, :username
@@ -17,7 +20,7 @@ class Users
 
         if args.first.is_a?(String) # Assume two string args were passed
             json_obj['username']  = args[0]
-            json_obj['full_name'] = args[1]
+            json_obj['full_name'] = args[1] || args[0] # Use the username if not specified
         else                        # Assume a Hash or nil was passed
             json_obj = Validator::validate_argument(args.first,'Users')
         end
