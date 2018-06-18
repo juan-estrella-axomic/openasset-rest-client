@@ -8,13 +8,22 @@ class Groups
 
     # Creates a Groups object
     #
-    # @param data [Hash, nil] Takes a JSON object/Hash or no argument 
-    # @return [Groups object]
+    # @param args [ Hash, 2 Strings, or nil ] Default => nil
+    # @return [ Groups object]
     #
     # @example 
-    #         group = Groups.new
-    def initialize(data=nil)
-        json_obj = Validator::validate_argument(data,'Groups')
+    #         user = Groups.new
+    #         user = Groups.new("Marketing")
+    #         user = Groups.new({:name=> "Marketing"})
+    def initialize(*args)
+        json_obj = {}
+
+        if args.first.is_a?(String) # Assume two string args were passed
+            json_obj['name'] = args.first
+        else                        # Assume a Hash or nil was passed
+            json_obj = Validator::validate_argument(args.first,'Groups')
+        end
+
         @alive = json_obj['alive']
         @id = json_obj['id']
         @name = json_obj['name']

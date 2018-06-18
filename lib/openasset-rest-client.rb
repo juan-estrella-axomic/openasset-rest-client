@@ -748,7 +748,7 @@ module OpenAsset
         # Retrieves Groups.
         #
         # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
-        # @return [JSON object] HTTP response JSON object.
+        # @return [JSON object] Group objects array.
         #
         # @example 
         #          rest_client.get_groups()
@@ -756,6 +756,57 @@ module OpenAsset
         def get_groups(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Groups")
             get(uri,query_obj,with_nested_resources)
+        end
+
+        # Create Groups.
+        #
+        # @param data [Single Groups Object, Array of Groups Objects] (Required)
+        # @param generate_objects [Boolean] (Optional) 
+        #        Caution: Hurts performance -> Only use if performing further edits after object creation
+        # @return [JSON object] HTTP response JSON object. Returns Groups objects array if generate_objects flag is set
+        #
+        # @example 
+        #          rest_client.create_groups(groups_obj)
+        #          rest_client.create_groups(groups_obj,true)    
+        #          rest_client.create_groups(groups_obj_array)    
+        #          rest_client.create_groups(groups_obj_array,true)    
+        def create_groups(data=nil,generate_objects=false)
+            uri = URI.parse(@uri + "/Groups")
+            post(uri,data,generate_objects)
+        end
+
+        # Update Groups.
+        #
+        # @param data [Single Groups Object, Array of Groups Objects] (Required)
+        # @param generate_objects [Boolean] (Optional) 
+        #        Caution: Hurts performance -> Only use if performing further edits after object creation
+        # @return [JSON object] HTTP response JSON object. Returns Groups objects array if generate_objects flag is set
+        #
+        # @example 
+        #          rest_client.update_groups(groups_obj)
+        #          rest_client.update_groups(groups_obj,true)    
+        #          rest_client.update_groups(groups_obj_array)    
+        #          rest_client.update_groups(groups_obj_array,true)    
+        def update_groups(data=nil,generate_objects=false)
+            uri = URI.parse(@uri + "/Groups")
+            put(uri,data,generate_objects)
+        end
+
+        # Delete Groups.
+        #
+        # @param data [Single Groups Object, Array of Groups Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example 
+        #          rest_client.delete_groups(users_obj)
+        #          rest_client.delete_groups(users_obj_array)
+        #          rest_client.delete_groups([1,2,3])
+        #          rest_client.delete_groups(['1','2','3'])
+        #          rest_client.delete_groups(1)
+        #          rest_client.delete_groups('1')
+        def delete_groups(data=nil)
+            uri = URI.parse(@uri + "/Groups")
+            delete(uri,data)
         end
 
         ############
