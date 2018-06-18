@@ -2,15 +2,16 @@ module AddFilesToAlbum
 
 	def __add_files_to_album(albums='',files='')
 
-            if albums.empty?
-                logger.error("Albums argument cannot be empty.")
+            if albums.empty? || albums.nil?
+                logger.error("Albums (argument 1) cannot be empty.")
                 return false
             end
 
-            if files.empty?
-                logger.error("Files argument cannot be empty.")
+            if files.empty? || files.nil?
+                logger.error("Files (argument 2) cannot be empty.")
                 return false
             end
+
             # Get album objects
             if albums.is_a?(Albums)
                 albums = [albums]
@@ -38,7 +39,6 @@ module AddFilesToAlbum
             end
 
             logger.info("Retrieved album(s).")
-
 
             # Get File objects
             if files.is_a?(Files)
