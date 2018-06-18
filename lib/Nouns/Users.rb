@@ -1,17 +1,17 @@
 # Groups class
-# 
+#
 # @author Juan Estrella
 class Users
-    
-    # @!parse attr_accessor :alive, :full_name, :id, :username
-    attr_accessor :alive, :full_name, :id, :username
-    
+
+    # @!parse attr_accessor :alive, :full_name, :id, :username, :groups
+    attr_accessor :alive, :full_name, :id, :username, :groups
+
     # Creates a Users object
     #
     # @param args [ Hash, 2 Strings, or nil ] Default => nil
     # @return [ Users object]
     #
-    # @example 
+    # @example
     #         user = Users.new
     #         user = Users.new("jdoe@contoso.com","John Doe")
     #         user = Users.new({:username => "jdoe@contoso.com", :full_name => "John Doe"})
@@ -29,6 +29,13 @@ class Users
         @full_name = json_obj['full_name']
         @id = json_obj['id']
         @username = json_obj['username']
+        @groups = []
+
+        if json_obj['groups'].is_a?(Array) && !json_obj['groups'].empty?
+            @groups = json_obj['groups'].map do |item|
+                NestedGroupItems.new(item['id'])
+            end
+        end
     end
 
     def json
@@ -37,7 +44,13 @@ class Users
         json_data[:full_name] = @full_name                    unless @full_name.nil?
         json_data[:id] = @id                                  unless @id.nil?
         json_data[:username] = @username                      unless @username.nil?
-        
-        return json_data    
+
+        unless @groups.empty?
+            json_data[:groups] = @groups.map do |item|
+                item.json
+            end
+        end
+
+        return json_data
     end
 end

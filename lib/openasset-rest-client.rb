@@ -64,6 +64,9 @@ module OpenAsset
         include ProjectMoveFieldDataToKeywords
         include ProjectMoveKeywordsToField
 
+        # Administrative Functions - Users/Groups
+        include AddUsersToGroups
+
 
 
         # @!parse attr_reader :session, :uri

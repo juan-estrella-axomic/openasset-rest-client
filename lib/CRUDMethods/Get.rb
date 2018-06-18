@@ -7,7 +7,7 @@ module Get
 
         if with_nested_resources
         # Ensures File resource query returns all nested resources
-            case resource 
+            case resource
             when 'Files'
                 options.add_option('sizes','all')
                 options.add_option('keywords','all')
@@ -25,20 +25,23 @@ module Get
             when 'Searches'
                 options.add_option('groups','all')
                 options.add_option('users','all')
+            when 'Groups'
+                options.add_option('users','all')
+            when 'Users'
+                options.add_option('groups','all')
             else
-                
             end
 
         end
-        
+
         begin
             attempts ||= 1
             response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
-                
+
                 #Account for 2048 character limit with GET requests
                 options_str_len = options.get_options.length
                 if options_str_len > 2048
-                    
+
                     request = Net::HTTP::Post.new(uri.request_uri)
                     request.add_field('X-Http-Method-Override','GET')
 
@@ -48,14 +51,14 @@ module Get
                     options_str = options.get_options.sub(/^\?/,'')
 
                     # Break down the string and extract key value arguments for the post parameters
-                    key_value_pairs = options_str.split(/&/).map do |key_val| 
+                    key_value_pairs = options_str.split(/&/).map do |key_val|
                         #puts key_val
-                        key_val.split(/=/) 
+                        key_val.split(/=/)
 
                     end
-                    
-                    key_value_pairs.each do |key, val| 
-                        
+
+                    key_value_pairs.each do |key, val|
+
                         key   = key.to_sym
                         value = nil
 
@@ -69,11 +72,11 @@ module Get
                             return
                         end
 
-                        # Insert data into post parameters hash 
+                        # Insert data into post parameters hash
                         if post_parameters.has_key?(key) # then update it otherwise perform new insert
                             # Check if value for corresponding key is an array -> ex. ?id=[1,2,3] instead of ?id=1,2,3
                             existing_data = post_parameters[key]
-                            match         = existing_data =~ /^(\[[\w\s,]+\])$/  
+                            match         = existing_data =~ /^(\[[\w\s,]+\])$/
 
                             if match
                                 begin
@@ -89,11 +92,11 @@ module Get
                             else
                                 post_parameters[key] = existing_data + ',' + value  # For non array list format => ?id=1,2,3
                             end
-                            
+
                         else
                             post_parameters[key] = value # For regular key value format => ?name=joe
                         end
-                                
+
                     end
 
                     request.set_form_data(post_parameters)
@@ -105,16 +108,16 @@ module Get
                     request.add_field('X-SessionKey',@session)
                 else
                     @session = @authenticator.get_session
-                    request.add_field('X-SessionKey',@session) 
+                    request.add_field('X-SessionKey',@session)
                 end
-        
-                http.request(request) 
+
+                http.request(request)
             end
         rescue Exception => e
             if attempts < 3
                 wait_and_try_again()
                 attempts += 1
-                retry                
+                retry
             end
             logger.error("Connection failed. The server is not responding. - #{e}")
             exit(-1)
@@ -135,7 +138,7 @@ module Get
         return unless response.kind_of?(Net::HTTPSuccess)
 
         response.body.encode!(@outgoing_encoding, @incoming_encoding, invalid: :replace, undef: :replace, replace: '?') # Encode returned data into utf-8
-        
+
         begin
             json_body = JSON.parse(response.body)
         rescue JSON::ParserError => e
@@ -143,5 +146,5 @@ module Get
             return []
         end
         return generate_objects_from_json_response_body(json_body, resource)
-    end	
+    end
 end

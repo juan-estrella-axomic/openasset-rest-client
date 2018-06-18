@@ -1,5 +1,5 @@
 # Groups class
-# 
+#
 # @author Juan Estrella
 class Groups
 
@@ -11,7 +11,7 @@ class Groups
     # @param args [ Hash, 2 Strings, or nil ] Default => nil
     # @return [ Groups object]
     #
-    # @example 
+    # @example
     #         user = Groups.new
     #         user = Groups.new("Marketing")
     #         user = Groups.new({:name=> "Marketing"})
@@ -27,6 +27,13 @@ class Groups
         @alive = json_obj['alive']
         @id = json_obj['id']
         @name = json_obj['name']
+        @users = []
+
+        if json_obj['users'].is_a?(Array) && !json_obj['users'].empty?
+            @users = json_obj['users'].map do |item|
+                NestedUserItems.new(item['id'])
+            end
+        end
     end
 
     # @!visibility private
@@ -36,7 +43,13 @@ class Groups
         json_data[:id] = @id            unless @id.nil?
         json_data[:name] = @name        unless @name.nil?
 
-        return json_data        
+        unless @users.empty?
+            json_data[:users] = @users.map do |item|
+                item.json
+            end
+        end
+
+        return json_data
     end
 
 end

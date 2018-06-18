@@ -2,12 +2,12 @@ module AddUsersToGroups
 
     def  __add_users_to_groups(groups,users)
 
-        if groups.empty? || groups.nil?
+        if (groups.is_a?(Array) && groups.empty?) || users.empty? || groups.nil?
             logger.error("Groups (argument 1) cannot be empty.")
             return false
         end
 
-        if users.empty? || users.nil?
+        if (users.is_a?(Array) && users.empty?) || users.empty? || users.nil?
             logger.error("Files (argument 2) cannot be empty.")
             return false
         end
