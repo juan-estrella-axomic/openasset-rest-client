@@ -67,13 +67,6 @@ module AddUsersToGroups
         end
 
         # Loop through groups and add users
-
-       # groups.each do |group|
-       #    uri = URI.parse(@uri + "/Groups" + "/#{group.id}" + "/Users")
-       #     res = post(uri,users,false)
-       #     #return false unless res.kind_of?(Net::HTTPSuccess)
-       # end
-
         # Ensure files objects include the nested groups
         if users.first.groups.empty?
             ids = users.map { |user| user.id }
