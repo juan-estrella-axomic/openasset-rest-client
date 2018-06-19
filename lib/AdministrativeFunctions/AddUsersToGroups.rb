@@ -38,7 +38,7 @@ module AddUsersToGroups
             return false
         end
 
-        logger.info("Retrieved album(s).")
+        logger.info("Retrieved group(s).")
 
         # Get User objects
         if users.is_a?(Users)
@@ -47,13 +47,13 @@ module AddUsersToGroups
             ids = users.to_s.split(/,/).reject { |v| v.strip.empty? || v.to_i.eql?(0) }
             op = RestOptions.new
             op.add_option('id',ids)
-            users = get_users(op)
+            users = get_users(op,true)
             op.clear
         elsif users.is_a?(Array)
             if users.first.is_a?(String) || users.first.is_a?(Integer)
                 op = RestOptions.new
                 op.add_option('id',users)
-                users = get_groups(op)
+                users = get_groups(op,true)
                 op.clear
                 if users.empty?
                     logger.error("Users with id(s) => #{users.join(',')} not found.")
@@ -66,17 +66,43 @@ module AddUsersToGroups
             return false
         end
 
-        logger.info("Retrieved album(s).")
-
         # Loop through groups and add users
-        logger.info("Adding users to album.")
-        groups.each do |group|
-            uri = URI.parse(@uri + "/Groups" + "/#{group.id}" + "/Users")
-            res = post(uri,users,false)
-            return false unless res.kind_of?(Net::HTTPSuccess)
-        end
-        return true
-    end
 
+       # groups.each do |group|
+       #    uri = URI.parse(@uri + "/Groups" + "/#{group.id}" + "/Users")
+       #     res = post(uri,users,false)
+       #     #return false unless res.kind_of?(Net::HTTPSuccess)
+       # end
+
+        # Ensure files objects include the nested groups
+        if users.first.groups.empty?
+            ids = users.map { |user| user.id }
+            options = RestOptions.new.tap do |o|
+                o.add_option('id',ids)
+                o.add_option('limit','0')
+                o.add_option('displayFields','id,groups')
+            end
+            users = get_users(options,true) # Get users with nested resources
+        end
+
+        logger.info("Retrieved user(s).")
+
+        payload = []
+        groups.each do |group|
+            users.each do |user|
+                # Skip ids 3 and 4 to protect Axomic and Superuser
+                next if user.id == "3" || user.id == "4"
+                nested_group_found = user.groups.find { |obj| obj.id == group.id }
+                user.groups << NestedGroupItems.new(group.id) unless nested_group_found
+                payload << user
+            end
+        end
+
+        logger.info("Adding user(s) to group(s).")
+        res = update_users(payload)
+
+        res.kind_of?(Net::HTTPSuccess) ? true : false
+
+    end
 
 end
