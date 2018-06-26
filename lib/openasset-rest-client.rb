@@ -689,15 +689,15 @@ module OpenAsset
 
         # Add Users to group(s).
         #
-        # @param albums [Groups Objects, Integer, String] (Required)
-        # @param files [Users Objects, Integer, String] (Required)
+        # @param groups [Groups Objects, Array of Groups objects] (Required)
+        # @param users [Users Objects, Array of Users objects] (Required)
         # @return [Boolean].
         #
         # @example
-        #          rest_client.add_users_to_groups(groups_object,users_object)
-        #          rest_client.add_users_to_groups(groups_objects_array,users_objects_array)
-        #          rest_client.add_users_to_groups('917','1,2,3,4,5,6') (Add users to group id 917)
-        #          rest_client.add_users_to_groups([917,918],[1,2,3,4,5,6]) (Add users to mutliple groups)
+        #          rest_client.add_users_to_groups(groups_object,users_object) (Add one user to one group)
+        #          rest_client.add_users_to_groups(groups_objects_array,users_objects_array) (Add multiple users to multiple groups)
+        #          rest_client.add_users_to_groups(groups_object,users_objects_array) (Add multiple users to one group)
+        #          rest_client.add_users_to_groups(groups_objects_array,users_object) (Add a user to mutliple groups)
         def add_users_to_groups(groups=nil,users=nil)
             __add_users_to_groups(groups,users)
         end

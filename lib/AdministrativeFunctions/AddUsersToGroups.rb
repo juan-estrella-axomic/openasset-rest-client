@@ -1,74 +1,47 @@
 module AddUsersToGroups
 
-    def  __add_users_to_groups(groups,users)
+    def  __add_users_to_groups(*args)
 
-        if (groups.is_a?(Array) && groups.empty?) || users.empty? || groups.nil?
-            logger.error("Groups (argument 1) cannot be empty.")
+        # Put arguments in array first for simpler validation below
+        arg1   = args[0].is_a?(Array) ? args[0] : [args[0]]
+        arg2   = args[1].is_a?(Array) ? args[1] : [args[1]]
+
+        if arg1.first.to_s.empty? || arg2.first.to_s.empty? # Check for nil and empty string at once
+            logger.error("Empty argument detected in #{__callee__}.")
             return false
         end
 
-        if (users.is_a?(Array) && users.empty?) || users.empty? || users.nil?
-            logger.error("Files (argument 2) cannot be empty.")
-            return false
-        end
+        groups = nil
+        users  = nil
 
-        # Get group objects
-        if groups.is_a?(Groups)
-            groups = [groups]
-        elsif groups.is_a?(String) || groups.is_a?(Integer)
-            ids = groups.to_s.split(/,/).reject { |v| v.strip.empty? || v.to_i.eql?(0) }
-            op = RestOptions.new
-            op.add_option('id',ids)
-            groups = get_groups(op)
-            op.clear
-        elsif groups.is_a?(Array)
-            if groups.first.is_a?(String) || groups.first.is_a?(Integer)
-                op = RestOptions.new
-                op.add_option('id',groups)
-                groups = get_groups(op)
-                op.clear
-                if groups.empty?
-                    logger.error("Groups with id(s) => #{groups.join(',')} not found.")
-                    return false
-                end
-            end
+        if arg1.first.is_a?(Groups) && arg2.first.is_a?(Users)
+            groups = arg1
+            users  = arg2
+        elsif arg1.is_a?(Users) && arg2.is_a?(Groups)
+            users  = arg1
+            groups = arg2
         else
-            logger.error("Expected Groups object(s), string id(s), array of id(s) for first argument. " +
-                         "Instead Got => #{groups.to_s.inspect}.")
-            return false
-        end
-
-        logger.info("Retrieved group(s).")
-
-        # Get User objects
-        if users.is_a?(Users)
-            users = [users]
-        elsif users.is_a?(String) || users.is_a?(Integer)
-            ids = users.to_s.split(/,/).reject { |v| v.strip.empty? || v.to_i.eql?(0) }
-            op = RestOptions.new
-            op.add_option('id',ids)
-            users = get_users(op,true)
-            op.clear
-        elsif users.is_a?(Array)
-            if users.first.is_a?(String) || users.first.is_a?(Integer)
-                op = RestOptions.new
-                op.add_option('id',users)
-                users = get_groups(op,true)
-                op.clear
-                if users.empty?
-                    logger.error("Users with id(s) => #{users.join(',')} not found.")
-                    return false
-                end
-            end
-        else
-            logger.error("Expected Users object(s), string id(s), array of id(s) for second argument. " +
-                         "Instead Got => #{users.to_s.inspect}.")
-            return false
+            logger.error("Expected one of the following (in any order) for #{__callee__}:" +
+                         "\n\t1.) One Groups object and One Users object." +
+                         "\n\t2.) An Array of Groups objects and an Array of Users objects." +
+                         "\n\t3.) One Groups object and an array of Users objects." +
+                         "\n\t4.) One Users object and an array of Groups objects." +
+                         "Instead got => #{arg1.inspect} and #{arg2.inspect}")
+            return
         end
 
         # Loop through groups and add users
-        # Ensure files objects include the nested groups
-        if users.first.groups.empty?
+        # Ensure users objects include the nested groups field
+        refetch = false
+        users.each do |user|
+            if user.groups.empty? || user.groups.to_s.empty? # <= in case it is set to nil or an empty string
+                refetch = true
+                break
+            end
+        end
+
+        if refetch
+            logger.info("Detected missing nested groups field. Refetching user(s).")
             ids = users.map { |user| user.id }
             options = RestOptions.new.tap do |o|
                 o.add_option('id',ids)
@@ -78,24 +51,30 @@ module AddUsersToGroups
             users = get_users(options,true) # Get users with nested resources
         end
 
-        logger.info("Retrieved user(s).")
-
-        payload = []
         groups.each do |group|
             users.each do |user|
                 # Skip ids 3 and 4 to protect Axomic and Superuser
                 next if user.id == "3" || user.id == "4"
                 nested_group_found = user.groups.find { |obj| obj.id == group.id }
                 user.groups << NestedGroupItems.new(group.id) unless nested_group_found
-                payload << user
             end
         end
 
         logger.info("Adding user(s) to group(s).")
-        res = update_users(payload)
 
-        res.kind_of?(Net::HTTPSuccess) ? true : false
+        # Perform updates in batches of 200
+        batch_size = 200
+        total, remainder = users.length.divmod(batch_size)
+        total += 1 if remainder > 0
+        success = true
+        users.each_slice(batch_size).with_index(1) do |batch,index|
+            logger.info("Updating user batch #{index} of #{total}.")
+            res = update_users(batch)
+            logger.info(res)
+            success = false unless res.kind_of?(Net::HTTPSuccess)
+        end
 
+        success
     end
 
 end
