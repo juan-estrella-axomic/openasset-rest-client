@@ -20,6 +20,7 @@ module Get
                 options.add_option('projectKeywords','all')
                 options.add_option('fields','all')
                 options.add_option('albums','all')
+                options.add_option('withLocation','1')
             when 'Fields'
                 options.add_option('fieldLookupStrings','all')
             when 'Searches'
