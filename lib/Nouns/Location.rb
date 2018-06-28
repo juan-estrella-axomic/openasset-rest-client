@@ -1,6 +1,23 @@
+require_relative '../Validator'
 class Location
+    # @!parse attr_accessor :address, :city, :country, :google_id, :latitude, :longitude
+    attr_accessor :address, :city, :country, :google_id, :latitude, :longitude
 
+    # @!parse attr_accessor :name, :postal_code, :state, :street, :street_number
+    attr_accessor :name, :postal_code, :state, :street, :street_number
+
+    # Creates a Location object
+    #
+    # @param args  [String, Array, Hash, nil]
+    # @return [Location object]
+    #
+    # @example
+    #         location_obj =  Location.new
+    #         location_obj =  Location.new({'address' => '123 main st', 'latitude' => '+90.0', 'longitude' => '-127.554334', ...})
     def initialize(*args)
+
+        if args.length > 1
+
         json_obj = Validator::validate_argument(args.first,'Location')
 
         @address = json_obj['address']
@@ -30,6 +47,25 @@ class Location
         json_data[:state] = @state                   unless @state.nil?
         json_data[:street] = @street                 unless @street.nil?
         json_data[:street_number] = @street_number   unless @street_number.nil?
+
+        return json_data
     end
 
+    # Sets and validates location coordinates for a project
+    #
+    # @param args  [String, Array, Hash, nil]
+    # @return [nil]
+    #
+    # @example
+    #         location_obj.set_coordinates('+90.0','-127.554334')
+    #         location_obj.set_coordinates('+90.0,-127.554334')
+    #         location_obj.set_coordinates(['+90.0','-127.554334'])
+    #         location_obj.set_coordinates({'latitude' => '+90.0', 'longitude' => '-127.554334'})
+    def set_coordinates(*args)
+        coordinates = Validator.validate_coordinates(args)
+        return if coordinates.empty?
+
+        @latitude = coordinates[0]
+        @latitude = coordinates[1]
+    end
 end

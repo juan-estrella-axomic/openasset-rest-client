@@ -7,30 +7,44 @@ require_relative 'MyLogger'
 class Validator
 
     NOUNS = %w[
-                AccessLevels 
-                Albums 
-                AlternateStores 
-                AspectRatios 
-                Categories 
-                CopyrightHolders 
+                AccessLevels
+                Albums
+                AlternateStores
+                AspectRatios
+                Categories
+                CopyrightHolders
                 CopyrightPolicies
                 FieldLookupStrings
-                Fields 
-                Files 
-                Groups 
-                Keywords 
-                KeywordCategories 
-                Photographers 
-                Projects 
-                ProjectKeywords 
-                ProjectKeywordCategories 
+                Fields
+                Files
+                Groups
+                Keywords
+                KeywordCategories
+                Photographers
+                Projects
+                ProjectKeywords
+                ProjectKeywordCategories
                 Searches
-                SearchItems 
-                Sizes 
-                TextRewrites 
+                SearchItems
+                Sizes
+                TextRewrites
                 Users
-              ] 
-    
+              ]
+
+    # Multi-line regex to match latitude and longitude
+    # values that fall within the correct range:
+    # +90.0, -127.554334 => Match
+    # -90., -180. => No Match
+    REGEX = %r{^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?)
+            \s*,\s*
+            [-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$}x
+
+    ACCEPTED_KEYS = ['latitude','longitude']
+
+    self.coordinates_valid?(value)
+        REGEX.match(value)
+    end
+
     #Validate the right object type is passed for Noun's constructor
     def self.validate_argument(arg,val='NOUN')
         unless arg.is_a?(NilClass) || arg.is_a?(Hash)
@@ -44,7 +58,7 @@ class Validator
             arg = arg.each_with_object({}) { |pair,hash| hash[pair.first.to_s] = pair.last }
         else
             arg = Hash.new
-        end     
+        end
         arg # Return arg or empty hash in case arg is nil
     end
 
@@ -62,19 +76,19 @@ class Validator
             when 'HEAD'
                 err_header = "Retrieving Header Data for \"#{resource}\""
         end
-        
-        if response.kind_of? Net::HTTPSuccess 
+
+        if response.kind_of? Net::HTTPSuccess
             msg = "Success: HTTP => #{response.code} #{response.message}"
             Logging::logger.info(msg.green)
-        elsif response.kind_of? Net::HTTPRedirection 
+        elsif response.kind_of? Net::HTTPRedirection
             location = response['location']
             msg      = "Unexpected Redirect to #{location}"
-            Logging::logger.error(msg.yellow) 
-        elsif response.kind_of? Net::HTTPUnauthorized 
+            Logging::logger.error(msg.yellow)
+        elsif response.kind_of? Net::HTTPUnauthorized
             msg = "Error: #{response.message}: Invalid Credentials."
-            Logging::logger.error(msg) 
+            Logging::logger.error(msg)
         elsif response.kind_of? Net::HTTPServerError
-            
+
             code = "Code: #{response.code}"
             msg  = "Message: #{response.message}"
 
@@ -93,14 +107,14 @@ class Validator
             Logging::logger.error(code)
             Logging::logger.error(msg)
         else
-            if response.body.include?('<title>OpenAsset - Something went wrong!</title>') && 
+            if response.body.include?('<title>OpenAsset - Something went wrong!</title>') &&
                !http_method.upcase.eql?('GET')
                     response.body = {'error_message' => 'Possibly unsupported file type: NGINX Error - OpenAsset - Something went wrong!','http_status_code' => "#{response.code}"}.to_json
             elsif response.code.eql?('403') && http_method.upcase.eql?('GET') &&
                response.body.include?('<title>OpenAsset - Something went wrong!</title>')
                     msg = "Don't let the error fool you. The image size specified is no longer available in S3. Go see the Wizard."
                     Logging::logger.error(msg)
-            end        
+            end
         end
         return response
     end
@@ -117,7 +131,7 @@ class Validator
             elsif field.is_a?(Hash) && field.has_key?('id')
                 id = field['id']
             else
-                msg = "Argument Error in get_field_lookup_strings method:\n\tFirst Parameter Expected " + 
+                msg = "Argument Error in get_field_lookup_strings method:\n\tFirst Parameter Expected " +
                       "one of the following so take your pick.\n\t1. Fields object\n\t2. Field object converted " +
                       "to Hash (e.g) field.json\n\t3. A hash just containing an id (e.g) {'id' => 1}\n\t" +
                       "4. A string or an Integer for the id\n\t5. An array of Integers of Numeric Strings"
@@ -144,10 +158,10 @@ class Validator
         if (uri_with_protocol =~ uri) == 0 #check for valid url and that protocol is specified
             uri
         elsif (uri_without_protocol =~ uri) == 0
-            uri = "https://" + uri               
+            uri = "https://" + uri
         elsif (uri_is_ip_address =~ uri) == 0
             unless uri.to_s.include?('http://') || uri.to_s.include?('https://')
-                uri = 'http://' + uri.to_s          
+                uri = 'http://' + uri.to_s
             end
             # Only allow private IPs because public ones will fail due to SSL certificate error
             unless /http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}/ =~ uri ||                # Class A IP range
@@ -160,7 +174,7 @@ class Validator
             end
             uri
         else
-            msg = "Invalid url! Expected http(s)://<subdomain>.openasset.com" + 
+            msg = "Invalid url! Expected http(s)://<subdomain>.openasset.com" +
                   "\nInstead got => #{uri.inspect}"
             Logging::logger.error(msg)
             abort
@@ -170,13 +184,13 @@ class Validator
 
     def self.validate_and_process_request_data(data)
         json_object = nil
-        
+
         if data.nil?
             msg = "Error: No body provided."
             Logging::logger.error(msg)
             return false
         end
-            
+
         #Perform all the checks for what will be the body of the HTTP request
         if data.is_a?(Hash)
             json_object = data #Already in json object format
@@ -203,7 +217,7 @@ class Validator
 
     def self.validate_and_process_delete_body(data)
         json_object = nil
-        
+
         #Perform all the checks for what will be the body of the delete request
         if data.is_a?(Hash)
             json_object = data #already a JSON object
@@ -224,7 +238,7 @@ class Validator
                 json_object = data.map {|noun_obj| noun_obj.json} # Convert all the Noun objects to JSON objects, NOT JSON Strings
             elsif data.first.is_a?(String) || data.first.is_a?(Integer) #Array of id's
                 json_object = data.map do |id_value|
-                    if id_value.to_i == 0 
+                    if id_value.to_i == 0
                         msg = "Invalid id value of #{id_value.inspect}. Skipping it."
                         Logging::logger.warn(msg.yellow)
                     else
@@ -243,7 +257,7 @@ class Validator
             Logging::logger.error(msg)
             return false
         else
-            msg = "Argument Error: Expected either\n\t1. A NOUN object\n\t2. An Array of NOUN objects" + 
+            msg = "Argument Error: Expected either\n\t1. A NOUN object\n\t2. An Array of NOUN objects" +
                                   "\n\t3. A Hash\n\t4. An Array of Hashes\n\t5. An Array of id strings or integers\n\t" +
                                   "Instead got a => #{data.class.to_s}."
             Logging::logger.error(msg)
@@ -252,4 +266,30 @@ class Validator
         return json_object
     end
 
+    def self.validate_coordinates(*args)
+        coordinate_pair = []
+        if args.length >= 2 # Two separate arguments
+            coordinate_pair << args[0] << ',' << args[1]
+        elsif args.first.is_a?(Array) # Array
+            coordinate_pair = args.first
+        elsif args.first.is_a?(Hash) # Hash
+            hash = args.first
+            hash.keys.each do |key|
+                unless ACCEPTED_KEYS.include?(key.to_s)
+                    msg = "Invalid key #{key.inspect}. Acceptable hash keys are " +
+                          "#{ACCEPTED_KEYS.inpect}."
+                    logger.error(msg)
+                    return coordinate_pair
+                end
+            end
+            coordinate_pair = hash.values
+        else # String
+            coordinate_pair = args.first.split(',')
+        end
+
+        unless coordinates_valid?(coordinate_pair.join(','))
+            logger.warn("Invalid coordinates detected => #{coordinate_pair}")
+        end
+        coordinate_pair
+    end
 end

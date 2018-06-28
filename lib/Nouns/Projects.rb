@@ -1,6 +1,7 @@
 require_relative 'NestedProjectKeywordItems'
 require_relative 'NestedFieldItems'
 require_relative 'NestedAlbumItems'
+require_relative '../Validator'
 require_relative '../Generic'
 
 
@@ -46,7 +47,7 @@ class Projects < Generic
         @name = json_obj['name']
         @name_alias_1 = json_obj['name_alias_1']
         @name_alias_2 = json_obj['name_alias_2']
-        @location = nil
+        @location
         @project_keywords = []
         @fields = []
         @albums = []
@@ -88,13 +89,7 @@ class Projects < Generic
         json_data[:name_alias_2] = @name_alias_2                 unless @name_alias_2.nil?
 
         unless @location.nil?
-            location_object = Hash.new
-            @location.instance_variables.each do |name|
-                value = @location.instance_variable_get(name)
-                key = name.to_s.gsub('@','').to_sym
-                location_object[key] = value
-            end
-            json_data[:location] = location_object
+            json_data[:location] = @location.json
         end
 
         unless @project_keywords.empty?
@@ -116,6 +111,26 @@ class Projects < Generic
         end
 
         json_data
+    end
+
+    # Sets and validates location coordinates on a project
+    #
+    # @param args  [String, Array, Hash, nil]
+    # @return [nil]
+    #
+    # @example
+    #         project = Projects.new('My Project','1234.00')
+    #         project.set_coordinates('+90.0','-127.554334')
+    #         project.set_coordinates('+90.0,-127.554334')
+    #         project.set_coordinates(['+90.0','-127.554334'])
+    #         project.set_coordinates({'latitude' => '+90.0', 'longitude' => '-127.554334'})
+    def set_coordinates(*args)
+        coordinates = Validator.validate_coordinates(args)
+        return if coordinates.empty?
+
+        @location = Location.new
+        @location.latitude  = coordinates[0]
+        @location.longitude = coordinates[1]
     end
 
 end
