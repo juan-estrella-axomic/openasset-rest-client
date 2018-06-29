@@ -16,8 +16,6 @@ class Location
     #         location_obj =  Location.new({'address' => '123 main st', 'latitude' => '+90.0', 'longitude' => '-127.554334', ...})
     def initialize(*args)
 
-        if args.length > 1
-
         json_obj = Validator::validate_argument(args.first,'Location')
 
         @address = json_obj['address']
@@ -51,7 +49,7 @@ class Location
         return json_data
     end
 
-    # Sets and validates location coordinates for a project
+    # Sets and validates location coordinates on a location object
     #
     # @param args  [String, Array, Hash, nil]
     # @return [nil]

@@ -41,7 +41,7 @@ class Validator
 
     ACCEPTED_KEYS = ['latitude','longitude']
 
-    self.coordinates_valid?(value)
+    def self.coordinates_valid?(value)
         REGEX.match(value)
     end
 
@@ -116,29 +116,29 @@ class Validator
                     Logging::logger.error(msg)
             end
         end
-        return response
+        response
     end
 
     def self.validate_field_lookup_string_arg(field)
         id = nil
         #check for a field object or an id as a string or integer
-            if field.is_a?(Fields)
-                id = field.id
-            elsif field.is_a?(Integer)
-                id = field
-            elsif field.is_a?(String) && field.to_i > 0
-                id = field.to_i.to_s #In case something like "12abc" is passed it returns "12"
-            elsif field.is_a?(Hash) && field.has_key?('id')
-                id = field['id']
-            else
-                msg = "Argument Error in get_field_lookup_strings method:\n\tFirst Parameter Expected " +
-                      "one of the following so take your pick.\n\t1. Fields object\n\t2. Field object converted " +
-                      "to Hash (e.g) field.json\n\t3. A hash just containing an id (e.g) {'id' => 1}\n\t" +
-                      "4. A string or an Integer for the id\n\t5. An array of Integers of Numeric Strings"
-                Logging::logger.error(msg)
-                abort
-            end
-            return id
+        if field.is_a?(Fields)
+            id = field.id
+        elsif field.is_a?(Integer)
+            id = field
+        elsif field.is_a?(String) && field.to_i > 0
+            id = field.to_i.to_s #In case something like "12abc" is passed it returns "12"
+        elsif field.is_a?(Hash) && field.has_key?('id')
+            id = field['id']
+        else
+            msg = "Argument Error in get_field_lookup_strings method:\n\tFirst Parameter Expected " +
+                    "one of the following so take your pick.\n\t1. Fields object\n\t2. Field object converted " +
+                    "to Hash (e.g) field.json\n\t3. A hash just containing an id (e.g) {'id' => 1}\n\t" +
+                    "4. A string or an Integer for the id\n\t5. An array of Integers of Numeric Strings"
+            Logging::logger.error(msg)
+            abort
+        end
+        id
     end
 
     def self.validate_and_process_url(uri)
@@ -212,7 +212,7 @@ class Validator
             Logging::logger.error(msg)
             return false
         end
-        return json_object
+        json_object
     end
 
     def self.validate_and_process_delete_body(data)
@@ -263,7 +263,7 @@ class Validator
             Logging::logger.error(msg)
             return false
         end
-        return json_object
+        json_object
     end
 
     def self.validate_coordinates(*args)
