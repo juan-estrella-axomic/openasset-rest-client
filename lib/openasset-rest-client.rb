@@ -156,6 +156,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/AccessLevels")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_access_level :get_access_levels
 
         ##########
         #        #
@@ -175,6 +176,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Albums")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_album :get_albums
 
         # Create Albums.
         #
@@ -192,6 +194,7 @@ module OpenAsset
             uri = URI.parse(@uri + '/Albums')
             post(uri,data,generate_objects)
         end
+        alias :create_album :create_albums
 
         # Modify Albums.
         #
@@ -209,6 +212,7 @@ module OpenAsset
             uri = URI.parse(@uri + '/Albums')
             put(uri,data,generate_objects)
         end
+        alias :update_album :update_albums
 
         # Delete Albums.
         #
@@ -226,6 +230,7 @@ module OpenAsset
             uri = URI.parse(@uri + '/Albums')
             delete(uri,data)
         end
+        alias :delete_album :delete_albums
 
         ####################
         #                  #
@@ -245,6 +250,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/AlternateStores")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_alternate_store :get_alternate_stores
 
         #################
         #               #
@@ -264,6 +270,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/AspectRatios")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_aspect_ratio :get_aspect_ratios
 
         ##############
         #            #
@@ -283,6 +290,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Categories")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_category :get_categories
 
         # Modify system Categories.
         #
@@ -300,6 +308,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Categories")
             put(uri,data,generate_objects)
         end
+        alias :update_category :update_categories
 
         #####################
         #                   #
@@ -319,6 +328,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/CopyrightHolders")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_copyright_holder :get_copyright_holders
 
         # Create CopyrightHoloders.
         #
@@ -336,6 +346,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/CopyrightHolders")
             post(uri,data,generate_objects)
         end
+        alias :create_copyright_holder :create_copyright_holders
 
         # Modify CopyrightHolders.
         #
@@ -353,6 +364,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/CopyrightHolders")
             put(uri,data,generate_objects)
         end
+        alias :update_copyright_holder :update_copyright_holders
 
         ######################
         #                    #
@@ -372,6 +384,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/CopyrightPolicies")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_copyright_policy :get_copyright_policies
 
         # Create CopyrightPolicies.
         #
@@ -389,6 +402,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/CopyrightPolicies")
             post(uri,data,generate_objects)
         end
+        alias :create_copyright_policy :create_copyright_policies
 
         # Modify CopyrightPolicies.
         #
@@ -406,6 +420,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/CopyrightPolicies")
             put(uri,data,generate_objects)
         end
+        alias :update_copyright_policy :update_copyright_policies
 
         # Disables CopyrightPolicies.
         #
@@ -423,6 +438,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/CopyrightPolicies")
             delete(uri,data)
         end
+        alias :delete_copyright_policy :delete_copyright_policies
 
         #####################
         #                   #
@@ -442,6 +458,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/DataIntegrations")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_data_integration :get_data_integrations
 
 
         ##########
@@ -462,6 +479,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Fields")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_field :get_fields
 
         # Create fields.
         #
@@ -479,6 +497,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Fields")
             post(uri,data,generate_objects)
         end
+        alias :create_field :create_fields
 
         # Modify fields.
         #
@@ -496,6 +515,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Fields")
             put(uri,data,generate_objects)
         end
+        alias :update_field :update_fields
 
         # Disable fields.
         #
@@ -513,6 +533,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Fields")
             delete(uri,data)
         end
+        alias :delete_field :delete_fields
 
         ########################
         #                      #
@@ -535,6 +556,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_field_lookup_string :get_field_lookup_strings
 
         # creates options for Fixed Suggestion, Suggestion, and Option field types.
         #
@@ -555,6 +577,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
             post(uri,data,generate_objects)
         end
+        alias :create_field_lookup_string :create_field_lookup_strings
 
         # Modifies options for Fixed Suggestion, Suggestion, and Option field types.
         #
@@ -575,6 +598,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
             put(uri,data,generate_objects)
         end
+        alias :update_field_lookup_string :update_field_lookup_strings
 
         # Delete an item and/or option for Fixed Suggestion, Suggestion, and Option field types.
         #
@@ -596,6 +620,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
             delete(uri,data) #data parameter validated in private delete method
         end
+        alias :delete_field_lookup_string :delete_field_lookup_strings
 
         #########
         #       #
@@ -617,6 +642,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Files")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_file :get_files
 
         # Uploads a file to OpenAsset.
         #
@@ -686,6 +712,9 @@ module OpenAsset
         def add_files_to_album(albums=nil,files=nil)
             __add_files_to_album(albums,files)
         end
+        alias :add_files_to_albums :add_files_to_album
+        alias :add_file_to_albums :add_files_to_album
+        alias :add_file_to_album :add_files_to_albums
 
         # Add Users to group(s).
         #
@@ -701,6 +730,9 @@ module OpenAsset
         def add_users_to_groups(groups=nil,users=nil)
             __add_users_to_groups(groups,users)
         end
+        alias :add_user_to_group :add_users_to_groups
+        alias :add_users_to_group :add_users_to_groups
+        alias :add_user_to_groups :add_users_to_groups
 
         # Download Files.
         #
@@ -722,6 +754,7 @@ module OpenAsset
 
             files.download(image_size,download_location)
         end
+        alias :download_file :download_files
 
         # Update Files.
         #
@@ -739,6 +772,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Files")
             put(uri,data,generate_objects)
         end
+        alias :update_file :update_files
 
         # Delete Files.
         #
@@ -756,6 +790,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Files")
             delete(uri,data)
         end
+        alias :delete_file :delete_files
 
         ##########
         #        #
@@ -775,6 +810,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Groups")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_group :get_groups
 
         # Create Groups.
         #
@@ -792,6 +828,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Groups")
             post(uri,data,generate_objects)
         end
+        alias :create_group :create_groups
 
         # Update Groups.
         #
@@ -809,6 +846,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Groups")
             put(uri,data,generate_objects)
         end
+        alias :update_group :update_groups
 
         # Delete Groups.
         #
@@ -826,6 +864,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Groups")
             delete(uri,data)
         end
+        alias :delete_group :delete_groups
 
         ############
         #          #
@@ -845,6 +884,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Keywords")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_keyword :get_keywords
 
         # Create new file Keywords in OpenAsset.
         #
@@ -862,6 +902,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Keywords")
             post(uri,data,generate_objects)
         end
+        alias :create_keyword :create_keywords
 
         # Modify file Keywords.
         #
@@ -879,6 +920,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Keywords")
             put(uri,data,generate_objects)
         end
+        alias :update_keyword :update_keywords
 
         # Delete Keywords.
         #
@@ -896,6 +938,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Keywords")
             delete(uri,data)
         end
+        alias :delete_keyword :delete_keywords
 
         ######################
         #                    #
@@ -915,6 +958,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/KeywordCategories")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_keyword_category :get_keyword_categories
 
         # Create file keyword categories.
         #
@@ -932,6 +976,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/KeywordCategories")
             post(uri,data,generate_objects)
         end
+        alias :create_keyword_category :create_keyword_categories
 
         # Modify file keyword categories.
         #
@@ -949,6 +994,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/KeywordCategories")
             put(uri,data,generate_objects)
         end
+        alias :update_keyword_category :update_keyword_categories
 
         # Delete Keyword Categories.
         #
@@ -966,6 +1012,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/KeywordCategories")
             delete(uri,data)
         end
+        alias :delete_keyword_category :delete_keyword_categories
 
         #################
         #               #
@@ -985,6 +1032,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Photographers")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_photographer :get_photographers
 
         # Create Photographers.
         #
@@ -1002,6 +1050,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Photographers")
             post(uri,data,generate_objects)
         end
+        alias :create_photographer :create_photographers
 
         # Modify Photographers.
         #
@@ -1019,6 +1068,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Photographers")
             put(uri,data,generate_objects)
         end
+        alias :update_photographer :update_photographers
 
         ############
         #          #
@@ -1038,6 +1088,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Projects")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_project :get_projects
 
         # Create Projects.
         #
@@ -1055,6 +1106,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Projects")
             post(uri,data,generate_objects)
         end
+        alias :create_project :create_projects
 
         # Modify Projects.
         #
@@ -1073,6 +1125,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Projects")
             put(uri,data,generate_objects)
         end
+        alias :update_project :update_projects
 
         # Delete Projects.
         #
@@ -1090,6 +1143,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Projects")
             delete(uri,data)
         end
+        alias :delete_project :delete_projects
 
         ####################
         #                  #
@@ -1109,6 +1163,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/ProjectKeywords")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_project_keyword :get_project_keywords
 
         # Create Project Keywords.
         #
@@ -1126,6 +1181,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/ProjectKeywords")
             post(uri,data,generate_objects)
         end
+        alias :create_project_keyword :create_project_keywords
 
         # Modify Project Keywords.
         #
@@ -1143,6 +1199,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/ProjectKeywords")
             put(uri,data,generate_objects)
         end
+        alias :update_project_keyword :update_project_keywords
 
         # Delete Project Keywords.
         #
@@ -1160,6 +1217,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/ProjectKeywords")
             delete(uri,data)
         end
+        alias :delete_project_keyword :delete_project_keywords
 
         ##############################
         #                            #
@@ -1179,6 +1237,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_project_keyword_category :get_project_keyword_categories
 
         # Create project keyword categories.
         #
@@ -1196,6 +1255,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
             post(uri,data,generate_objects)
         end
+        alias :create_project_keyword_category :create_project_keyword_categories
 
         # Modify project keyword categories.
         #
@@ -1213,6 +1273,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
             put(uri,data,generate_objects)
         end
+        alias :update_project_keyword_category :update_project_keyword_categories
 
         # Delete Project Keyword Categories.
         #
@@ -1230,6 +1291,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
             delete(uri,data)
         end
+        alias :delete_project_keyword_category :delete_project_keyword_categories
 
         ############
         #          #
@@ -1249,6 +1311,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Searches")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_search :get_searches
 
         # Create Searches.
         #
@@ -1266,6 +1329,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Searches")
             post(uri,data,generate_objects)
         end
+        alias :create_search :create_searches
 
         # Modify Searches.
         #
@@ -1283,6 +1347,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Searches")
             put(uri,data,generate_objects)
         end
+        alias :update_search :update_searches
 
         #########
         #       #
@@ -1302,6 +1367,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Sizes")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_image_size :get_image_sizes
 
         # Create image Sizes.
         #
@@ -1319,6 +1385,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Sizes")
             post(uri,data,generate_objects)
         end
+        alias :create_image_size :create_image_sizes
 
         # Modify image Sizes.
         #
@@ -1336,6 +1403,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Sizes")
             put(uri,data,generate_objects)
         end
+        alias :update_image_size :update_image_sizes
 
         # Delete Image Sizes.
         #
@@ -1353,6 +1421,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Sizes")
             delete(uri,data)
         end
+        alias :delete_image_size :delete_image_sizes
 
         #################
         #               #
@@ -1372,6 +1441,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/TextRewrites")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_text_rewrite :get_text_rewrites
 
         #########
         #       #
@@ -1391,6 +1461,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Users")
             get(uri,query_obj,with_nested_resources)
         end
+        alias :get_user :get_users
 
         # Create Users.
         #
@@ -1408,6 +1479,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Users")
             post(uri,data,generate_objects)
         end
+        alias :create_user :create_users
 
         # Update Users.
         #
@@ -1425,6 +1497,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Users")
             put(uri,data,generate_objects)
         end
+        alias :update_user :update_users
 
         # Delete Users.
         #
@@ -1442,6 +1515,7 @@ module OpenAsset
             uri = URI.parse(@uri + "/Users")
             delete(uri,data)
         end
+        alias :delete_user :delete_users
 
         ############################
         #                          #
@@ -1463,6 +1537,9 @@ module OpenAsset
         def file_add_keywords(files=nil,keywords=nil)
             __file_add_keywords(files,keywords)
         end
+        alias :file_add_keyword :file_add_keywords
+        alias :files_add_keyword :file_add_keywords
+        alias :files_add_keywords :file_add_keywords
 
         # Tag Projects with keywords.
         #
@@ -1478,6 +1555,9 @@ module OpenAsset
         def project_add_keywords(projects=nil,proj_keywords=nil)
             __project_add_keywords(projects,proj_keywords)
         end
+        alias :project_add_keyword :project_add_keywords
+        alias :projects_add_keyword :project_add_keywords
+        alias :projects_add_keywords :project_add_keywords
 
         # Add data to ANY File field (built-in or custom).
         #
