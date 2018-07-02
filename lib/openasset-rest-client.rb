@@ -654,8 +654,8 @@ module OpenAsset
         # FOR PROJECT UPLOADS
         # @example
         #          rest_client.upload_file('/path/to/file', category_obj, project_obj)
-        #             rest_client.upload_file('/path/to/file','2','10')
-        #            rest_client.upload_file('/path/to/file', 2, 10)
+        #          rest_client.upload_file('/path/to/file','2','10')
+        #          rest_client.upload_file('/path/to/file', 2, 10)
         #          rest_client.upload_file('/path/to/file', category_obj, project_obj, true)
         #          rest_client.upload_file('/path/to/file','2','10', true)
         #          rest_client.upload_file('/path/to/file', 2, 10, true)
