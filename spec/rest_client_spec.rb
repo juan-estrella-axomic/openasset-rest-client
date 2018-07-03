@@ -443,8 +443,22 @@ describe RestClient do
     # Project Keywords #
     ####################
     context 'when dealing with project keywords' do
+        it 'creates a project keyword' do
+            project_keyword = ProjectKeywords.new('RSpecTest')
+            object = client.create_project_keywords(project_keyword,true).first
+            expect(object.is_a?(ProjectKeywords)).to be true
+        end
         it 'retrieves a project keyword' do
-            expect(client.get_project_keywords.first.class.to_s).to eq 'ProjectKeywords'
+            object = client.get_project_keywords.first
+            expect(object.is_a?(ProjectKeywords)).to be true
+        end
+        it 'updates a project keyword' do
+            query.clear
+            query.add_option('name','RSpecTest')
+            query.add_option('textMatching','exact')
+            project_keyword = client.get_project_keywords(query).first
+            project_keyword.name = 'RSpecTest-Updated'
+            expect(client.update_project_keywords(project_keyword).code).to eq '200'
         end
     end
 
@@ -454,17 +468,30 @@ describe RestClient do
     context 'when dealing with projects' do
         context 'with location' do
             it 'creates a project' do
-
+                project = Projects.new('RSpecTest')
+                project.set_location('40.7128 N , 74.0060 W')
+                object = client.create_projects(project,true).first
+                expect(object.is_a?(Projects)).to be true
+            end
+            it 'retrieves a project' do
+                object = client.get_project_keywords.first
+                expect(object.is_a?(Projects)).to be true
             end
             it 'updates a project' do
-
+                query.clear
+                query.add_option('name','RSpecTest')
+                query.add_option('textMatching','exact')
+                project = client.get_projects(query).first
+                project.name = 'RSpecTest-Updated'
+                expect(client.update_projects(project).code).to eq '200'
             end
-        end
-        it 'retrieves a project' do
-            expect(client.get_projects.first.class.to_s).to eq 'Projects'
-        end
-        it 'deletes a project' do
-
+            it 'deletes a project' do
+                query.clear
+                query.add_option('name','RSpecTest-Updated')
+                query.add_option('textMatching','exact')
+                project = client.get_projects(query).first
+                expect(client.delete_projects(project).code).to eq '204'
+            end
         end
     end
 
@@ -472,8 +499,21 @@ describe RestClient do
     # Searches #
     ############
     context 'when dealing with searches' do
+        it 'creates a search' do
+            args = {
+                'code'       => 'rank',
+                'exclude'    => '0',
+                'operator'   => '<',
+                'values/ids' => ['6']
+            }
+            search_item = SearchItems.new(args)
+            search = Searches.new('search1',search_items_object)
+        end
         it 'retrieves a search' do
             expect(client.get_searches.first.class.to_s).to eq 'Searches'
+        end
+        it 'updates a search' do
+
         end
     end
 
