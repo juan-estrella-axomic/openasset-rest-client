@@ -60,10 +60,19 @@ class Location
     #         location_obj.set_coordinates(['+90.0','-127.554334'])
     #         location_obj.set_coordinates({'latitude' => '+90.0', 'longitude' => '-127.554334'})
     def set_coordinates(*args)
-        coordinates = Validator.validate_coordinates(args)
+        len = args.length
+        coordinates = nil
+
+        if len >=2
+            coordinates = Validator.validate_coordinates(args[0],args[1])
+        else
+            coordinates = Validator.validate_coordinates(args.first)
+        end
+
         return if coordinates.empty?
 
-        @latitude = coordinates[0]
-        @latitude = coordinates[1]
+        @location.latitude  = coordinates[0]
+        @location.longitude = coordinates[1]
+        coordinates
     end
 end

@@ -13,6 +13,9 @@ class Projects < Generic
     # @!parse attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields, :albums
     attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields, :albums
 
+    # @!parse attr_reader :location
+    attr_reader :location
+
     # Creates a Projects object
     #
     # @param args  [String]
@@ -47,7 +50,7 @@ class Projects < Generic
         @name = json_obj['name']
         @name_alias_1 = json_obj['name_alias_1']
         @name_alias_2 = json_obj['name_alias_2']
-        @location
+        @location = nil
         @project_keywords = []
         @fields = []
         @albums = []
@@ -125,12 +128,22 @@ class Projects < Generic
     #         project.set_coordinates(['+90.0','-127.554334'])
     #         project.set_coordinates({'latitude' => '+90.0', 'longitude' => '-127.554334'})
     def set_coordinates(*args)
-        coordinates = Validator.validate_coordinates(args)
+        len = args.length
+        coordinates = nil
+
+        if len >=2
+            coordinates = Validator.validate_coordinates(args[0],args[1])
+        else
+            coordinates = Validator.validate_coordinates(args.first)
+        end
+
         return if coordinates.empty?
 
         @location = Location.new
         @location.latitude  = coordinates[0]
         @location.longitude = coordinates[1]
+        coordinates
     end
+    alias :set_location :set_coordinates
 
 end

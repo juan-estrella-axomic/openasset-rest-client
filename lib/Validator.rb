@@ -269,7 +269,7 @@ class Validator
     def self.validate_coordinates(*args)
         coordinate_pair = []
         if args.length >= 2 # Two separate arguments
-            coordinate_pair << args[0] << ',' << args[1]
+            coordinate_pair << args[0] << args[1]
         elsif args.first.is_a?(Array) # Array
             coordinate_pair = args.first
         elsif args.first.is_a?(Hash) # Hash
@@ -278,7 +278,7 @@ class Validator
                 unless ACCEPTED_KEYS.include?(key.to_s)
                     msg = "Invalid key #{key.inspect}. Acceptable hash keys are " +
                           "#{ACCEPTED_KEYS.inpect}."
-                    logger.error(msg)
+                    Logging::logger.error(msg)
                     return coordinate_pair
                 end
             end
@@ -287,8 +287,12 @@ class Validator
             coordinate_pair = args.first.split(',')
         end
 
+        # Sanitize latitude and longitude values (remove any degree symbols, letters, etc)
+        coordinate_pair = coordinate_pair.map { |val| val.to_s.gsub(/[^0-9\.]/,'') }.reject { |val| val.empty? }
+
+        # Make sure the coordinates are within valid ranges
         unless coordinates_valid?(coordinate_pair.join(','))
-            logger.warn("Invalid coordinates detected => #{coordinate_pair}")
+            Logging::logger.warn("Invalid coordinates detected => #{coordinate_pair}")
         end
         coordinate_pair
     end
