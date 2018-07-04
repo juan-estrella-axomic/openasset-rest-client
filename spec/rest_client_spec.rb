@@ -191,7 +191,6 @@ describe RestClient do
     # Field Lookup Strings #
     ########################
     context 'when dealing with field lookup strings' do
-           # g c u d
         it 'creats a field lookup string' do
             field_lookup_string = FieldLookupStrings.new('RSpecTest')
             object = client.create_field_lookup_strings(field_lookup_string,true).first
@@ -275,29 +274,41 @@ describe RestClient do
     # Groups #
     ##########
     context 'when dealing with groups' do
-        it 'creates a group' do
-            group = Groups.new('RSpecTest')
-            object = client.create_groups(group,true).first
-            expect(objet.is_a?(Groups)).to be true
-        end
-        it 'retrieves a group' do
-            object = client.get_groups.first
-            expect(object.is_a?(Groups)).to be true
-        end
-        it 'updates a group' do
-            query.clear
-            query.add_option('name','RSpecTest')
-            query.add_option('textMatching','exact')
-            group = client.get_groups(query).first
-            group.name = 'RSpecTest-Updated'
-            expect(client.update_groups(group).code).to eq '200'
-        end
-        it 'deletes a group' do
-            query.clear
-            query.add_option('name','RSpecTest-Updated')
-            query.add_option('textMatching','exact')
-            group = client.get_groups(query)
-            expect(client.delete_groups(group).code).to eq '204'
+        contex 'with nested users' do
+            user = Users.new('rspec@axomic.com','RSpec Test','pass')
+            user = client.create_users(user,true).first
+            nested_user = NestedUserItems.new(user.id)
+            group = nil
+            it 'creates a group' do
+                group = Groups.new('RSpecTest')
+                object = client.create_groups(group,true).first
+                expect(objet.is_a?(Groups)).to be true
+            end
+            it 'updates a group' do
+                query.clear
+                query.add_option('name','RSpecTest')
+                query.add_option('textMatching','exact')
+                group = client.get_groups(query).first
+                group.name = 'RSpecTest-Updated'
+                group.users << nested_user
+                expect(client.update_groups(group).code).to eq '200'
+            end
+            it 'retrieves a group' do
+                query.clear
+                query.add_option('users','all')
+                group = client.get_groups(query).first
+                expect(group.is_a?(Groups)).to be true
+            end
+            it 'has a user' do
+                expect(group.users.first.id).to eq user.id
+            end
+            it 'deletes a group' do
+                query.clear
+                query.add_option('name','RSpecTest-Updated')
+                query.add_option('textMatching','exact')
+                group = client.get_groups(query)
+                expect(client.delete_groups(group).code).to eq '204'
+            end
         end
     end
 
@@ -365,31 +376,11 @@ describe RestClient do
         end
     end
 
-
-    context 'object with nested fields' do
-
-    end
-
-    context 'user with nested groups' do
-
-    end
-
-    context 'group with nested users' do
-
-    end
-
-
-    context 'project object with nested keywords' do
-
-    end
-
-
-
     #################
     # Photographers #
     #################
     context 'when dealing with photographers' do
-        suffix = DateTime.now.strftime("%Y%m%d%H%M%S")
+        suffix = Helpers.current_time_in_milliseconds()
         it 'creates a photographer' do
             photographer = Photographers.new("RSpecTest_#{suffix}")
             object = client.create_photographers(photographer,true).first
@@ -493,12 +484,58 @@ describe RestClient do
                 expect(client.delete_projects(project).code).to eq '204'
             end
         end
+        context 'with nested resources' do
+            project = nil
+            suffix  = Helpers.current_time_in_milliseconds()
+            name    = "RSpecTest_#{suffix}"
+            field_type = 'project'
+            field_display_type = 'singleLine'
+            it 'creates a project' do
+                # album
+                album = Albums.new(name)
+                album = client.create_albums(album,true).first
+                # project keyword
+                project_keyword = ProjectKeywords.new(name)
+                project_keyword = client.create_project_keywords(project_keyword,true).first
+                # field
+                field = Fields.new(name,field_type,field_display_type)
+                field = client.create_fields(field,true).first
+
+                project = Projects.new(name)
+                project = client.create_projects(project,true).first
+
+                project.albums << NestedAlbumItems.new(album.id)
+                project.project_keywords << NestedProjectKeywordItems.new(project_keyword.id)
+                project.albums << NestedFieldItems.new(field.id,'RSpect Test Sample Data')
+                expect(client.update_projects(project).code).to eq '200'
+
+            end
+            it 'retrieves a project' do
+                query.clear
+                query.add_option('name',name)
+                query.add_option('textMatching','exact')
+                query.add_option('albums','all')
+                query.add_option('projectKeywords','all')
+                query.add_option('fields','all')
+                project = client.get_projects(query).first
+            end
+            it 'has a field' do
+                expect(project.fields.first.id).to eq field.id
+            end
+            it 'has a project keyword' do
+                expect(project.project_keywords.first.id).to eq project_keyword.id
+            end
+            it 'has an album' do 
+                expect(project.albums.first.id).to eq album.id
+            end
+        end
     end
 
     ############
     # Searches #
     ############
     context 'when dealing with searches' do
+        suffix = Helpers.current_time_in_milliseconds()
         it 'creates a search' do
             args = {
                 'code'       => 'rank',
@@ -507,26 +544,51 @@ describe RestClient do
                 'values/ids' => ['6']
             }
             search_item = SearchItems.new(args)
-            search = Searches.new('search1',search_items_object)
+            search = Searches.new("RSpecTestSearch_#{suffix}",search_items)
+            object = client.create_searches(search,true).first
+            expect(object.is_a?(Searhes)).to be true
         end
         it 'retrieves a search' do
-            expect(client.get_searches.first.class.to_s).to eq 'Searches'
+            object = client.get_searches.first
+            expect(object.is_a?(Searches)).to be true
         end
         it 'updates a search' do
-
+            query.clear
+            query.add_option('name',"RSpecTestSearch_#{suffix}")
+            query.add_option('textMatching','exact')
+            search = client.get_searches(query).first
+            search.name = "RSpecTestSearch-Updated_#{suffix}"
+            expect(client.update_searchess(searche).code).to eq '200'
         end
-    end
-
-    context 'search object with nested search' do
-
     end
 
     #########
     # Sizes #
     #########
     context 'when dealing with sizes' do
-        it 'retrieves a search' do
-            expect(client.get_sizes.first.class.to_s).to eq 'Sizes'
+        it 'creates an image size' do
+            img_size = Sizes.new('RSpecTest')
+            object = client.create_image_sizes(img_size,true).first
+            expect(object.is_a?(Sizes)).to be true
+        end
+        it 'retrieves an image size' do
+            object = client.get_image_sizes.first
+            expect(object.is_a?(Sizes)).to be true
+        end
+        it 'updates an image size' do
+            query.clear
+            query.add_option('name','RSpecTest')
+            query.add_option('textMatching','exact')
+            img_size = client.get_image_sizes(query).first
+            img_size.name = 'RSpecTest-Updated'
+            expect(client.update_image_sizes(img_size).code).to eq '200'
+        end
+        it 'deletes an image size' do
+            query.clear
+            query.add_option('name','RSpecTest-Updated')
+            query.add_option('textMatching','exact')
+            img_size = client.get_image_sizes(query).first
+            expect(client.delete_image_sizes(img_size).code).to eq '200'
         end
     end
 
@@ -535,7 +597,10 @@ describe RestClient do
     #################
     context 'when dealing with text rewrites' do
         it 'retrieves a text rewrite' do
-            expect(client.get_text_rewrites.first.class.to_s).to eq 'TextRewrites'
+            object = client.get_text_rewrites.first
+            test = false
+            test = true if object.nil? || object.is_a?(TextRewrites)
+            expect(test).to be true
         end
     end
 
@@ -543,8 +608,44 @@ describe RestClient do
     # Users #
     #########
     context 'when dealing with users' do
-        it 'retrieves a user' do
-            expect(client.get_users.first.class.to_s).to eq 'users'
+        context 'with nested groups' do
+            suffix = Helpers.current_time_in_milliseconds()
+            name   = "RSpecTest_#{suffix}"
+            group  = Groups.new(name)
+            group  = client.create_groups(group,true).first
+            it 'creates a user' do
+                data = {:username => 'jdoe@axomic.com', 
+                        :full_name => 'John Doe', 
+                        :password => 'pass'}
+                user = Users.new(data)
+                object = client.create_users(user,true).first
+                expect(object.is_a?(Users)).to be true
+            end
+            it 'updates a user' do
+                query.clear
+                query.add_option('username','jdoe@axomic.com')
+                query.add_option('textMatching','exact')
+                user = client.get_users(query).first
+                user.full_name = 'Jane Doe'
+                user.groups << NestedGroupItems.new(group.id)
+                expect(client.update_users(user).code).to eq '200'
+            end
+            it 'retrieves a user' do
+                query.clear
+                query.add_option('groups','all')
+                user = client.get_users(query).first
+                expect(user.is_a?(Users)).to be true
+            end
+            it 'is part of a group' do
+                expect(user.groups.first.id).to eq group.id
+            end
+            it 'deletes a user' do
+                query.clear
+                query.add_option('username','jdoe@axomic.com')
+                query.add_option('textMatching','exact')
+                user = client.get_users(query).first
+                expect(client.delete_users(query).code).to eq '204'
+            end
         end
     end
 
