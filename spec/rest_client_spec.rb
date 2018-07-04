@@ -1,5 +1,6 @@
-require_relative '../openasset-rest-client'
 require 'rspec'
+require_relative '../openasset-rest-client'
+require_relative 'spec_helper'
 
 include OpenAsset
 include RSpec
