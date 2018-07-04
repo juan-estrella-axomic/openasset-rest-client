@@ -1,5 +1,6 @@
-require_relative '../openasset-rest-client'
 require 'rspec'
+require_relative '../openasset-rest-client'
+require_relative 'spec_helper'
 
 include OpenAsset
 include RSpec
@@ -129,7 +130,7 @@ describe RestClient do
             object = client.get_copyright_policies.first
             expect(object.is_a?(CopyrightHolders)).to be true
         end
-        it 'updates a copyright policy' do
+        it 'modifies a copyright policy' do
             query.clear
             query.add_option('name','RSpecTest')
             query.add_option('textMatching','exact')
@@ -170,7 +171,7 @@ describe RestClient do
             object = client.get_fields.first
             expect(object.is_a?(Fields)).to be true
         end
-        it 'updates a field' do
+        it 'modifies a field' do
             query.clear
             query.add_option('name','RSpecTest')
             query.add_option('textMatching','exact')
@@ -200,7 +201,7 @@ describe RestClient do
             object = client.get_field_lookup_strings.first
             expect(object.is_a?(FieldLookupStrings)).to be true
         end
-        it 'updates a field lookup string' do
+        it 'modifies a field lookup string' do
             query.clear
             query.add_option('name','RSpecTest')
             query.add_option('textMatching','exact')
@@ -253,7 +254,7 @@ describe RestClient do
             replacement_img = './resources/rspec_flowers.jpg'
             expect(client.replace_file(existing_img,replacement_img).code).to eq '200'
         end
-        it 'updates a file' do
+        it 'modifies a file' do
             query.clear
             query.add_option('original_filename','rspec_flowers.jpg')
             query.add_option('textMatching','exact')
@@ -284,7 +285,7 @@ describe RestClient do
                 object = client.create_groups(group,true).first
                 expect(objet.is_a?(Groups)).to be true
             end
-            it 'updates a group' do
+            it 'modifies a group' do
                 query.clear
                 query.add_option('name','RSpecTest')
                 query.add_option('textMatching','exact')
@@ -326,7 +327,7 @@ describe RestClient do
             object = client.get_keyword_categories.first
             expect(object.is_a?(KeywordCategories)).to be true
         end
-        it 'updates a keyword category' do
+        it 'modifies a keyword category' do
             query.clear
             query.add_option('name','RSpecTest')
             query.add_option('textMatching','exact')
@@ -357,7 +358,7 @@ describe RestClient do
             object = client.get_keywords.first
             expect(object.is_a?(Keywords)).to be true
         end
-        it 'updates a keyword' do
+        it 'modifies a keyword' do
             query.clear
             query.add_option('name','RSpecTest')
             query.add_option('keyword_category_id','5')
@@ -390,7 +391,7 @@ describe RestClient do
             object = client.get_photographers.first
             expect(object.is_a?(Photographers)).to be true
         end
-        it 'updates a photographer' do
+        it 'modifies a photographer' do
             query.clear
             query.add_option('name',"RSpecTest_#{suffix}")
             query.add_option('textMatching','exact')
@@ -413,7 +414,7 @@ describe RestClient do
             object = client.get_project_keyword_categories.first
             expect(object.is_a?(ProjectKeywordCategories)).to be true
         end
-        it 'updates a project keyword category' do
+        it 'modifies a project keyword category' do
             query.clear
             query.add_option('name','RSpecTest')
             query.add_option('textMatching','exact')
@@ -443,7 +444,7 @@ describe RestClient do
             object = client.get_project_keywords.first
             expect(object.is_a?(ProjectKeywords)).to be true
         end
-        it 'updates a project keyword' do
+        it 'modifies a project keyword' do
             query.clear
             query.add_option('name','RSpecTest')
             query.add_option('textMatching','exact')
@@ -468,7 +469,7 @@ describe RestClient do
                 object = client.get_project_keywords.first
                 expect(object.is_a?(Projects)).to be true
             end
-            it 'updates a project' do
+            it 'modifies a project' do
                 query.clear
                 query.add_option('name','RSpecTest')
                 query.add_option('textMatching','exact')
@@ -552,7 +553,7 @@ describe RestClient do
             object = client.get_searches.first
             expect(object.is_a?(Searches)).to be true
         end
-        it 'updates a search' do
+        it 'modifies a search' do
             query.clear
             query.add_option('name',"RSpecTestSearch_#{suffix}")
             query.add_option('textMatching','exact')
@@ -575,7 +576,7 @@ describe RestClient do
             object = client.get_image_sizes.first
             expect(object.is_a?(Sizes)).to be true
         end
-        it 'updates an image size' do
+        it 'modifies an image size' do
             query.clear
             query.add_option('name','RSpecTest')
             query.add_option('textMatching','exact')
@@ -621,7 +622,7 @@ describe RestClient do
                 object = client.create_users(user,true).first
                 expect(object.is_a?(Users)).to be true
             end
-            it 'updates a user' do
+            it 'modifies a user' do
                 query.clear
                 query.add_option('username','jdoe@axomic.com')
                 query.add_option('textMatching','exact')
