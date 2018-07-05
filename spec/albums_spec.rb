@@ -1,5 +1,8 @@
-require 'spec_helper'
+require_relative 'spec_helper'
 require_relative '../lib/Nouns/Albums'
+require_relative '../lib/Nouns/NestedGroupItems'
+require_relative '../lib/Nouns/NestedFileItems'
+require_relative '../lib/Nouns/NestedUserItems'
 
 RSpec.describe Albums do
     let(:album) { Albums.new }
@@ -73,18 +76,15 @@ RSpec.describe Albums do
         expect(album.user_id).to eq '9'
     end
     it 'has a image in it' do
-        nested_file = Struct.new(:display_order, :id)
-        album.files << nested_file.new('1','123')
+        album.files << NestedFileItems.new('1','123')
         expect(album.files.first.id).to eq '123'
     end
     it 'accessible to a group' do
-        group = Struct.new(:can_modifiy,:id)
-        album.groups << group.new('1','9')
+        album.groups << NestedGroupItems.new('1','9')
         expect(album.group.first.id).to eq '9'
     end
     it 'is accessible to a user' do
-        user = Struct.new(:can_modifiy,:id)
-        album.users << user.new('1','9')
+        album.users << NestedUserItems.new('1','9')
         expect(album.group.first.id).to eq '9'
     end
     it 'becomes json' do
