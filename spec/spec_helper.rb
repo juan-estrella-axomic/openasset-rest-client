@@ -99,11 +99,15 @@ RSpec.configure do |config|
 =end
 end
 
+require 'rspec'
 ##################
 # Helper Methods #
 ##################
 module Helpers
   def current_time_in_milliseconds
     (Time.now.to_f * 1000).to_i
+  end
+  def fourteen_digit_timestamp
+    Time.now.strftime('%Y%m%dH%M%S')
   end
 end

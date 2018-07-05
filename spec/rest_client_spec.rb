@@ -1,11 +1,9 @@
-require 'rspec'
 require_relative '../openasset-rest-client'
 require_relative 'spec_helper'
 
 include OpenAsset
-include RSpec
 
-describe RestClient do
+RSpec.describe RestClient do
 
     let(:client) { RestClient.new('demo-jes.openasset.com','rspec_user','') }
     let(:query) { RestOptions.new }
