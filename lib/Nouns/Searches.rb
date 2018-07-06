@@ -4,7 +4,6 @@ require_relative 'NestedUserItems'
 require_relative '../JsonBuilder'
 
 class Searches
-
     include JsonBuilder
 
     # @!parse attr_accessor :all_users_can_modify, :approved_company_search, :can_modify, :code
@@ -80,5 +79,4 @@ class Searches
         end
 
     end
-
 end

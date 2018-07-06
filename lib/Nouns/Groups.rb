@@ -1,7 +1,10 @@
 # Groups class
 #
 # @author Juan Estrella
+require_relative '../JsonBuilder'
 class Groups
+
+    include JsonBuilder
 
     # @!parse attr_accessor :alive, :id, :name
     attr_accessor :alive, :id, :name
@@ -34,22 +37,6 @@ class Groups
                 NestedUserItems.new(item['id'])
             end
         end
-    end
-
-    # @!visibility private
-    def json
-        json_data = Hash.new
-        json_data[:alive] = @alive      unless @alive.nil?
-        json_data[:id] = @id            unless @id.nil?
-        json_data[:name] = @name        unless @name.nil?
-
-        unless @users.empty?
-            json_data[:users] = @users.map do |item|
-                item.json
-            end
-        end
-
-        return json_data
     end
 
 end

@@ -3,6 +3,7 @@
 # @author Juan Estrella
 require_relative '../Generic'
 require_relative '../Validator'
+require_relative '../JsonBuilder'
 require_relative 'NestedGroupItems'
 require_relative 'NestedFileItems'
 require_relative 'NestedUserItems'
@@ -10,6 +11,7 @@ require_relative 'NestedUserItems'
 
 class Albums < Generic
 
+    include JsonBuilder
     # @!parse attr_accessor :all_users_can_modify, :can_modify, :code, :company_album, :created, :description, :approved_company_album
     attr_accessor :all_users_can_modify, :can_modify, :code, :company_album, :created, :description, :approved_company_album
 
@@ -80,30 +82,4 @@ class Albums < Generic
         end
     end
 
-    # @!visibility private
-    def json
-        json_data = Hash.new
-        json_data[:all_users_can_modify] = @all_users_can_modify      unless @all_users_can_modify.nil?
-        json_data[:can_modify] = @can_modify                          unless @can_modify.nil?
-        json_data[:code] = @code                                      unless @code.nil?
-        json_data[:company_album] = @company_album                    unless @company_album.nil?
-        json_data[:created] = @created                                unless @created.nil?
-        json_data[:description] = @description                        unless @description.nil?
-        json_data[:id] = @id                                          unless @id.nil?
-        json_data[:locked] = @locked                                  unless @locked.nil?
-        json_data[:my_album] = @my_album                              unless @my_album.nil?
-        json_data[:name] = @name                                      unless @name.nil?
-        json_data[:private_image_count] = @private_image_count        unless @private_image_count.nil?
-        json_data[:public_image_count] = @public_image_count          unless @public_image_count.nil?
-        json_data[:share_with_all_users] = @share_with_all_users      unless @share_with_all_users.nil?
-        json_data[:shared_album] = @shared_album                      unless @shared_album
-        json_data[:unapproved_image_count] = @unapproved_image_count  unless @unapproved_image_count.nil?
-        json_data[:updated] = @updated                                unless @updated
-        json_data[:user_id] = @user_id                                unless @user_id.nil?
-        json_data[:files] = @files.map { |obj| obj.to_h }             unless @files.empty?
-        json_data[:groups] = @groups.map { |obj| obj.to_h }           unless @groups.empty?
-        json_data[:users] = @users.map { |obj| obj.to_h }             unless @users.empty?
-
-        return json_data
-    end
 end

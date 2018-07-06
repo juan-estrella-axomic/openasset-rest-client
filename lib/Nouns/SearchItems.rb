@@ -1,5 +1,6 @@
+require_relative '../JsonBuilder'
 class SearchItems
-
+    include JsonBuilder
     # @!parse attr_accessor :code, :exclude, :operator, :values
     attr_accessor :code, :exclude, :operator, :values
 
@@ -39,15 +40,4 @@ class SearchItems
         @operator = json_obj['operator']
         @values   = json_obj['values/ids'] || Array.new
     end
-
-    def json
-        json_data = Hash.new
-        json_data[:code]        = @code        unless @code.nil?
-        json_data[:exclude]     = @exclude     unless @exclude.nil?
-        json_data[:operator]    = @operator    unless @operator.nil?
-        json_data['values/ids'] = @values
-
-        return json_data
-    end
-
 end

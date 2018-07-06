@@ -1,7 +1,10 @@
 # Generic nested object id class => For nested users and groups
-# 
+#
 # @author Juan Estrella
+require_relative '../JsonBuilder'
 class NestedItemBasic
+    include JsonBuilder
+
     attr_accessor :id
 
     def initialize(val)
@@ -14,13 +17,5 @@ class NestedItemBasic
         end
 
         @id = json_obj['id']
-    end
-
-    # @!visibility private
-    def json
-        json_data = Hash.new
-        json_data[:id] = @id            unless @id.nil?
-
-        return json_data        
     end
 end

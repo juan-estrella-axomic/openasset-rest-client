@@ -1,9 +1,10 @@
-require_relative 'FieldLookupStrings.rb'
 # Fields class
 #
 # @author Juan Estrella
+require_relative 'FieldLookupStrings.rb'
+require_relative '../JsonBuilder'
 class Fields
-
+    include JsonBuilder
     # @!parse attr_accessor :alive, :cardinality, :code, :rest_code, :description, :display_order, :field_display_type
     attr_accessor :alive, :cardinality, :code, :rest_code, :description, :display_order, :field_display_type
 
@@ -59,32 +60,4 @@ class Fields
             end
         end
     end
-
-    # @!visibility private
-    def json
-        json_data = Hash.new
-        json_data[:alive] = @alive                                unless @alive.nil?
-        json_data[:cardinality] = @cardinality                    unless @cardinality.nil?
-        json_data[:code] = @code                                  unless @code.nil?
-        json_data[:rest_code] = @rest_code                        unless @rest_code.nil?
-        json_data[:description] = @description                    unless @description.nil?
-        json_data[:display_order] = @display_order                unless @display_order.nil?
-        json_data[:field_display_type] = @field_display_type      unless @field_display_type.nil?
-        json_data[:field_type] = @field_type                      unless @field_type.nil?
-        json_data[:id] = @id                                      unless @id.nil?
-        json_data[:include_on_info] = @include_on_info            unless @include_on_info.nil?
-        json_data[:include_on_search] = @include_on_search        unless @include_on_search.nil?
-        json_data[:name] = @name                                  unless @name.nil?
-        json_data[:protected] = @protected                        unless @protected.nil?
-        json_data[:built_in] = @built_in                          unless @built_in.nil?
-
-        unless @field_lookup_strings.empty?
-            json_data[:fieldLookupStrings] = @field_lookup_strings.map do |item|
-                item.json
-            end
-        end
-
-        return json_data
-    end
-
 end

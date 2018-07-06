@@ -3,10 +3,11 @@ require_relative 'NestedFieldItems'
 require_relative 'NestedAlbumItems'
 require_relative '../Validator'
 require_relative '../Generic'
+require_relative '../JsonBuilder'
 
 
 class Projects < Generic
-
+    include JsonBuilder
     # @!parse attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name
     attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name
 
@@ -77,43 +78,6 @@ class Projects < Generic
             end
         end
 
-    end
-
-    def json
-        json_data = Hash.new
-        json_data[:alive] = @alive                               unless @alive.nil?
-        json_data[:code] = @code                                 unless @code.nil?
-        json_data[:code_alias_1] = @code_alias_1                 unless @code_alias_1.nil?
-        json_data[:code_alias_2] = @code_alias_2                 unless @code_alias_2.nil?
-        json_data[:hero_image_id] = @hero_image_id               unless @hero_image_id.nil?
-        json_data[:id] = @id                                     unless @id.nil?
-        json_data[:name] = @name                                 unless @name.nil?
-        json_data[:name_alias_1] = @name_alias_1                 unless @name_alias_1.nil?
-        json_data[:name_alias_2] = @name_alias_2                 unless @name_alias_2.nil?
-
-        unless @location.nil?
-            json_data[:location] = @location.json
-        end
-
-        unless @project_keywords.empty?
-            json_data[:projectKeywords] = @project_keywords.map do |item|
-                item.json
-            end
-        end
-
-        unless @fields.empty?
-            json_data[:fields] = @fields.map do |item|
-                item.json
-            end
-        end
-
-        unless @albums.empty?
-            json_data[:albums] = @albums.map do |item|
-                item.json
-            end
-        end
-
-        json_data
     end
 
     # Sets and validates location coordinates on a project

@@ -1,5 +1,7 @@
 require_relative '../Validator'
+require_relative '../JsonBuilder'
 class Location
+    include JsonBuilder
     # @!parse attr_accessor :address, :city, :country, :google_id, :latitude, :longitude
     attr_accessor :address, :city, :country, :google_id, :latitude, :longitude
 
@@ -29,24 +31,6 @@ class Location
         @state = json_obj['state']
         @street = json_obj['street']
         @street_number = json_obj['street_number']
-    end
-
-    def json
-        json_data = Hash.new
-
-        json_data[:address] = @address               unless @address.nil?
-        json_data[:city] = @city                     unless @city.nil?
-        json_data[:country] = @country               unless @country.nil?
-        json_data[:google_id] = @google_id           unless @google_id.nil?
-        json_data[:latitude] = @latitude             unless @latitude.nil?
-        json_data[:longitude] = @longitude           unless @longitude.nil?
-        json_data[:name] = @name                     unless @name.nil?
-        json_data[:postal_code] = @postal_code       unless @postal_code.nil?
-        json_data[:state] = @state                   unless @state.nil?
-        json_data[:street] = @street                 unless @street.nil?
-        json_data[:street_number] = @street_number   unless @street_number.nil?
-
-        return json_data
     end
 
     # Sets and validates location coordinates on a location object
