@@ -24,7 +24,7 @@ RSpec.describe Albums do
     end
     it 'is an approved company album' do
         album.approved_company_album = '1'
-        expect(approved_company_album).to eq '1'
+        expect(album.approved_company_album).to eq '1'
     end
     it 'has a created date' do
         album.created = '19840917000000'
@@ -64,7 +64,7 @@ RSpec.describe Albums do
     end
     it 'has unapproved images' do
         album.unapproved_image_count = '9'
-        expect(unapproved_image_count).to eq '9'
+        expect(album.unapproved_image_count).to eq '9'
     end
     it 'was updated now' do
         time_now = Helpers.fourteen_digit_timestamp()
@@ -81,11 +81,11 @@ RSpec.describe Albums do
     end
     it 'accessible to a group' do
         album.groups << NestedGroupItems.new('1','9')
-        expect(album.group.first.id).to eq '9'
+        expect(album.groups.first.id).to eq '9'
     end
     it 'is accessible to a user' do
         album.users << NestedUserItems.new('1','9')
-        expect(album.group.first.id).to eq '9'
+        expect(album.users.first.id).to eq '9'
     end
     it 'becomes json' do
         expect(album.json.is_a?(Hash)).to be true

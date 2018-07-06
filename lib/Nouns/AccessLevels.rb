@@ -2,8 +2,9 @@
 #
 # @author Juan Estrella
 require_relative '../Validator'
+require_relative '../JsonBuilder'
 class AccessLevels
-
+    include JsonBuilder
     # @!parse attr_accessor :id, :label
     attr_accessor :id, :label
 
@@ -15,17 +16,9 @@ class AccessLevels
     # @example
     #         access_level = AccessLevels.new
     def initialize(data=nil)
+        puts "hello"
         json_obj = Validator.validate_argument(data,'AccessLevels')
         @id      = json_obj['id']
         @label   = json_obj['label']
-    end
-
-    # @!visibility private
-    def json
-        json_data = Hash.new
-        json_data[:id]    = @id     unless @id.nil?
-        json_data[:label] = @label  unless @label.nil?
-
-        return json_data
     end
 end

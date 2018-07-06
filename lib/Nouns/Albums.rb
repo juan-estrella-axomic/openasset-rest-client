@@ -2,9 +2,11 @@
 #
 # @author Juan Estrella
 require_relative '../Generic'
+require_relative '../Validator'
 require_relative 'NestedGroupItems'
 require_relative 'NestedFileItems'
 require_relative 'NestedUserItems'
+
 
 class Albums < Generic
 

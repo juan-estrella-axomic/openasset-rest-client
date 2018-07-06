@@ -2,12 +2,15 @@ require_relative 'NestedSizeItems'
 require_relative 'NestedFieldItems'
 require_relative 'NestedKeywordItems'
 require_relative 'NestedAlbumItems'
+require_relative '../JsonBuilder'
 require_relative '../Generic'
 
 # Files class
-# 
+#
 # @author Juan Estrella
 class Files < Generic
+
+    include JsonBuilder
 
     # @!parse attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
     attr_accessor :access_level, :alternate_store_id, :caption, :category_id, :click_count, :contains_audio
@@ -26,10 +29,10 @@ class Files < Generic
 
     # Creates a Files object
     #
-    # @param args [Hash, String Argument list, nil] Takes a JSON object/Hash or no argument 
+    # @param args [Hash, String Argument list, nil] Takes a JSON object/Hash or no argument
     # @return [Files object]
     #
-    # @example 
+    # @example
     #          file = Files.new
     #          file = Files.new(cat_id,'imagename.jpg')
     #          file = Files.new(cat_id,'imagename.jpg',proj_id)
@@ -70,16 +73,16 @@ class Files < Generic
                 json_obj['partial_filename']  = args[4]
                 json_obj['rotate_degrees']    = args[5]
             else
-                warn "Argument Error:\n\tExpected either\n\t1. No Arguments\n\t2. A Hash\n\t" + 
-                     "3. Minimum of 2 arguments e.g. Files.new(category_id,original_filename," + 
-                     "project_id,album_id,partial_filename,rotate_degrees) " + 
+                warn "Argument Error:\n\tExpected either\n\t1. No Arguments\n\t2. A Hash\n\t" +
+                     "3. Minimum of 2 arguments e.g. Files.new(category_id,original_filename," +
+                     "project_id,album_id,partial_filename,rotate_degrees) " +
                      "in that order. First 2 arguments are required (if any are specified)." +
                      "\n\tInstead got #{args.inspect} => Creating empty Files object."
             end
         else
             json_obj = Validator::validate_argument(args.first,'Files')
         end
-          
+
         @access_level = json_obj['access_level']
         @alternate_store_id = json_obj['alternate_store_id']
         @caption = json_obj['caption']
@@ -105,8 +108,8 @@ class Files < Generic
         @replaced = json_obj['replaced']
         @replaced_user_id = json_obj['replaced_user_id']
         @rotation_since_upload = json_obj['rotation_since_upload']
-        @uploaded = json_obj['uploaded']     
-        @user_id = json_obj['user_id']                       
+        @uploaded = json_obj['uploaded']
+        @user_id = json_obj['user_id']
         @rotate_degrees = json_obj['rotate_degrees']
         @updated = json_obj['updated']
         @video_frames_per_second = json_obj['video_frames_per_second']
@@ -146,77 +149,13 @@ class Files < Generic
 
     end
 
-    # @!visibility private
-    def json
-        json_data = Hash.new
-        json_data[:access_level] = @access_level                        unless @access_level.nil?
-        json_data[:alternate_store_id] = @alternate_store_id            unless @alternate_store_id.nil?
-        json_data[:caption] = @caption                                  unless @caption.nil?
-        json_data[:category_id] = @category_id                          unless @category_id.nil?
-        json_data[:click_count] = @click_count                          unless @click_count.nil?
-        json_data[:contains_audio] = @contains_audio                    unless @contains_audio.nil?
-        json_data[:contains_video] = @contains_video                    unless @contains_video.nil?
-        json_data[:copyright_holder_id] = @copyright_holder_id          unless @copyright_holder_id.nil?
-        json_data[:created] = @created                                  unless @created.nil?
-        json_data[:description] = @description                          unless @description.nil?
-        json_data[:download_count] = @download_count                    unless @download_count.nil?
-        json_data[:duration] = @duration                                unless @duration.nil?
-        json_data[:filename] = @filename                                unless @filename.nil?
-        json_data[:id] = @id                                            unless @id.nil?
-        json_data[:md5_at_upload] = @md5_at_upload                      unless @md5_at_upload.nil?
-        json_data[:md5_now] = @md5_now                                  unless @md5_now.nil?
-        json_data[:original_filename] = @original_filename              unless @original_filename.nil?
-        json_data[:photographer_id] = @photographer_id                  unless @photographer_id.nil?
-        json_data[:processing_failures] = @processing_failures          unless @processing_failures.nil?
-        json_data[:project_id] = @project_id                            unless @project_id.nil?
-        json_data[:rank] = @rank                                        unless @rank.nil?
-        json_data[:recheck] = @recheck                                  unless @recheck.nil?
-        json_data[:replaced] = @replaced                                unless @replaced.nil?
-        json_data[:replaced_user_id] = @replaced_user_id                unless @replaced_user_id.nil?
-        json_data[:rotation_since_upload] = @rotation_since_upload      unless @uploaded.nil?
-        json_data[:uploaded] = @uploaded                                unless @uploaded.nil?
-        json_data[:rotate_degrees] = @rotate_degrees                    unless @rotate_degrees.nil?
-        json_data[:user_id] = @user_id                                  unless @user_id.nil?
-        json_data[:updated] = @updated                                  unless @updated.nil?
-        json_data[:video_frames_per_second] = @video_frames_per_second  unless @video_frames_per_second.nil?
-
-        unless @sizes.empty?
-            #convert every nested sizes object back to a hash/json object
-            json_data[:sizes] = @sizes.map do |item|
-                item.json
-            end
-        end
-
-        unless @keywords.empty?
-            #convert every nested keywords object back to hash/json object
-            json_data[:keywords] = @keywords.map do |item|
-                item.json
-            end
-        end    
-
-        unless @fields.empty?
-            #you get the idea...
-            json_data[:fields] = @fields.map do |item| 
-                item.json 
-            end                            
-        end
-        
-        unless @albums.empty?
-            #you get the idea...
-            json_data[:albums] = @albums.map do |item| 
-                item.json 
-            end                            
-        end
-        return json_data
-    end
-
     # Retrieves the file path for specified image size.
     #
     # @param size [String, Integer] Takes image size id or postfix string like 'medium'
     #                              Defaults to id of 1 which provides path to original image size
     # @return [String, false] Returns image download path or empty string when error is encountered.
     #
-    # @example 
+    # @example
     #          file_obj.get_image_size_file_path('1')
     #          file_obj.get_image_size_file_path('medium')
     def get_image_size_file_path(size='1') #Always returns the original by default
@@ -229,10 +168,10 @@ class Files < Generic
                 return false
             else
                 #image.http_root.gsub('//','') + image.http_relative_path
-                image.http_root.gsub('//','') + image.relative_path                
+                image.http_root.gsub('//','') + image.relative_path
             end
         elsif size.is_a?(String)
-            #Look for the postfix search_parameter string in the path 
+            #Look for the postfix search_parameter string in the path
             image = @sizes.find {|item| item.http_relative_path.include?(size.downcase)}
             unless image
                 puts "Error: Could not find the postfix value => #{size.inspect}. \n" +
