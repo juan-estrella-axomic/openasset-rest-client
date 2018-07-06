@@ -1,21 +1,25 @@
 require_relative 'spec_helper'
-require_relative '../lib/Nouns/CopyRightHolders'
+require_relative '../lib/Nouns/CopyrightHolders'
 
-RSpec.describe CopyRightHolders do
-    let(:copyright_holder) { CopyRightHolders.new }
-    it 'has a copyright policy id' do
-        copyright_holder.copyright_policy_id = '10'
-        expect(copyright_holder.id).to eq '10'
+RSpec.describe CopyrightHolders do
+    let(:copyright_holder) { CopyrightHolders.new }
+    describe 'attributes' do
+        it 'gets/sets copyright_policy_id with :copyright_policy_id' do
+            copyright_holder.copyright_policy_id = '10'
+            expect(copyright_holder.copyright_policy_id).to eq '10'
+        end
+        it 'gets/sets id with :id' do
+            copyright_holder.id = '1'
+            expect(copyright_holder.id).to eq '1'
+        end
+        it 'gets/sets name with :name' do
+            copyright_holder.name = 'RSpecTest'
+            expect(copyright_holder.name).to eq 'RSpecTest'
+        end
     end
-    it 'has an id' do
-        copyright_holder.id = '1'
-        expect(copyright_holder.id).to eq '1'
-    end
-    it 'has a name' do
-        alternate_store.name = 'RSpecTest'
-        expect(copyright_holder.name).to eq 'RSpecTest'
-    end
-    it 'becomes json' do
-        expect(copyright_holder.json.is_a(Hash)).to be true
+    describe '#json' do
+        it 'converts object to json' do
+            expect(copyright_holder.json.is_a?(Hash)).to be true
+        end
     end
 end

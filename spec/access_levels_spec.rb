@@ -3,14 +3,12 @@ require_relative '../lib/Nouns/AccessLevels'
 
 RSpec.describe AccessLevels do
     let(:access_level) { AccessLevels.new }
-    describe '#id' do
-        it 'sets and returns the id' do
+    describe 'attributes' do
+        it 'gets/sets id with :id' do
             access_level.id = '10'
             expect(access_level.id).to eq '10'
         end
-    end
-    describe '#label' do
-        it 'sets and returns the label' do
+        it 'gets/sets label with :label' do
             access_level.label = 'RSpecTest'
             expect(access_level.label).to eq 'RSpecTest'
         end

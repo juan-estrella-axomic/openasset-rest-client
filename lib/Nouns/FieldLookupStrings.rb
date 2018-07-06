@@ -2,6 +2,7 @@
 #
 # @author Juan Estrella
 require_relative '../JsonBuilder'
+require_relative '../Validator'
 class FieldLookupStrings
     include JsonBuilder
     # @!parse attr_accessor :id, :display_order, :value

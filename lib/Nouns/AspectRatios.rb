@@ -2,6 +2,7 @@
 #
 # @author Juan Estrella
 require_relative '../JsonBuilder'
+require_relative '../Validator'
 class AspectRatios
     include JsonBuilder
     # @!parse attr_accessor :id, :code, :label

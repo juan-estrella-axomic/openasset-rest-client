@@ -16,7 +16,6 @@ class AccessLevels
     # @example
     #         access_level = AccessLevels.new
     def initialize(data=nil)
-        puts "hello"
         json_obj = Validator.validate_argument(data,'AccessLevels')
         @id      = json_obj['id']
         @label   = json_obj['label']

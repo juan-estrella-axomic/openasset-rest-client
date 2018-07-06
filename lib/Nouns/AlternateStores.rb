@@ -2,6 +2,7 @@
 #
 # @author Juan Estrella
 require_relative '../JsonBuilder'
+require_relative '../Validator'
 class AlternateStores
     include JsonBuilder
     # @!parse attr_accessor :id, :name, :storage_name

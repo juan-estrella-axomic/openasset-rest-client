@@ -1,4 +1,5 @@
 require_relative '../JsonBuilder'
+require_relative '../Validator'
 class DataIntegrations
     include JsonBuilder
     # @!parse attr_accessor :address, :alive, :id, :name, :display_order, :version
@@ -12,7 +13,7 @@ class DataIntegrations
     # @example
     #          obj = DataIntegrations.new => Empty obj
     #          obj = DataIntegrations.new(:address => "http://example.vision.com/Vision/VisionWS.asmx", :name => "Test", :display_order => "1")
-    def initialize(value)
+    def initialize(value=nil)
         json_obj = Validator::validate_argument(value,'DataIntegrations')
 
         @address       = json_obj['address']
