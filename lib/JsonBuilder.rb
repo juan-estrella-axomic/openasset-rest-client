@@ -10,7 +10,7 @@ module JsonBuilder
                 json_obj[key] = value
             elsif value.is_a?(Array) && !value.empty?
                 json_obj[key] = value.map { |obj| obj.json }
-            elsif value.is_a?(Location)
+            elsif value.class.to_s == 'Location'
                 json_obj[key] = value.json
             end
         end
