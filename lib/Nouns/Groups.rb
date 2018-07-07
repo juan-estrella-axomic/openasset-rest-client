@@ -7,7 +7,7 @@ class Groups
     include JsonBuilder
 
     # @!parse attr_accessor :alive, :id, :name
-    attr_accessor :alive, :id, :name
+    attr_accessor :alive, :id, :name, :users
 
     # Creates a Groups object
     #
