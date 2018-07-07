@@ -2,7 +2,6 @@
 #
 # @author Juan Estrella
 require_relative '../JsonBuilder'
-require_relative '../Validator'
 class Categories
     include JsonBuilder
     # @!parse attr_accessor :alive, :code, :default_access_level, :default_rank, :description, :display_order

@@ -2,7 +2,6 @@
 #
 # @author Juan Estrella
 require_relative '../Generic'
-require_relative '../Validator'
 require_relative '../JsonBuilder'
 require_relative 'NestedGroupItems'
 require_relative 'NestedFileItems'

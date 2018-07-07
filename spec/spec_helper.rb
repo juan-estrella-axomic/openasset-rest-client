@@ -100,6 +100,7 @@ RSpec.configure do |config|
 end
 
 require 'rspec'
+require_relative '../lib/Validator'
 ##################
 # Helper Methods #
 ##################

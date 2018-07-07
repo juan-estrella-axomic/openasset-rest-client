@@ -1,7 +1,6 @@
 # AccessLevels class
 #
 # @author Juan Estrella
-require_relative '../Validator'
 require_relative '../JsonBuilder'
 class AccessLevels
     include JsonBuilder

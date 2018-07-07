@@ -1,5 +1,4 @@
 require_relative '../JsonBuilder'
-require_relative '../Validator'
 class DataIntegrations
     include JsonBuilder
     # @!parse attr_accessor :address, :alive, :id, :name, :display_order, :version

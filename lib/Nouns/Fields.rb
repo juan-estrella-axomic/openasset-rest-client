@@ -3,7 +3,6 @@
 # @author Juan Estrella
 require_relative 'FieldLookupStrings.rb'
 require_relative '../JsonBuilder'
-require_relative '../Validator'
 class Fields
     include JsonBuilder
     # @!parse attr_accessor :alive, :cardinality, :code, :rest_code, :description, :display_order, :field_display_type

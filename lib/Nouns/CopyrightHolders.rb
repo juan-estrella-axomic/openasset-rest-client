@@ -2,7 +2,6 @@
 #
 # @author Juan Estrella
 require_relative '../JsonBuilder'
-require_relative '../Validator'
 class CopyrightHolders
     include JsonBuilder
     # @!parse attr_accessor :copyright_policy_id, :id, :name
