@@ -1,7 +1,7 @@
 require_relative 'spec_helper'
 require_relative '../lib/Nouns/KeywordCategories'
 
-RSpec.describe KeywordCategories do]
+RSpec.describe KeywordCategories do
     describe 'attributes' do
         it 'gets/sets category_id with :category_id' do
             subject.category_id = '9'
