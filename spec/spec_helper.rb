@@ -101,6 +101,7 @@ end
 
 require 'rspec'
 require_relative '../lib/Validator'
+require_relative './support/shared_examples'
 ##################
 # Helper Methods #
 ##################
