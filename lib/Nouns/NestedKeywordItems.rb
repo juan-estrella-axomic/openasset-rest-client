@@ -1,8 +1,9 @@
 require_relative '../JsonBuilder'
-class NestedKeywordItems
+require_relative 'NestedItemBasic'
+class NestedKeywordItems < NestedItemBasic
     include JsonBuilder
     # @!parse attr_accessor :id
-    attr_accessor :id
+    #attr_accessor :id
 
     # Creates a NestedKeywordItems object
     #
@@ -13,14 +14,7 @@ class NestedKeywordItems
     #          nstd_kwd_item = NestedKeywordItems.new => Empty obj
     #          nstd_kwd_item = NestedKeywordItems.new("17")
     #          nstd_kwd_item = NestedKeywordItems.new(17)
-    def initialize(data=nil)
-        json_obj = nil
-        #check for an integer or string that can be converted to an integer
-        unless (data.is_a?(Integer) || data.is_a?(String)) && data.to_i != 0
-            json_obj = Validator::validate_argument(data,'NestedKeywordItems')
-            @id = json_obj['id']
-        else
-            @id = data
-        end
+    def initialize(arg=nil)
+        super(arg)
     end
 end

@@ -2,17 +2,6 @@ require_relative 'spec_helper'
 require_relative '../lib/Nouns/Location'
 
 RSpec.describe Location do
-        # @address = json_obj['address']
-        # @city = json_obj['city']
-        # @country = json_obj['country']
-        # @google_id = json_obj['google_id']
-        # @latitude = json_obj['latitude']
-        # @longitude = json_obj['longitude']
-        # @name = json_obj['name']
-        # @postal_code = json_obj['postal_code']
-        # @state = json_obj['state']
-        # @street = json_obj['street']
-        # @street_number = json_obj['street_number']
     describe 'attributes' do
         it 'gets/sets address with :address' do
             subject.address = '999 main st'

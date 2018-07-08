@@ -8,4 +8,5 @@ RSpec.describe NestedFileItems do
             expect(subject.id).to eq '112'
         end
     end
+    it_behaves_like 'a json builder'
 end

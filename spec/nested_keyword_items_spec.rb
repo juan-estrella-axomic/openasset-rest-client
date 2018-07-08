@@ -1,7 +1,7 @@
 require_relative 'spec_helper'
-require_relative '../lib/Nouns/NestedAlbumItems'
+require_relative '../lib/Nouns/NestedKeywordItems'
 
-RSpec.describe NestedAlbumItems do
+RSpec.describe NestedKeywordItems do
     describe '#id' do
         it 'gets/sets id with :id' do
             subject.id = '111'

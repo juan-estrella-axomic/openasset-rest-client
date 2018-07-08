@@ -16,4 +16,5 @@ RSpec.describe NestedGroupItems do
             expect(subject.can_modify).to eq '1'
         end
     end
+    it_behaves_like 'a json builder'
 end

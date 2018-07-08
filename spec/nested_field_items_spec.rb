@@ -14,4 +14,5 @@ RSpec.describe NestedFieldItems do
             expect(subject.values.first).to eq 'Sample data'
         end
     end
+    it_behaves_like 'a json builder'
 end
