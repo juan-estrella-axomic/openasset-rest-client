@@ -8,8 +8,8 @@ require_relative '../JsonBuilder'
 
 class Projects < Generic
     include JsonBuilder
-    # @!parse attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name
-    attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name
+    # @!parse attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name, :hero_image_id
+    attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name, :hero_image_id
 
     # @!parse attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields, :albums
     attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields, :albums
@@ -52,6 +52,7 @@ class Projects < Generic
         @name_alias_1 = json_obj['name_alias_1']
         @name_alias_2 = json_obj['name_alias_2']
         @location = nil
+        @hero_image_id = json_obj['hero_image_id']
         @project_keywords = []
         @fields = []
         @albums = []

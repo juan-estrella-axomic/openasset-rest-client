@@ -657,30 +657,36 @@ RSpec.describe RestClient do
     # Searches #
     ############
     context 'when dealing with searches' do
-        suffix = Helpers.current_time_in_milliseconds()
-        it 'creates a search' do
-            args = {
-                'code'       => 'rank',
-                'exclude'    => '0',
-                'operator'   => '<',
-                'values/ids' => ['6']
-            }
-            search_item = SearchItems.new(args)
-            search = Searches.new("RSpecTestSearch_#{suffix}",search_items)
-            object = @client.create_searches(search,true).first
-            expect(object.is_a?(Searhes)).to be true
+        describe '#create_searches' do
+            it 'creates a search' do
+                args = {
+                    'code'       => 'rank',
+                    'exclude'    => '0',
+                    'operator'   => '<',
+                    'values/ids' => ['6']
+                }
+                suffix = Helpers.current_time_in_milliseconds()
+                search_item = SearchItems.new(args)
+                search = Searches.new("RSpecTestSearch_#{@suffix}",search_items)
+                object = @client.create_searches(search,true).first
+                expect(object.is_a?(Searhes)).to be true
+            end
         end
-        it 'retrieves a search' do
-            object = @client.get_searches.first
-            expect(object.is_a?(Searches)).to be true
+        describe '#get_searches' do
+            it 'retrieves a search' do
+                object = @client.get_searches.first
+                expect(object.is_a?(Searches)).to be true
+            end
         end
-        it 'modifies a search' do
-            query.clear
-            query.add_option('name',"RSpecTestSearch_#{suffix}")
-            query.add_option('textMatching','exact')
-            search = @client.get_searches(query).first
-            search.name = "RSpecTestSearch-Updated_#{suffix}"
-            expect(@client.update_searchess(searche).code).to eq '200'
+        describe '#update_searches' do
+            it 'modifies a search' do
+                query.clear
+                query.add_option('name',"RSpecTestSearch_#{suffix}")
+                query.add_option('textMatching','exact')
+                search = @client.get_searches(query).first
+                search.name = "RSpecTestSearch-Updated_#{suffix}"
+                expect(@client.update_searchess(searche).code).to eq '200'
+            end
         end
     end
 
@@ -688,29 +694,37 @@ RSpec.describe RestClient do
     # Sizes #
     #########
     context 'when dealing with sizes' do
-        it 'creates an image size' do
-            img_size = Sizes.new('RSpecTest')
-            object = @client.create_image_sizes(img_size,true).first
-            expect(object.is_a?(Sizes)).to be true
+        describe '#create_image_sizes' do
+            it 'creates an image size' do
+                img_size = Sizes.new('RSpecTest')
+                object = @client.create_image_sizes(img_size,true).first
+                expect(object.is_a?(Sizes)).to be true
+            end
         end
-        it 'retrieves an image size' do
-            object = @client.get_image_sizes.first
-            expect(object.is_a?(Sizes)).to be true
+        describe '#get_image_sizes' do
+            it 'retrieves an image size' do
+                object = @client.get_image_sizes.first
+                expect(object.is_a?(Sizes)).to be true
+            end
         end
-        it 'modifies an image size' do
-            query.clear
-            query.add_option('name','RSpecTest')
-            query.add_option('textMatching','exact')
-            img_size = @client.get_image_sizes(query).first
-            img_size.name = 'RSpecTest-Updated'
-            expect(@client.update_image_sizes(img_size).code).to eq '200'
+        describe '#update_image_sizes' do
+            it 'modifies an image size' do
+                query.clear
+                query.add_option('name','RSpecTest')
+                query.add_option('textMatching','exact')
+                img_size = @client.get_image_sizes(query).first
+                img_size.name = 'RSpecTest-Updated'
+                expect(@client.update_image_sizes(img_size).code).to eq '200'
+            end
         end
-        it 'deletes an image size' do
-            query.clear
-            query.add_option('name','RSpecTest-Updated')
-            query.add_option('textMatching','exact')
-            img_size = @client.get_image_sizes(query).first
-            expect(@client.delete_image_sizes(img_size).code).to eq '200'
+        describe '#delete_image_sizes' do
+            it 'deletes an image size' do
+                query.clear
+                query.add_option('name','RSpecTest-Updated')
+                query.add_option('textMatching','exact')
+                img_size = @client.get_image_sizes(query).first
+                expect(@client.delete_image_sizes(img_size).code).to eq '200'
+            end
         end
     end
 
@@ -718,11 +732,13 @@ RSpec.describe RestClient do
     # Text Rewrites #
     #################
     context 'when dealing with text rewrites' do
-        it 'retrieves a text rewrite' do
-            object = @client.get_text_rewrites.first
-            test = false
-            test = true if object.nil? || object.is_a?(TextRewrites)
-            expect(test).to be true
+        describe '#get_text_rewrites' do
+            it 'retrieves a text rewrite' do
+                object = @client.get_text_rewrites.first
+                test = false
+                test = true if object.nil? || object.is_a?(TextRewrites)
+                expect(test).to be true
+            end
         end
     end
 
@@ -731,44 +747,51 @@ RSpec.describe RestClient do
     #########
     context 'when dealing with users' do
         context 'with nested groups' do
-            suffix = Helpers.current_time_in_milliseconds()
-            name   = "RSpecTest_#{suffix}"
-            group  = Groups.new(name)
-            group  = @client.create_groups(group,true).first
-            it 'creates a user' do
-                data = {:username => 'jdoe@axomic.com', 
-                        :full_name => 'John Doe', 
-                        :password => 'pass'}
-                user = Users.new(data)
-                object = @client.create_users(user,true).first
-                expect(object.is_a?(Users)).to be true
+            before(:all) do
+                @suffix = Helpers.current_time_in_milliseconds()
+                @name   = "RSpecTest_#{@suffix}"
+                @group  = Groups.new(name)
+                @group  = @client.create_groups(@group,true).first
+                data = {
+                    :username  => 'jdoe@axomic.com', 
+                    :full_name => 'John Doe', 
+                    :password  => 'pass'
+                }
+                @user = Users.new(data)
             end
-            it 'modifies a user' do
-                query.clear
-                query.add_option('username','jdoe@axomic.com')
-                query.add_option('textMatching','exact')
-                user = @client.get_users(query).first
-                user.full_name = 'Jane Doe'
-                user.groups << NestedGroupItems.new(group.id)
-                expect(@client.update_users(user).code).to eq '200'
+            describe '#create_users' do
+                it 'creates a user' do
+                    @user = @client.create_users(@user,true).first
+                    expect(@user.is_a?(Users)).to be true
+                end
             end
-            it 'retrieves a user' do
-                query.clear
-                query.add_option('groups','all')
-                user = @client.get_users(query).first
-                expect(user.is_a?(Users)).to be true
+            describe '#update_users' do
+                it 'modifies a user' do
+                    @user.full_name = 'Jane Doe'
+                    @user.groups << NestedGroupItems.new(@group.id)
+                    expect(@client.update_users(@user).code).to eq '200'
+                end
             end
-            it 'is part of a group' do
-                expect(user.groups.first.id).to eq group.id
+            describe '#get_users' do
+                it 'retrieves a user' do
+                    query.clear
+                    query.add_option('id',@user.id)
+                    query.add_option('groups','all')
+                    @user = @client.get_users(query).first
+                    expect(@user.is_a?(Users)).to be true
+                end
+                it 'is assigned to a group' do
+                    expect(@user.groups.first.id).to eq @group.id
+                end
             end
-            it 'deletes a user' do
-                query.clear
-                query.add_option('username','jdoe@axomic.com')
-                query.add_option('textMatching','exact')
-                user = @client.get_users(query).first
-                expect(@client.delete_users(query).code).to eq '204'
+            describe '#delete_users' do
+                it 'deletes a user' do
+                    expect(@client.delete_users(@user).code).to eq '204'
+                end
+            end
+            after(:all) do
+                @client.delete_groups(@group)
             end
         end
     end
-
 end
