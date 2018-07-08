@@ -7,15 +7,29 @@ class NestedItemBasic
 
     attr_accessor :id
 
-    def initialize(val=nil)
+    def initialize(arg1=nil,arg2=nil)
         json_obj = {}
-
-        if val.to_i > 0 # Check if a non-zero numeric value is passed
-            json_obj['id'] = val
-        else                        # Assume a Hash or nil was passed
-            json_obj = Validator::validate_argument(val,'Nested Group/User')
+        if !arg2 && arg1.to_i > 0# When only the id is needed. Happens when nested inside Users object
+            json_obj['id'] = arg1       
+        elsif arg1 && arg2                 # When can_modify(arg1) AND id(arg2) is needed. 
+            json_obj['can_modify'] = arg1  # Happens when nested inside Albums or Searches object 
+            json_obj['id']         = arg2    
+        else
+            # arg1 can also be hash or nil
+            json_obj = Validator.validate_argument(arg1,'Nested Group/User')
         end
 
+        # Always set the id attribute
         @id = json_obj['id']
+        if arg2
+            @can_modify = arg2 # Create and set can_modify attribute if needed
+            # Dynamically add getter and setter methods for can_modify attribute
+            self.define_singleton_method('can_modify=') do |val|
+                @can_modify = val
+            end
+            self.define_singleton_method('can_modify') do
+                @can_modify
+            end
+        end
     end
 end

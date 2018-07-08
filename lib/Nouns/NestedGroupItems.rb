@@ -3,18 +3,18 @@
 # @author Juan Estrella
 require_relative 'NestedItemBasic'
 class NestedGroupItems < NestedItemBasic
-    def initialize(*args)
-        if args.length == 1
-            super(args.first)
-        else args.length > 1
-            super(args[1])
-            @can_modify = args.first
-            self.define_singleton_method('can_modify=') do |val|
-                @can_modify = val
-            end
-            self.define_singleton_method('can_modify') do
-                @can_modify
-            end
-        end
+    # @!parse attr_accessor :id, :can_modify
+
+    # Creates a NestedGroupItems object
+    #
+    # @param data [Integer, String, nil] Takes an Integer, String, or no argument
+    # @return [NestedGroupItems object]
+    #
+    # @example
+    #          nstd_group_item = NestedGroupItems.new => Empty obj
+    #          nstd_group_item = NestedGroupItems.new("17")
+    #          nstd_group_item = NestedGroupItems.new(17)
+    def initialize(arg1=nil,arg2=nil)
+        super(arg1,arg2)
     end
 end
