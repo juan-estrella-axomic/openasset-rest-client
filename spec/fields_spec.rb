@@ -27,13 +27,13 @@ RSpec.describe Fields do
             subject.display_order = '5'
             expect(subject.display_order).to eq '5'
         end
-        it 'gets/sets subject_display_type with :subject_display_type' do
-            subject.subject_display_type = 'suggestion'
-            expect(subject.subject_display_type).to eq 'suggestion'
+        it 'gets/sets field_display_type with :field_display_type' do
+            subject.field_display_type = 'suggestion'
+            expect(subject.field_display_type).to eq 'suggestion'
         end
-        it 'gets/sets subject_type with :subject_type' do
-            subject.subject_type = 'project'
-            expect(subject.subject_type).to eq 'project'
+        it 'gets/sets field_type with :field_type' do
+            subject.field_type = 'project'
+            expect(subject.field_type).to eq 'project'
         end
         it 'gets/sets id with :id' do
             subject.id = '12'
@@ -59,14 +59,14 @@ RSpec.describe Fields do
             subject.built_in = '0'
             expect(subject.built_in).to eq '0'
         end
-        it 'gets/sets subject_lookup_strings with :subject_lookup_strings' do
+        it 'gets/sets field_lookup_strings with :sfield_lookup_strings' do
             data = {
                 'id' => '1',
                 'value' => 'RSpecTest',
                 'display_order' => '3'
             }
-            subject.subject_lookup_strings << subjectLookupStrings.new(data)
-            expect(subject.subject_lookup_strings.first.value).to eq 'RSpecTest'
+            subject.field_lookup_strings << FieldLookupStrings.new(data)
+            expect(subject.field_lookup_strings.first.value).to eq 'RSpecTest'
         end
     end
     it_behaves_like 'a json builder'

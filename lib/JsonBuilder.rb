@@ -9,7 +9,9 @@ module JsonBuilder
             if value.is_a?(String)
                 json_obj[key] = value
             elsif value.is_a?(Array) && !value.empty?
-                json_obj[key] = value.map { |obj| obj.json }
+                if value.first.respond_to?(:json)
+                    json_obj[key] = value.map { |obj| obj.json }
+                end
             elsif value.class.to_s == 'Location'
                 json_obj[key] = value.json
             end

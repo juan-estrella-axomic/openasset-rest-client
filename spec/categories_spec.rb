@@ -35,9 +35,9 @@ RSpec.describe Categories do
             subject.name = 'RSpecTest'
             expect(subject.name).to eq 'RSpecTest'
         end
-        it 'gets/sets projects_categoy with :projects_subject' do
-            subject.projects_subject = '1'
-            expect(subject.projects_subject).to eq '1'
+        it 'gets/sets projects_category with :projects_category' do
+            subject.projects_category = '1'
+            expect(subject.projects_category).to eq '1'
         end
     end
     it_behaves_like 'a json builder'
