@@ -268,10 +268,14 @@ class Validator
 
     def self.validate_coordinates(*args)
         coordinate_pair = []
-        if args.length >= 2 # Two separate arguments
-            coordinate_pair << args[0] << args[1]
-        elsif args.first.is_a?(Array) # Array
-            coordinate_pair = args.first
+
+        if args.first.is_a?(Array) # Array
+            if args.length == 1
+                coordinate_pair = args.first
+            elsif args.length > 1
+                coordinate_pair[0] = args[0]
+                coordinate_pair[1] = args[1]
+            end
         elsif args.first.is_a?(Hash) # Hash
             hash = args.first
             hash.keys.each do |key|
@@ -283,6 +287,8 @@ class Validator
                 end
             end
             coordinate_pair = hash.values
+        elsif args.length >= 2 # Two separate arguments
+            coordinate_pair << args[0] << args[1]
         else # String
             coordinate_pair = args.first.split(',')
         end

@@ -52,7 +52,6 @@ class Projects < Generic
         @name_alias_1 = json_obj['name_alias_1']
         @name_alias_2 = json_obj['name_alias_2']
         @location = nil
-        @hero_image_id = json_obj['hero_image_id']
         @project_keywords = []
         @fields = []
         @albums = []
