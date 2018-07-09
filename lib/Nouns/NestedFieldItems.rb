@@ -1,5 +1,7 @@
 require_relative '../JsonBuilder'
-class NestedFieldItems
+require_relative 'NestedItemBasic'
+require_relative '../Validator'
+class NestedFieldItems < NestedItemBasic
     include JsonBuilder
     # @!parse attr_accessor :id, :values
     attr_accessor :id, :values
@@ -16,24 +18,12 @@ class NestedFieldItems
     #          nstd_fld_item = NestedFieldItems.new("14","data")
     #          nstd_fld_item = NestedFieldItems.new("14",["data"])
     def initialize(arg1=nil,arg2=nil)
-
-        json_obj = nil
-        if arg1.is_a?(Hash) || arg1.nil?
-            json_obj = Validator::validate_argument(arg1,'NestedFieldItems')
-        elsif (arg1.is_a?(Integer) || arg1.is_a?(String)) &&
-              (arg2.is_a?(Integer) || arg2.is_a?(String))
-              json_obj = {:id => arg1.to_s, :values => [arg2.to_s]}
-        elsif (arg1.is_a?(Integer) || arg1.is_a?(String)) &&
-              (arg2.is_a?(Integer) || arg2.is_a?(String) || arg2.is_a?(Array))
-
-            arg2 = [arg2.to_s]      unless arg2.is_a?(Array)
-            json_obj = {:id => arg1.to_s, :values => arg2}
-
-        else # Its probably an Array or something else. the Validator will display error and abort
-            Validator::validate_argument(arg1,'NestedFieldItems')
+        type = self.class.to_s
+        if !arg1.is_a?(Hash)
+            if !arg2
+                Validator.validate_argument(arg1,type,'two arguments(id,string data)')
+            end
         end
-
-        @id     = json_obj[:id]
-        @values = json_obj[:values]
+        super(arg1,arg2,type)
     end
 end

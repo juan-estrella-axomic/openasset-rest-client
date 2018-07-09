@@ -46,9 +46,10 @@ class Validator
     end
 
     #Validate the right object type is passed for Noun's constructor
-    def self.validate_argument(arg,val='NOUN')
+    def self.validate_argument(arg,val='NOUN',options=nil) # Options lets us specify more allowed arg types
         unless arg.is_a?(NilClass) || arg.is_a?(Hash)
-            msg = "Argument Validation Error: Expected no argument or a \"Hash\" to create #{val} object." +
+            options = options ? ", #{options}, " : ''
+            msg = "Argument Validation Error: Expected no argument #{options} or a Hash to create #{val} object." +
                   "\nInstead got a(n) #{arg.class} with contents => #{arg.inspect}"
             Logging::logger.error(msg)
             abort
@@ -270,6 +271,7 @@ class Validator
         coordinate_pair = []
 
         if args.first.is_a?(Array) # Array
+            puts "Array"
             if args.length == 1
                 coordinate_pair = args.first
             elsif args.length > 1
@@ -277,6 +279,7 @@ class Validator
                 coordinate_pair[1] = args[1]
             end
         elsif args.first.is_a?(Hash) # Hash
+            puts "Hash"
             hash = args.first
             hash.keys.each do |key|
                 unless ACCEPTED_KEYS.include?(key.to_s)
@@ -287,7 +290,7 @@ class Validator
                 end
             end
             coordinate_pair = hash.values
-        elsif args.length >= 2 # Two separate arguments
+        elsif !args[1].nil? # Two separate arguments
             coordinate_pair << args[0] << args[1]
         else # String
             coordinate_pair = args.first.split(',')

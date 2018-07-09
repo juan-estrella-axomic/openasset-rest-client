@@ -1,6 +1,7 @@
 require_relative '../JsonBuilder'
 require_relative 'NestedItemBasic'
 class NestedAlbumItems < NestedItemBasic
+    #attr_accessor :id
     # Creates a NestedAlbumItems object
     #
     # @param data [Integer, String, nil] Takes an Integer, String, or no argument

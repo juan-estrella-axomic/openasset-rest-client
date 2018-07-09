@@ -54,12 +54,12 @@ RSpec.describe Projects do
             expect(subject.project_keywords.first.is_a?(NestedProjectKeywordItems)).to be true
         end
         it 'gets/sets fields with :fields' do
-            subject.fields << NestedFieldItems.new('18')
-            expect(subject.fields.first.is_a?(NestedFieldItems)).to be true
+            subject.fields << NestedFieldItems.new('18','data')
+            expect(subject.fields.first.values).to eq ['data']
         end
         it 'gets/sets albums with :albums' do
             subject.fields << NestedAlbumItems.new('33')
-            expect(subject.fields.first.is_a?(NestedAlbumtems)).to be true
+            expect(subject.fields.first.is_a?(NestedAlbumItems)).to be true
         end
     end
     it_behaves_like 'a json builder'
