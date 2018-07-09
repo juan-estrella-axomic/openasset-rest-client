@@ -51,7 +51,7 @@ RSpec.describe Projects do
         end
         it 'gets/sets project_keywords with :project_keywords' do
             subject.project_keywords << NestedProjectKeywordItems.new('17')
-            expect(subject.project_keywords.first.is_a?(NestedProjectKeywordItems)).to be true
+            expect(subject.project_keywords.first.id).to eq '17'
         end
         it 'gets/sets fields with :fields' do
             subject.fields << NestedFieldItems.new('18','data')
@@ -59,7 +59,7 @@ RSpec.describe Projects do
         end
         it 'gets/sets albums with :albums' do
             subject.fields << NestedAlbumItems.new('33')
-            expect(subject.fields.first.is_a?(NestedAlbumItems)).to be true
+            expect(subject.fields.first.id).to eq '33'
         end
     end
     it_behaves_like 'a json builder'

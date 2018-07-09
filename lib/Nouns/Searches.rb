@@ -12,8 +12,8 @@ class Searches
     # @!parse attr_accessor :company_saved_search, :created, :id, :locked, :name, :saved, :search_items
     attr_accessor :company_saved_search, :created, :id, :locked, :name, :saved, :search_items
 
-    # @!parse attr_accessor :share_with_all_users, :updated, :user_id
-    attr_accessor :share_with_all_users, :updated, :user_id
+    # @!parse attr_accessor :share_with_all_users, :updated, :user_id, :search_items, :groups, :users
+    attr_accessor :share_with_all_users, :updated, :user_id, :search_items, :groups, :users
 
     # Creates a Searches object
     #

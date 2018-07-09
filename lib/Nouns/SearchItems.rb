@@ -12,32 +12,19 @@ class SearchItems
     # @example
     #         search =  SearchItems.new
     #         search =  SearchItems.new('albums','0','>','34') => Files in albums with id greater than 34
-    def initialize(*args)
-        json_obj = nil
-        if args.first.is_a?(Hash)
-            json_obj = Validator::validate_argument(args.first,'SearchItems')
-        elsif args.empty?
-            json_obj = Validator::validate_argument(args.first, 'SearchItems')
-        elsif (args.length == 4  &&
-            args[0].is_a?(String) &&
-            (args[1] == 1 || args[1] == 0 || args[1] == '1' || args[1] == '0') &&
-            (args[2] == '-' || args[2] == '+' || args[2] == '' || args[2] == nil) &&
-             args[3].is_a?(Array))
+    def initialize(data)
+        json_obj = Validator.validate_argument(data,'SearchItems')
 
-            json_obj = {}
-            json_obj['code']       = args[0]
-            json_obj['exclude']    = args[1]
-            json_obj['operator']   = args[2]
-            json_obj['values/ids'] = args[3]
-        else
-            puts "Argument Error:\n\tInvalid argument detected for nested search items object." +
-                 "Expected a Hash, Nil, or 4 arguments in constructor.\n\tReceived => #{args.inspect}"
-            return false
+        @code
+        @exlcude
+        @operator
+        @values
+        @ids
+
+        json_obj.keys.each do |key|
+            value = json_obj[key]
+            key = key.to_s # In case symbols are used instead of strings
+            instance_variable_set("@#{key}",value)
         end
-
-        @code     = json_obj['code']
-        @exlcude  = json_obj['exclude']
-        @operator = json_obj['operator']
-        @values   = json_obj['values/ids'] || Array.new
     end
 end

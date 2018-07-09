@@ -2,10 +2,11 @@
 #
 # @author Juan Estrella
 require_relative '../JsonBuilder'
+require_relative '../MyLogger'
 class Users
     include JsonBuilder
-    # @!parse attr_accessor :alive, :full_name, :id, :username, :groups
-    attr_accessor :alive, :full_name, :id, :username, :groups
+    # @!parse attr_accessor :alive, :full_name, :id, :username, :groups, :password
+    attr_accessor :alive, :full_name, :id, :username, :groups, :password
 
     # Creates a Users object
     #
@@ -22,7 +23,7 @@ class Users
         if args.length < 3 && !args.first.is_a?(Hash)
             msg = "Expected username, fullname, and password or a Hash\n" +
                   "\tInstead got #{args.inspect}.\nCreating empty user object."
-            Logger.error(msg)
+            Logging::logger.error(msg)
         elsif args.first.is_a?(String) # Assume three string args were passed
             json_obj['username']  = args[0]
             json_obj['full_name'] = args[1]
