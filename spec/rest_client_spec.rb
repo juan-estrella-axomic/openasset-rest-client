@@ -13,268 +13,268 @@ RSpec.describe RestClient do
         @suffix = Helpers.current_time_in_milliseconds()
     end
 
-    #let(:@query) { RestOptions.new }
+    # #let(:@query) { RestOptions.new }
 
-    #################
-    # Access Levels #
-    #################
-    context 'when dealing with access levels' do
-        describe '#get_access_level' do
-            it 'retrieves an access level' do
-                object = @client.get_access_levels.first
-                expect(object.is_a?(AccessLevels)).to be true
-            end
-        end
-    end
+    # #################
+    # # Access Levels #
+    # #################
+    # context 'when dealing with access levels' do
+    #     describe '#get_access_level' do
+    #         it 'retrieves an access level' do
+    #             object = @client.get_access_levels.first
+    #             expect(object.is_a?(AccessLevels)).to be true
+    #         end
+    #     end
+    # end
 
-    ##########
-    # Albums #
-    ##########
-    context 'when dealing with albums' do
-        name   = Helpers.generate_unique_name()
-        describe '#get_albums' do
-            it 'retrieves an album' do
-                object = @client.get_albums.first
-                expect(object.is_a?(Albums)).to be true
-            end
-        end
-        describe '#create_albums' do
-            it 'creates an album' do
-                album = Albums.new(name)
-                object = @client.create_albums(album,true).first
-                expect(object.is_a?(Albums)).to be true
-            end
-        end
-        describe '#update_albums' do
-            it 'modifies an album' do
-                @query.clear
-                @query.add_option('name',name)
-                @query.add_option('textMatching','exact')
-                album = @client.get_albums(@query).first
-                name = "RspecTest-Updated_#{@suffix}" #Update the name for delete query
-                album.name = name
-                expect(@client.update_albums(album).code).to eq '200'
-            end
-        end
-        describe '#delete_albums' do
-            it 'deletes an album' do
-                @query.clear
-                @query.add_option('name',name)
-                @query.add_option('textMatching','exact')
-                album = @client.get_albums(@query)
-                expect(@client.delete_albums(album).empty?).to be true #Delete return empty array
-            end
-        end
-    end
+    # ##########
+    # # Albums #
+    # ##########
+    # context 'when dealing with albums' do
+    #     name   = Helpers.generate_unique_name()
+    #     describe '#get_albums' do
+    #         it 'retrieves an album' do
+    #             object = @client.get_albums.first
+    #             expect(object.is_a?(Albums)).to be true
+    #         end
+    #     end
+    #     describe '#create_albums' do
+    #         it 'creates an album' do
+    #             album = Albums.new(name)
+    #             object = @client.create_albums(album,true).first
+    #             expect(object.is_a?(Albums)).to be true
+    #         end
+    #     end
+    #     describe '#update_albums' do
+    #         it 'modifies an album' do
+    #             @query.clear
+    #             @query.add_option('name',name)
+    #             @query.add_option('textMatching','exact')
+    #             album = @client.get_albums(@query).first
+    #             name = "RspecTest-Updated_#{@suffix}" #Update the name for delete query
+    #             album.name = name
+    #             expect(@client.update_albums(album).code).to eq '200'
+    #         end
+    #     end
+    #     describe '#delete_albums' do
+    #         it 'deletes an album' do
+    #             @query.clear
+    #             @query.add_option('name',name)
+    #             @query.add_option('textMatching','exact')
+    #             album = @client.get_albums(@query)
+    #             expect(@client.delete_albums(album).empty?).to be true #Delete return empty array
+    #         end
+    #     end
+    # end
 
-    ####################
-    # Alternate Stores #
-    ####################
-    context 'when dealing with alternate stores' do
-        describe '#get_alternate_stores' do
-            it 'retrieves an alternate store' do
-                object = @client.get_alternate_stores.first
-                expect(object.is_a?(AlternateStores)).to be true
-            end
-        end
-    end
+    # ####################
+    # # Alternate Stores #
+    # ####################
+    # context 'when dealing with alternate stores' do
+    #     describe '#get_alternate_stores' do
+    #         it 'retrieves an alternate store' do
+    #             object = @client.get_alternate_stores.first
+    #             expect(object.is_a?(AlternateStores)).to be true
+    #         end
+    #     end
+    # end
 
-    ################
-    # Apect Ratios #
-    ################
-    context 'when dealing with aspect ratios' do
-        describe '#get_aspect_ratios' do
-            it 'retrieves an aspect ratio' do
-                object = @client.get_aspect_ratios.first
-                expect(object.is_a?(AspectRatios)).to be true
-            end
-        end
-    end
+    # ################
+    # # Apect Ratios #
+    # ################
+    # context 'when dealing with aspect ratios' do
+    #     describe '#get_aspect_ratios' do
+    #         it 'retrieves an aspect ratio' do
+    #             object = @client.get_aspect_ratios.first
+    #             expect(object.is_a?(AspectRatios)).to be true
+    #         end
+    #     end
+    # end
 
-    ##############
-    # Categories #
-    ##############
-    context 'when dealing with categories' do
-        describe '#get_categories' do
-            it 'retrieves a category' do
-                object = @client.get_categories.first
-                expect(object.is_a?(Categories)).to be true
-            end
-        end
-        describe '#update_categories' do
-            it 'modifies an category' do
-                @query.clear
-                @query.add_option('name','Reference')
-                @query.add_option('textMatching','exact')
-                category = @client.get_categories(@query).first
-                category.name = 'Reference-Updated'
-                @client.update_categories(category)
-                @query.clear
-                @query.add_option('name','Reference-Updated')
-                @query.add_option('textMatching','exact')
-                category = @client.get_categories(@query).first
-                category.name = 'Reference'
-                expect(@client.update_categories(category).code).to eq '200'
-            end
-        end
-    end
+    # ##############
+    # # Categories #
+    # ##############
+    # context 'when dealing with categories' do
+    #     describe '#get_categories' do
+    #         it 'retrieves a category' do
+    #             object = @client.get_categories.first
+    #             expect(object.is_a?(Categories)).to be true
+    #         end
+    #     end
+    #     describe '#update_categories' do
+    #         it 'modifies an category' do
+    #             @query.clear
+    #             @query.add_option('name','Reference')
+    #             @query.add_option('textMatching','exact')
+    #             category = @client.get_categories(@query).first
+    #             category.name = 'Reference-Updated'
+    #             @client.update_categories(category)
+    #             @query.clear
+    #             @query.add_option('name','Reference-Updated')
+    #             @query.add_option('textMatching','exact')
+    #             category = @client.get_categories(@query).first
+    #             category.name = 'Reference'
+    #             expect(@client.update_categories(category).code).to eq '200'
+    #         end
+    #     end
+    # end
 
-    #####################
-    # Copyright Holders #
-    #####################
-    context 'when dealing with copyright holders' do
-        name = Helpers.generate_unique_name()
-        describe '#create_copyright_holders' do
-            it 'creates a copyright holder' do
-                copyright_holder = CopyrightHolders.new(name)
-                object = @client.create_copyright_holders(copyright_holder,true).first
-                expect(object.is_a?(CopyrightHolders)).to be true
-            end
-        end
-        describe '#get_copyright_holders' do
-            it 'retrieves a copyright holder' do
-                object = @client.get_copyright_holders.first
-                expect(object.is_a?(CopyrightHolders)).to be true
-            end
-        end
-    end
+    # #####################
+    # # Copyright Holders #
+    # #####################
+    # context 'when dealing with copyright holders' do
+    #     name = Helpers.generate_unique_name()
+    #     describe '#create_copyright_holders' do
+    #         it 'creates a copyright holder' do
+    #             copyright_holder = CopyrightHolders.new(name)
+    #             object = @client.create_copyright_holders(copyright_holder,true).first
+    #             expect(object.is_a?(CopyrightHolders)).to be true
+    #         end
+    #     end
+    #     describe '#get_copyright_holders' do
+    #         it 'retrieves a copyright holder' do
+    #             object = @client.get_copyright_holders.first
+    #             expect(object.is_a?(CopyrightHolders)).to be true
+    #         end
+    #     end
+    # end
 
-    #####################
-    # Copyright Polices #
-    #####################
-    context 'when dealing with copyright policies' do
-        name = Helpers.generate_unique_name()
-        describe '#create_copyright_policies' do
-            it 'creates a copyright policy' do
-                copyright_policy = CopyrightPolicies.new(name)
-                object = @client.create_copyright_policies(copyright_policy,true).first
-                expect(object.is_a?(CopyrightPolicies)).to be true
-            end
-        end
-        describe '#get_copyright_policies' do
-            it 'retrieves a copyright policy' do
-                object = @client.get_copyright_policies.first
-                expect(object.is_a?(CopyrightPolicies)).to be true
-            end
-        end
-        describe '#update_copyright_policies' do
-            it 'modifies a copyright policy' do
-                @query.clear
-                @query.add_option('name',name)
-                @query.add_option('textMatching','exact')
-                copyright_policy = @client.get_copyright_policies(@query).first
-                copyright_policy.name = "#{name}_Updated"
-                expect(@client.update_copyright_policies(copyright_policy).code).to eq '200'
-            end
-        end
-        describe '#delete_copyright_policies' do
-            it 'deletes a copyright policy' do
-                @query.clear
-                @query.add_option('name',"#{name}_Updated")
-                @query.add_option('textMatching','exact')
-                copyright_policy = @client.get_copyright_policies(@query)
-                # Copyright Policies can only be merged - NOT DELETED
-                expect(@client.
-                    delete_copyright_policies(copyright_policy)
-                    .first['http_status_code']).to eq '403'
-            end
-        end
-    end
+    # #####################
+    # # Copyright Polices #
+    # #####################
+    # context 'when dealing with copyright policies' do
+    #     name = Helpers.generate_unique_name()
+    #     describe '#create_copyright_policies' do
+    #         it 'creates a copyright policy' do
+    #             copyright_policy = CopyrightPolicies.new(name)
+    #             object = @client.create_copyright_policies(copyright_policy,true).first
+    #             expect(object.is_a?(CopyrightPolicies)).to be true
+    #         end
+    #     end
+    #     describe '#get_copyright_policies' do
+    #         it 'retrieves a copyright policy' do
+    #             object = @client.get_copyright_policies.first
+    #             expect(object.is_a?(CopyrightPolicies)).to be true
+    #         end
+    #     end
+    #     describe '#update_copyright_policies' do
+    #         it 'modifies a copyright policy' do
+    #             @query.clear
+    #             @query.add_option('name',name)
+    #             @query.add_option('textMatching','exact')
+    #             copyright_policy = @client.get_copyright_policies(@query).first
+    #             copyright_policy.name = "#{name}_Updated"
+    #             expect(@client.update_copyright_policies(copyright_policy).code).to eq '200'
+    #         end
+    #     end
+    #     describe '#delete_copyright_policies' do
+    #         it 'deletes a copyright policy' do
+    #             @query.clear
+    #             @query.add_option('name',"#{name}_Updated")
+    #             @query.add_option('textMatching','exact')
+    #             copyright_policy = @client.get_copyright_policies(@query)
+    #             # Copyright Policies can only be merged - NOT DELETED
+    #             expect(@client.
+    #                 delete_copyright_policies(copyright_policy)
+    #                 .first['http_status_code']).to eq '403'
+    #         end
+    #     end
+    # end
 
-    #####################
-    # Data Integrations #
-    #####################
-    context 'when dealing with data integrations' do
-        describe '#get_data_integrations' do
-            it 'retrieves a data integration' do
-                object = @client.get_data_integrations.first
-                expect(object.nil?).to be true
-            end
-        end
-    end
+    # #####################
+    # # Data Integrations #
+    # #####################
+    # context 'when dealing with data integrations' do
+    #     describe '#get_data_integrations' do
+    #         it 'retrieves a data integration' do
+    #             object = @client.get_data_integrations.first
+    #             expect(object.nil?).to be true
+    #         end
+    #     end
+    # end
 
-    ##########
-    # Fields #
-    ##########
-    context 'when dealing with fields' do
-        name = Helpers.generate_unique_name()
-        describe '#create_fields' do
-            it 'creates a field' do
-                field = Fields.new(name,'image','singleLine')
-                object = @client.create_fields(field,true).first
-                expect(object.is_a?(Fields)).to be true
-            end
-        end
-        describe '#get_fields' do
-            it 'retrieves a field' do
-                object = @client.get_fields.first
-                expect(object.is_a?(Fields)).to be true
-            end
-        end
-        describe '#update_fields' do
-            it 'modifies a field' do
-                @query.clear
-                @query.add_option('name',name)
-                @query.add_option('textMatching','exact')
-                field = @client.get_fields(@query).first
-                field.name = "#{name}-Updated"
-                expect(@client.update_fields(field).code).to eq '200'
-            end
-        end
-        describe '#delete_fields' do
-            it 'deletes a field' do
-                @query.clear
-                @query.add_option('name',"#{name}-Updated")
-                @query.add_option('textMatching','exact')
-                field = @client.get_fields(@query)
-                expect(@client.delete_fields(field).empty?).to be true
-            end
-        end
-    end
+    # ##########
+    # # Fields #
+    # ##########
+    # context 'when dealing with fields' do
+    #     name = Helpers.generate_unique_name()
+    #     describe '#create_fields' do
+    #         it 'creates a field' do
+    #             field = Fields.new(name,'image','singleLine')
+    #             object = @client.create_fields(field,true).first
+    #             expect(object.is_a?(Fields)).to be true
+    #         end
+    #     end
+    #     describe '#get_fields' do
+    #         it 'retrieves a field' do
+    #             object = @client.get_fields.first
+    #             expect(object.is_a?(Fields)).to be true
+    #         end
+    #     end
+    #     describe '#update_fields' do
+    #         it 'modifies a field' do
+    #             @query.clear
+    #             @query.add_option('name',name)
+    #             @query.add_option('textMatching','exact')
+    #             field = @client.get_fields(@query).first
+    #             field.name = "#{name}-Updated"
+    #             expect(@client.update_fields(field).code).to eq '200'
+    #         end
+    #     end
+    #     describe '#delete_fields' do
+    #         it 'deletes a field' do
+    #             @query.clear
+    #             @query.add_option('name',"#{name}-Updated")
+    #             @query.add_option('textMatching','exact')
+    #             field = @client.get_fields(@query)
+    #             expect(@client.delete_fields(field).empty?).to be true
+    #         end
+    #     end
+    # end
 
-    ########################
-    # Field Lookup Strings #
-    ########################
-    context 'when dealing with field lookup strings' do
-        name = Helpers.generate_unique_name()
-        field = {'id' => '31'}
-        describe '#create_field_lookup_strings' do
-            it 'creates a field lookup string' do
-                field_lookup_string = FieldLookupStrings.new(name)
-                object = @client.create_field_lookup_strings(field,field_lookup_string,true).first
-                expect(object.is_a?(FieldLookupStrings)).to be true
-            end
-        end
-        describe '#get_fieldd_lookup_strings' do
-            it 'retrieves a field lookup string' do
-                object = @client.get_field_lookup_strings(field).first
-                expect(object.is_a?(FieldLookupStrings)).to be true
-            end
-        end
-        describe '#update_field_lookup_strings' do
-            it 'modifies a field lookup string' do
-                @query.clear
-                @query.add_option('name',name)
-                @query.add_option('textMatching','exact')
-                field_lookup_string = @client.get_field_lookup_strings(field,@query).first
-                field_lookup_string.value = "#{name}-Updated"
-                expect(@client.update_field_lookup_strings(field,field_lookup_string).code).to eq '200'
-            end
-        end
-        describe '#delete_field_lookup_strings' do
-            it 'deletes a field lookup string' do
-                @query.clear
-                @query.add_option('name',"#{name}-Updated")
-                @query.add_option('textMatching','exact')
-                field_lookup_string = @client.get_field_lookup_strings(field,@query).first
-                expect(@client.delete_field_lookup_strings(field,field_lookup_string).empty?).to be true
-            end
-        end
-    end
+    # ########################
+    # # Field Lookup Strings #
+    # ########################
+    # context 'when dealing with field lookup strings' do
+    #     name = Helpers.generate_unique_name()
+    #     field = {'id' => '31'}
+    #     describe '#create_field_lookup_strings' do
+    #         it 'creates a field lookup string' do
+    #             field_lookup_string = FieldLookupStrings.new(name)
+    #             object = @client.create_field_lookup_strings(field,field_lookup_string,true).first
+    #             expect(object.is_a?(FieldLookupStrings)).to be true
+    #         end
+    #     end
+    #     describe '#get_fieldd_lookup_strings' do
+    #         it 'retrieves a field lookup string' do
+    #             object = @client.get_field_lookup_strings(field).first
+    #             expect(object.is_a?(FieldLookupStrings)).to be true
+    #         end
+    #     end
+    #     describe '#update_field_lookup_strings' do
+    #         it 'modifies a field lookup string' do
+    #             @query.clear
+    #             @query.add_option('name',name)
+    #             @query.add_option('textMatching','exact')
+    #             field_lookup_string = @client.get_field_lookup_strings(field,@query).first
+    #             field_lookup_string.value = "#{name}-Updated"
+    #             expect(@client.update_field_lookup_strings(field,field_lookup_string).code).to eq '200'
+    #         end
+    #     end
+    #     describe '#delete_field_lookup_strings' do
+    #         it 'deletes a field lookup string' do
+    #             @query.clear
+    #             @query.add_option('name',"#{name}-Updated")
+    #             @query.add_option('textMatching','exact')
+    #             field_lookup_string = @client.get_field_lookup_strings(field,@query).first
+    #             expect(@client.delete_field_lookup_strings(field,field_lookup_string).empty?).to be true
+    #         end
+    #     end
+    # end
 
-    # #########
-    # # Files #
-    # #########
+    #########
+    # Files #
+    #########
     # context 'when dealing with files' do
     #     describe '#upload_files' do
     #         it 'uploads a file' do
@@ -285,10 +285,11 @@ RSpec.describe RestClient do
     #     end
     #     context 'retrieves a file with nested resources' do
     #         describe '#get_files' do
-    #             @query.clear
-    #             @query.add_option('id','11458') #file in OA containing nested resources
-    #             file = @client.get_files(@query,true).first
+    #             file = nil
     #             it 'is a file' do
+    #                 @query.clear
+    #                 @query.add_option('id','11458') #file in OA containing nested resources
+    #                 file = @client.get_files(@query,true).first
     #                 expect(file.is_a?(Files)).to be true
     #             end
     #             it 'has sizes' do
@@ -328,61 +329,65 @@ RSpec.describe RestClient do
     #             @query.add_option('original_filename','rspec_flowers.jpg')
     #             @query.add_option('textMatching','exact')
     #             file = @client.get_files(@query).first
-    #             expect(@client.delete_files(file).code).to eq '204'
+    #             expect(@client.delete_files(file).empty?).to be true
     #         end
     #     end
     # end
 
-    # ##########
-    # # Groups #
-    # ##########
-    # context 'when dealing with groups' do
-    #     contex 'with nested users' do
-    #         before(:all) do # Prep: create nested user
-    #             @user = Users.new('rspec@axomic.com','RSpec Test','pass')
-    #             @user = @client.create_users(user,true).first
-    #             nested_user = NestedUserItems.new(@user.id)
-    #             @group = nil
-    #         end
-    #         describe '#create_groups' do
-    #             it 'creates a group' do
-    #                 group = Groups.new('RSpecTest')
-    #                 @group = @client.create_groups(group,true).first
-    #                 expect(@group.is_a?(Groups)).to be true
-    #             end
-    #         end
-    #         describe '#update_groups' do
-    #             it 'modifies a group' do
-    #                 @query.clear
-    #                 @query.add_option('id',@group.id)
-    #                 @group = @client.get_groups(@query).first
-    #                 @group.name = 'RSpecTest-Updated'
-    #                 @group.users << nested_user
-    #                 expect(@client.update_groups(@group).code).to eq '200'
-    #             end
-    #         end
-    #         describe '#get_groups' do
-    #             it 'retrieves a group' do
-    #                 @query.clear
-    #                 @query.add_option('id',@group.id)
-    #                 @query.add_option('users','all')
-    #                 @group = @client.get_groups(@query).first
-    #                 expect(@group.is_a?(Groups)).to be true
-    #             end
-    #         end
-    #         it 'has a user' do
-    #             expect(@group.users.first.id).to eq @user.id
-    #         end
-    #     end
-    #     describe '#delete_groups' do
-    #         it 'deletes a group' do
-    #             expect(@client.delete_groups(@group).code).to eq '204'
-    #         end
-    #     end
-    #     after(:all) do # Clean up: delete created user
-    #         @client.delete_users(@user)
-    #     end
-    # end
+    ##########
+    # Groups #
+    ##########
+    context 'when dealing with groups with nested resources' do
+        before(:all) do # Prep: create nested user
+            user = Users.new('rspec@axomic.com','RSpec Test','pass')
+            @user = @client.create_users(user,true).first
+            @nested_user = NestedUserItems.new(@user.id)
+        end
+        describe '#create_groups' do
+            it 'creates a group' do
+                g = Groups.new('RSpecTest')
+                group = @client.create_groups(g,true).first
+                expect(group.is_a?(Groups)).to be true
+            end
+        end
+        describe '#update_groups' do
+            it 'modifies a group' do
+                @query.clear
+                @query.add_option('name','RSpecTest')
+                group = @client.get_groups(@query,true).first
+                group.name = 'RSpecTest-Updated'
+                group.users << @nested_user
+                expect(@client.update_groups(group).code).to eq '200'
+            end
+        end
+        describe '#get_groups' do
+            group = nil
+            it 'retrieves a group' do
+                @query.clear
+                @query.add_option('name','RSpecTest-Updated')
+                @query.add_option('textMatching','exact')
+                @query.add_option('users','all')
+                group = @client.get_groups(@query).first
+                expect(group.is_a?(Groups)).to be true
+            end
+            it 'has the created user' do
+                expect(group.users.first.id).to eq @user.id
+            end
+        end
+
+        describe '#delete_groups' do
+            it 'deletes a group' do
+                @query.clear
+                @query.add_option('name','RSpecTest-Updated')
+                @query.add_option('textMatching','exact')
+                group = @client.get_groups(@query).first
+                expect(@client.delete_groups(group).empty?).to be true
+            end
+        end
+        after(:all) do # Clean up: delete created user
+            @client.delete_users(@user)
+        end
+    end
 
     # ######################
     # # Keyword Categories #
