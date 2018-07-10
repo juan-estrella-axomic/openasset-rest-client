@@ -4,7 +4,7 @@
 require_relative 'NestedItemBasic'
 class NestedGroupItems < NestedItemBasic
     # @!parse attr_accessor :id, :can_modify
-
+    attr_accessor :id, :can_modify
     # Creates a NestedGroupItems object
     #
     # @param arg1 [Hash, Integer, String, nil] Takes a Hash, Integer, String, or no argument

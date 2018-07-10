@@ -9,9 +9,11 @@ RSpec.describe RestClient do
         instance = 'demo-jes.openasset.com'
         username = 'respec_user'
         @client = RestClient.new(instance,username)
+        @query  = RestOptions.new
+        @suffix = Helpers.current_time_in_milliseconds()
     end
 
-    let(:query) { RestOptions.new }
+    #let(:@query) { RestOptions.new }
 
     #################
     # Access Levels #
@@ -25,250 +27,250 @@ RSpec.describe RestClient do
         end
     end
 
-    # ##########
-    # # Albums #
-    # ##########
-    # context 'when dealing with albums' do
-    #     describe '#get_albums' do
-    #         it 'retrieves an album' do
-    #             object = @client.get_albums.first
-    #             expect(object.is_a?(Albums)).to be true
-    #         end
-    #     end
-    #     describe '#create_albums' do
-    #         it 'creates an album' do
-    #             name = 'RspecTest'
-    #             album = Albums.new(name)
-    #             object = @client.create_albums(album,true).first
-    #             expect(object.is_a?(Albums)).to be true
-    #         end
-    #     end
-    #     describe '#update_albums' do
-    #         it 'modifies an album' do
-    #             query.clear
-    #             query.add_option('name','RspecTest')
-    #             query.add_option('textMatching','exact')
-    #             album = @client.get_albums(query)
-    #             album.name = 'RspecTest-Updated'
-    #             expect(@client.update_albums(album).code).to eq '200'
-    #         end
-    #     end
-    #     describe '#delete_albums' do
-    #         it 'deletes an album' do
-    #             query.clear
-    #             query.add_option('name','RspecTest-Updated')
-    #             query.add_option('textMatching','exact')
-    #             album = @client.get_albums(query)
-    #             expect(@client.delete_albums(album).code).to eq '204'
-    #         end
-    #     end
-    # end
+    ##########
+    # Albums #
+    ##########
+    context 'when dealing with albums' do
+        name   = Helpers.generate_unique_name()
+        describe '#get_albums' do
+            it 'retrieves an album' do
+                object = @client.get_albums.first
+                expect(object.is_a?(Albums)).to be true
+            end
+        end
+        describe '#create_albums' do
+            it 'creates an album' do
+                album = Albums.new(name)
+                object = @client.create_albums(album,true).first
+                expect(object.is_a?(Albums)).to be true
+            end
+        end
+        describe '#update_albums' do
+            it 'modifies an album' do
+                @query.clear
+                @query.add_option('name',name)
+                @query.add_option('textMatching','exact')
+                album = @client.get_albums(@query).first
+                name = "RspecTest-Updated_#{@suffix}" #Update the name for delete query
+                album.name = name
+                expect(@client.update_albums(album).code).to eq '200'
+            end
+        end
+        describe '#delete_albums' do
+            it 'deletes an album' do
+                @query.clear
+                @query.add_option('name',name)
+                @query.add_option('textMatching','exact')
+                album = @client.get_albums(@query)
+                expect(@client.delete_albums(album).empty?).to be true #Delete return empty array
+            end
+        end
+    end
 
-    # ####################
-    # # Alternate Stores #
-    # ####################
-    # context 'when dealing with alternate stores' do
-    #     describe '#get_alternate_stores' do
-    #         it 'retrieves an alternate store' do
-    #             object = @client.get_alternate_stores.first
-    #             expect(object.is_a?(AlternateStores)).to be true
-    #         end
-    #     end
-    # end
+    ####################
+    # Alternate Stores #
+    ####################
+    context 'when dealing with alternate stores' do
+        describe '#get_alternate_stores' do
+            it 'retrieves an alternate store' do
+                object = @client.get_alternate_stores.first
+                expect(object.is_a?(AlternateStores)).to be true
+            end
+        end
+    end
 
-    # ################
-    # # Apect Ratios #
-    # ################
-    # context 'when dealing with aspect ratios' do
-    #     describe '#get_aspect_ratios' do
-    #         it 'retrieves an aspect ratio' do
-    #             object = @client.get_aspect_ratios.first
-    #             expect(object.is_a?(AspectRatios)).to be true
-    #         end
-    #     end
-    # end
+    ################
+    # Apect Ratios #
+    ################
+    context 'when dealing with aspect ratios' do
+        describe '#get_aspect_ratios' do
+            it 'retrieves an aspect ratio' do
+                object = @client.get_aspect_ratios.first
+                expect(object.is_a?(AspectRatios)).to be true
+            end
+        end
+    end
 
-    # ##############
-    # # Categories #
-    # ##############
-    # context 'when dealing with categories' do
-    #     describe '#get_categories' do
-    #         it 'retrieves a category' do
-    #             object = get_categories.first
-    #             expect(object.is_a?(Categories)).to be true
-    #         end
-    #     end
-    #     describe '#update_categories' do
-    #         it 'modifies an category' do
-    #             query.clear
-    #             query.add_option('name','Reference')
-    #             query.add_option('textMatching','exact')
-    #             category = @client.get_categories(query).first
-    #             category.name = 'Reference-Updated'
-    #             @client.update_categories(category)
-    #             query.clear
-    #             query.add_option('name','Reference-Updated')
-    #             query.add_option('textMatching','exact')
-    #             category.name = 'Reference'
-    #             category = @client.get_categories(query).first
-    #             expect(@client.update_categories(category).code).to eq '200'
-    #         end
-    #     end
-    # end
+    ##############
+    # Categories #
+    ##############
+    context 'when dealing with categories' do
+        describe '#get_categories' do
+            it 'retrieves a category' do
+                object = @client.get_categories.first
+                expect(object.is_a?(Categories)).to be true
+            end
+        end
+        describe '#update_categories' do
+            it 'modifies an category' do
+                @query.clear
+                @query.add_option('name','Reference')
+                @query.add_option('textMatching','exact')
+                category = @client.get_categories(@query).first
+                category.name = 'Reference-Updated'
+                @client.update_categories(category)
+                @query.clear
+                @query.add_option('name','Reference-Updated')
+                @query.add_option('textMatching','exact')
+                category = @client.get_categories(@query).first
+                category.name = 'Reference'
+                expect(@client.update_categories(category).code).to eq '200'
+            end
+        end
+    end
 
-    # #####################
-    # # Copyright Holders #
-    # #####################
-    # context 'when dealing with copyright holders' do
-    #     describe '#copyright_holder' do
-    #         it 'creates a copyright holder' do
-    #             copyright_holder = CopyrightHolders.new('RSpecTest')
-    #             object = @client.create_copyright_holders(copyright_holder,true)
-    #             expect(object.is_a?(CopyrightHolders)).to be true
-    #         end
-    #     end
-    #     describe '#get_copyright_holder' do
-    #         it 'retrieves a copyright holder' do
-    #             object = @client.get_copyright_holders.first
-    #             expect(object.is_a?(CopyrightHolders)).to be true
-    #         end
-    #     end
-    #     describe '#delete_copyright_holders' do
-    #         it 'deletes a copyright holder' do
-    #             query.clear
-    #             query.add_option('name','RSpectTest')
-    #             query.add_option('textMatching','exact')
-    #             copyright_holder = @client.get_copyright_holders(query)
-    #             expect(@client.delete_copyright_holders(copyright_holder).code).to eq '204'
-    #         end
-    #     end
-    # end
+    #####################
+    # Copyright Holders #
+    #####################
+    context 'when dealing with copyright holders' do
+        name = Helpers.generate_unique_name()
+        describe '#create_copyright_holders' do
+            it 'creates a copyright holder' do
+                copyright_holder = CopyrightHolders.new(name)
+                object = @client.create_copyright_holders(copyright_holder,true).first
+                expect(object.is_a?(CopyrightHolders)).to be true
+            end
+        end
+        describe '#get_copyright_holders' do
+            it 'retrieves a copyright holder' do
+                object = @client.get_copyright_holders.first
+                expect(object.is_a?(CopyrightHolders)).to be true
+            end
+        end
+    end
 
-    # #####################
-    # # Copyright Polices #
-    # #####################
-    # context 'when dealing with copyright policies' do
-    #     describe '#create_copyright_policies' do
-    #         it 'creates a copyright policy' do
-    #             copyright_policy = CopyrightPolicies.new('RSpecTest')
-    #             object = @client.create_copyright_polices(copyright_policy,true).first
-    #             expect(object.is_a?(CopyrightPolicies)).to be true
-    #         end
-    #     end
-    #     describe '#get_copyright_policies' do
-    #         it 'retrieves a copyright policy' do
-    #             object = @client.get_copyright_policies.first
-    #             expect(object.is_a?(CopyrightHolders)).to be true
-    #         end
-    #     end
-    #     describe '#update_copyright_policies' do
-    #         it 'modifies a copyright policy' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest')
-    #             query.add_option('textMatching','exact')
-    #             copyright_policy = @client.get_copyright_policies(query).first
-    #             copyright_policy.name = 'RSpecTest-Updated'
-    #             expect(@client.update_copyright_policies(copyright_policy).code).to eq '200'
-    #         end
-    #     end
-    #     describe '#delete_copyright_policies' do
-    #         it 'deletes a copyright policy' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest-Updated')
-    #             query.add_option('textMatching','exact')
-    #             copyright_policy = @client.get_copyright_policies(query)
-    #             expect(@client.delete_copyright_policies(copyright_policy).code).to eq '204'
-    #         end
-    #     end
-    # end
+    #####################
+    # Copyright Polices #
+    #####################
+    context 'when dealing with copyright policies' do
+        name = Helpers.generate_unique_name()
+        describe '#create_copyright_policies' do
+            it 'creates a copyright policy' do
+                copyright_policy = CopyrightPolicies.new(name)
+                object = @client.create_copyright_policies(copyright_policy,true).first
+                expect(object.is_a?(CopyrightPolicies)).to be true
+            end
+        end
+        describe '#get_copyright_policies' do
+            it 'retrieves a copyright policy' do
+                object = @client.get_copyright_policies.first
+                expect(object.is_a?(CopyrightPolicies)).to be true
+            end
+        end
+        describe '#update_copyright_policies' do
+            it 'modifies a copyright policy' do
+                @query.clear
+                @query.add_option('name',name)
+                @query.add_option('textMatching','exact')
+                copyright_policy = @client.get_copyright_policies(@query).first
+                copyright_policy.name = "#{name}_Updated"
+                expect(@client.update_copyright_policies(copyright_policy).code).to eq '200'
+            end
+        end
+        describe '#delete_copyright_policies' do
+            it 'deletes a copyright policy' do
+                @query.clear
+                @query.add_option('name',"#{name}_Updated")
+                @query.add_option('textMatching','exact')
+                copyright_policy = @client.get_copyright_policies(@query)
+                # Copyright Policies can only be merged - NOT DELETED
+                expect(@client.
+                    delete_copyright_policies(copyright_policy)
+                    .first['http_status_code']).to eq '403'
+            end
+        end
+    end
 
-    # #####################
-    # # Data Integrations #
-    # #####################
-    # context 'when dealing with data integrations' do
-    #     describe '#get_data_integrations' do
-    #         it 'retrieves a data integration' do
-    #             object = @client.get_data_integrations.first
-    #             expect(object.is_a?(DataIntegrations)).to be true
-    #         end
-    #     end
-    # end
+    #####################
+    # Data Integrations #
+    #####################
+    context 'when dealing with data integrations' do
+        describe '#get_data_integrations' do
+            it 'retrieves a data integration' do
+                object = @client.get_data_integrations.first
+                expect(object.nil?).to be true
+            end
+        end
+    end
 
-    # ##########
-    # # Fields #
-    # ##########
-    # context 'when dealing with fields' do
-    #     describe '#create_fields' do
-    #         it 'creates a field' do
-    #             field = Fields.new('RSpecTest')
-    #             object = @client.create_fields(field,true).first
-    #             expect(object.is_a?(Fields)).to be true
-    #         end
-    #     end
-    #     describe '#get_fields' do
-    #         it 'retrieves a field' do
-    #             object = @client.get_fields.first
-    #             expect(object.is_a?(Fields)).to be true
-    #         end
-    #     end
-    #     describe '#update_fields' do
-    #         it 'modifies a field' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest')
-    #             query.add_option('textMatching','exact')
-    #             field = @client.get_fields(query).first
-    #             field.name = 'RSpecTest-Updated'
-    #             expect(@client.update_fields(field).code).to eq '200'
-    #         end
-    #     end
-    #     describe '#delete_fields' do
-    #         it 'deletes a field' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest-Updated')
-    #             query.add_option('textMatching','exact')
-    #             field = @client.get_fields(query)
-    #             expect(@client.delete_fields(field).code).to eq '204'
-    #         end
-    #     end
-    # end
+    ##########
+    # Fields #
+    ##########
+    context 'when dealing with fields' do
+        name = Helpers.generate_unique_name()
+        describe '#create_fields' do
+            it 'creates a field' do
+                field = Fields.new(name,'image','singleLine')
+                object = @client.create_fields(field,true).first
+                expect(object.is_a?(Fields)).to be true
+            end
+        end
+        describe '#get_fields' do
+            it 'retrieves a field' do
+                object = @client.get_fields.first
+                expect(object.is_a?(Fields)).to be true
+            end
+        end
+        describe '#update_fields' do
+            it 'modifies a field' do
+                @query.clear
+                @query.add_option('name',name)
+                @query.add_option('textMatching','exact')
+                field = @client.get_fields(@query).first
+                field.name = "#{name}-Updated"
+                expect(@client.update_fields(field).code).to eq '200'
+            end
+        end
+        describe '#delete_fields' do
+            it 'deletes a field' do
+                @query.clear
+                @query.add_option('name',"#{name}-Updated")
+                @query.add_option('textMatching','exact')
+                field = @client.get_fields(@query)
+                expect(@client.delete_fields(field).empty?).to be true
+            end
+        end
+    end
 
-    # ########################
-    # # Field Lookup Strings #
-    # ########################
-    # context 'when dealing with field lookup strings' do
-    #     describe '#create_field_lookup_strings' do
-    #         it 'creats a field lookup string' do
-    #             field_lookup_string = FieldLookupStrings.new('RSpecTest')
-    #             object = @client.create_field_lookup_strings(field_lookup_string,true).first
-    #             expect(object.is_a?(FieldLookupStrings)).to be true
-    #         end
-    #     end
-    #     describe '#get_fieldd_lookup_strings' do
-    #         it 'retrieves a field lookup string' do
-    #             object = @client.get_field_lookup_strings.first
-    #             expect(object.is_a?(FieldLookupStrings)).to be true
-    #         end
-    #     end
-    #     describe '#update_field_lookup_strings' do
-    #         it 'modifies a field lookup string' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest')
-    #             query.add_option('textMatching','exact')
-    #             field_lookup_string = @client.get_field_lookup_strings(query).first
-    #             field_lookup_string.name = 'RSpecTest-Updated'
-    #             expect(@client.update_field_lookup_strings(field_lookup_string).code).to eq '200'
-    #         end
-    #     end
-    #     describe '#delete_field_lookup_strings' do
-    #         it 'deletes a field lookup string' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest-Updated')
-    #             query.add_option('textMatching','exact')
-    #             field_lookup_string = @client.get_field_lookup_strings(query).first
-    #             expect(@client.delete_field_lookup_strings(field_lookup_string).code).to eq '204'
-    #         end
-    #     end
-    # end
+    ########################
+    # Field Lookup Strings #
+    ########################
+    context 'when dealing with field lookup strings' do
+        name = Helpers.generate_unique_name()
+        field = {'id' => '31'}
+        describe '#create_field_lookup_strings' do
+            it 'creates a field lookup string' do
+                field_lookup_string = FieldLookupStrings.new(name)
+                object = @client.create_field_lookup_strings(field,field_lookup_string,true).first
+                expect(object.is_a?(FieldLookupStrings)).to be true
+            end
+        end
+        describe '#get_fieldd_lookup_strings' do
+            it 'retrieves a field lookup string' do
+                object = @client.get_field_lookup_strings(field).first
+                expect(object.is_a?(FieldLookupStrings)).to be true
+            end
+        end
+        describe '#update_field_lookup_strings' do
+            it 'modifies a field lookup string' do
+                @query.clear
+                @query.add_option('name',name)
+                @query.add_option('textMatching','exact')
+                field_lookup_string = @client.get_field_lookup_strings(field,@query).first
+                field_lookup_string.value = "#{name}-Updated"
+                expect(@client.update_field_lookup_strings(field,field_lookup_string).code).to eq '200'
+            end
+        end
+        describe '#delete_field_lookup_strings' do
+            it 'deletes a field lookup string' do
+                @query.clear
+                @query.add_option('name',"#{name}-Updated")
+                @query.add_option('textMatching','exact')
+                field_lookup_string = @client.get_field_lookup_strings(field,@query).first
+                expect(@client.delete_field_lookup_strings(field,field_lookup_string).empty?).to be true
+            end
+        end
+    end
 
     # #########
     # # Files #
@@ -282,10 +284,10 @@ RSpec.describe RestClient do
     #         end
     #     end
     #     context 'retrieves a file with nested resources' do
-    #         describle '#get_files' do
-    #             query.clear
-    #             query.add_option('id','11458') #file in OA containing nested resources
-    #             file = @client.get_files(query,true).first
+    #         describe '#get_files' do
+    #             @query.clear
+    #             @query.add_option('id','11458') #file in OA containing nested resources
+    #             file = @client.get_files(@query,true).first
     #             it 'is a file' do
     #                 expect(file.is_a?(Files)).to be true
     #             end
@@ -302,30 +304,30 @@ RSpec.describe RestClient do
     #     end
     #     describe '#replace_file' do
     #         it 'replaces a file' do
-    #             query.clear
-    #             query.add_option('original_filename','rspec_bird.jpg')
-    #             query.add_option('textMatching','exact')
-    #             existing_img = @client.get_files(query).first
+    #             @query.clear
+    #             @query.add_option('original_filename','rspec_bird.jpg')
+    #             @query.add_option('textMatching','exact')
+    #             existing_img = @client.get_files(@query).first
     #             replacement_img = './resources/rspec_flowers.jpg'
     #             expect(@client.replace_file(existing_img,replacement_img).code).to eq '200'
     #         end
     #     end
     #     describe '#update_files' do
     #         it 'modifies a file' do
-    #             query.clear
-    #             query.add_option('original_filename','rspec_flowers.jpg')
-    #             query.add_option('textMatching','exact')
-    #             file = @client.get_files(query).first
+    #             @query.clear
+    #             @query.add_option('original_filename','rspec_flowers.jpg')
+    #             @query.add_option('textMatching','exact')
+    #             file = @client.get_files(@query).first
     #             file.caption = 'RSpecTest'
     #             expect(@client.update_files(file).code).to eq '200'
     #         end
     #     end
     #     describe '#delete_files' do
     #         it 'deletes a file' do
-    #             query.clear
-    #             query.add_option('original_filename','rspec_flowers.jpg')
-    #             query.add_option('textMatching','exact')
-    #             file = @client.get_files(query).first
+    #             @query.clear
+    #             @query.add_option('original_filename','rspec_flowers.jpg')
+    #             @query.add_option('textMatching','exact')
+    #             file = @client.get_files(@query).first
     #             expect(@client.delete_files(file).code).to eq '204'
     #         end
     #     end
@@ -351,9 +353,9 @@ RSpec.describe RestClient do
     #         end
     #         describe '#update_groups' do
     #             it 'modifies a group' do
-    #                 query.clear
-    #                 query.add_option('id',@group.id)
-    #                 @group = @client.get_groups(query).first
+    #                 @query.clear
+    #                 @query.add_option('id',@group.id)
+    #                 @group = @client.get_groups(@query).first
     #                 @group.name = 'RSpecTest-Updated'
     #                 @group.users << nested_user
     #                 expect(@client.update_groups(@group).code).to eq '200'
@@ -361,10 +363,10 @@ RSpec.describe RestClient do
     #         end
     #         describe '#get_groups' do
     #             it 'retrieves a group' do
-    #                 query.clear
-    #                 query.add_option('id',@group.id)
-    #                 query.add_option('users','all')
-    #                 @group = @client.get_groups(query).first
+    #                 @query.clear
+    #                 @query.add_option('id',@group.id)
+    #                 @query.add_option('users','all')
+    #                 @group = @client.get_groups(@query).first
     #                 expect(@group.is_a?(Groups)).to be true
     #             end
     #         end
@@ -402,20 +404,20 @@ RSpec.describe RestClient do
     #     end
     #     describe '#update_keyword_categories' do
     #         it 'modifies a keyword category' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest')
-    #             query.add_option('textMatching','exact')
-    #             keyword_category = @client.get_keyword_categories(query).first
+    #             @query.clear
+    #             @query.add_option('name','RSpecTest')
+    #             @query.add_option('textMatching','exact')
+    #             keyword_category = @client.get_keyword_categories(@query).first
     #             keyword_category.name = 'RSpecTest-Updated'
     #             expect(@client.update_keyword_categories(keyword_category).code).to eq '200'
     #         end
     #     end
     #     describe '#delete_keyword_categories' do
     #         it 'deletes a keyword category' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest-Updated')
-    #             query.add_option('textMatching','exact')
-    #             keyword_category = @client.get_keyword_categories(query).first
+    #             @query.clear
+    #             @query.add_option('name','RSpecTest-Updated')
+    #             @query.add_option('textMatching','exact')
+    #             keyword_category = @client.get_keyword_categories(@query).first
     #             expect(@client.delete_keyword_categories(keyword_category).code).to eq '204'
     #         end
     #     end
@@ -441,22 +443,22 @@ RSpec.describe RestClient do
     #     end
     #     describe '#update_keywords' do
     #         it 'modifies a keyword' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest')
-    #             query.add_option('keyword_category_id','5')
-    #             query.add_option('textMatching','exact')
-    #             keyword = @client.get_keywords(query).first
+    #             @query.clear
+    #             @query.add_option('name','RSpecTest')
+    #             @query.add_option('keyword_category_id','5')
+    #             @query.add_option('textMatching','exact')
+    #             keyword = @client.get_keywords(@query).first
     #             keyword.name = 'RSpecTest-Updated'
     #             expect(@client.update_keywords(keyword).code).to eq '200'
     #         end
     #     end
     #     describe '#delete_keywords' do
     #         it 'deletes a keyword' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest-Updated')
-    #             query.add_option('keyword_category_id','5')
-    #             query.add_option('textMatching','exact')
-    #             keyword = @client.get_keywords(query).first
+    #             @query.clear
+    #             @query.add_option('name','RSpecTest-Updated')
+    #             @query.add_option('keyword_category_id','5')
+    #             @query.add_option('textMatching','exact')
+    #             keyword = @client.get_keywords(@query).first
     #             expect(@client.delete_keywords(keyword).code).to eq '204'
     #         end
     #     end
@@ -484,10 +486,10 @@ RSpec.describe RestClient do
     #     end
     #     describe '#update_photographers' do
     #         it 'modifies a photographer' do
-    #             query.clear
-    #             query.add_option('name',"RSpecTest_#{@suffix}")
-    #             query.add_option('textMatching','exact')
-    #             photographer = @client.get_photographers(query).first
+    #             @query.clear
+    #             @query.add_option('name',"RSpecTest_#{@suffix}")
+    #             @query.add_option('textMatching','exact')
+    #             photographer = @client.get_photographers(@query).first
     #             photographer.name = "RSpecTest_Updated_#{suffix}"
     #             expect(@client.update_photographers(photographer).code).to eq '200'
     #         end
@@ -513,20 +515,20 @@ RSpec.describe RestClient do
     #     end
     #     describe '#update_project_keyword_categories' do
     #         it 'modifies a project keyword category' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest')
-    #             query.add_option('textMatching','exact')
-    #             project_keyword_category = @client.get_project_keyword_categories(query).first
+    #             @query.clear
+    #             @query.add_option('name','RSpecTest')
+    #             @query.add_option('textMatching','exact')
+    #             project_keyword_category = @client.get_project_keyword_categories(@query).first
     #             project_keyword_category.name = 'RSpecTest-Updated'
     #             expect(@client.update_project_keyword_categories(project_keyword_category).code).to eq '200'
     #         end
     #     end
     #     describe '#delete_project_keyword_categories' do
     #         it 'deletes a project keyword category' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest-Updated')
-    #             query.add_option('textMatching','exact')
-    #             project_keyword_category = @client.get_project_keyword_categories(query).first
+    #             @query.clear
+    #             @query.add_option('name','RSpecTest-Updated')
+    #             @query.add_option('textMatching','exact')
+    #             project_keyword_category = @client.get_project_keyword_categories(@query).first
     #             expect(@client.delete_project_keyword_category(project_keyword_category).code).to eq '204'
     #         end
     #     end
@@ -551,10 +553,10 @@ RSpec.describe RestClient do
     #     end
     #     describe '#update_project_keywords' do
     #         it 'modifies a project keyword' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest')
-    #             query.add_option('textMatching','exact')
-    #             project_keyword = @client.get_project_keywords(query).first
+    #             @query.clear
+    #             @query.add_option('name','RSpecTest')
+    #             @query.add_option('textMatching','exact')
+    #             project_keyword = @client.get_project_keywords(@query).first
     #             project_keyword.name = 'RSpecTest-Updated'
     #             expect(@client.update_project_keywords(project_keyword).code).to eq '200'
     #         end
@@ -584,19 +586,19 @@ RSpec.describe RestClient do
     #         end
     #         describe '#update_projects' do
     #             it 'modifies a project' do
-    #                 query.clear
-    #                 query.add_option('id',@project.id)
-    #                 @project = @client.get_projects(query).first
+    #                 @query.clear
+    #                 @query.add_option('id',@project.id)
+    #                 @project = @client.get_projects(@query).first
     #                 @project.name = 'RSpecTest-Updated'
     #                 expect(@client.update_projects(project).code).to eq '200'
     #             end
     #         end
     #         describe '#delete_projects' do
     #             it 'deletes a project' do
-    #                 query.clear
-    #                 query.add_option('name','RSpecTest-Updated')
-    #                 query.add_option('textMatching','exact')
-    #                 project = @client.get_projects(query).first
+    #                 @query.clear
+    #                 @query.add_option('name','RSpecTest-Updated')
+    #                 @query.add_option('textMatching','exact')
+    #                 project = @client.get_projects(@query).first
     #                 expect(@client.delete_projects(project).code).to eq '204'
     #             end
     #         end
@@ -631,13 +633,13 @@ RSpec.describe RestClient do
     #         end
     #         describe '#get_projects' do
     #             it 'retrieves a project' do
-    #                 query.clear
-    #                 query.add_option('name',name)
-    #                 query.add_option('textMatching','exact')
-    #                 query.add_option('albums','all')
-    #                 query.add_option('projectKeywords','all')
-    #                 query.add_option('fields','all')
-    #                 project = @client.get_projects(query).first
+    #                 @query.clear
+    #                 @query.add_option('name',name)
+    #                 @query.add_option('textMatching','exact')
+    #                 @query.add_option('albums','all')
+    #                 @query.add_option('projectKeywords','all')
+    #                 @query.add_option('fields','all')
+    #                 project = @client.get_projects(@query).first
     #             end
     #             it 'has a field' do
     #                 expect(project.fields.first.id).to eq @field.id
@@ -679,10 +681,10 @@ RSpec.describe RestClient do
     #     end
     #     describe '#update_searches' do
     #         it 'modifies a search' do
-    #             query.clear
-    #             query.add_option('name',"RSpecTestSearch_#{suffix}")
-    #             query.add_option('textMatching','exact')
-    #             search = @client.get_searches(query).first
+    #             @query.clear
+    #             @query.add_option('name',"RSpecTestSearch_#{suffix}")
+    #             @query.add_option('textMatching','exact')
+    #             search = @client.get_searches(@query).first
     #             search.name = "RSpecTestSearch-Updated_#{suffix}"
     #             expect(@client.update_searchess(searche).code).to eq '200'
     #         end
@@ -708,20 +710,20 @@ RSpec.describe RestClient do
     #     end
     #     describe '#update_image_sizes' do
     #         it 'modifies an image size' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest')
-    #             query.add_option('textMatching','exact')
-    #             img_size = @client.get_image_sizes(query).first
+    #             @query.clear
+    #             @query.add_option('name','RSpecTest')
+    #             @query.add_option('textMatching','exact')
+    #             img_size = @client.get_image_sizes(@query).first
     #             img_size.name = 'RSpecTest-Updated'
     #             expect(@client.update_image_sizes(img_size).code).to eq '200'
     #         end
     #     end
     #     describe '#delete_image_sizes' do
     #         it 'deletes an image size' do
-    #             query.clear
-    #             query.add_option('name','RSpecTest-Updated')
-    #             query.add_option('textMatching','exact')
-    #             img_size = @client.get_image_sizes(query).first
+    #             @query.clear
+    #             @query.add_option('name','RSpecTest-Updated')
+    #             @query.add_option('textMatching','exact')
+    #             img_size = @client.get_image_sizes(@query).first
     #             expect(@client.delete_image_sizes(img_size).code).to eq '200'
     #         end
     #     end
@@ -773,10 +775,10 @@ RSpec.describe RestClient do
     #         end
     #         describe '#get_users' do
     #             it 'retrieves a user' do
-    #                 query.clear
-    #                 query.add_option('id',@user.id)
-    #                 query.add_option('groups','all')
-    #                 @user = @client.get_users(query).first
+    #                 @query.clear
+    #                 @query.add_option('id',@user.id)
+    #                 @query.add_option('groups','all')
+    #                 @user = @client.get_users(@query).first
     #                 expect(@user.is_a?(Users)).to be true
     #             end
     #             it 'is assigned to a group' do

@@ -3,6 +3,14 @@ require_relative '../lib/Nouns/Users'
 require_relative '../lib/Nouns/NestedGroupItems'
 
 RSpec.describe Users do
+    let(:subject) do
+        data = {
+            username: 'jdoe@somewhere.com',
+            fullname: 'John Doe',
+            password: 'secret'
+        } 
+        Users.new(data) 
+    end
     describe 'attributes' do
         it 'gets/sets alive with :alive' do
             subject.alive = '1'

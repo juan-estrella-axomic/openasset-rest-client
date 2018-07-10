@@ -112,4 +112,8 @@ module Helpers
   def self.fourteen_digit_timestamp
     Time.now.strftime('%Y%m%dH%M%S')
   end
+  def self.generate_unique_name
+    suffix = current_time_in_milliseconds()
+    "RSpecTest_#{suffix}"
+  end
 end

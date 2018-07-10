@@ -135,7 +135,8 @@ class Validator
             msg = "Argument Error in get_field_lookup_strings method:\n\tFirst Parameter Expected " +
                     "one of the following so take your pick.\n\t1. Fields object\n\t2. Field object converted " +
                     "to Hash (e.g) field.json\n\t3. A hash just containing an id (e.g) {'id' => 1}\n\t" +
-                    "4. A string or an Integer for the id\n\t5. An array of Integers of Numeric Strings"
+                    "4. A string or an Integer for the id\n\t5. An array of Integers of Numeric Strings" +
+                    "\n\tInstead got => #{field.inspect}"
             Logging::logger.error(msg)
             abort
         end

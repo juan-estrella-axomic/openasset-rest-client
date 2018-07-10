@@ -294,7 +294,7 @@ module OpenAsset
 
         # Modify system Categories.
         #
-        # @param data [Single CopyrightPolicies Object, Array of CopyrightPolicies Objects] (Required)
+        # @param data [Single Categories Object, Array of Categories Objects] (Required)
         # @param generate_objects [Boolean] (Optional)
         #        Caution: Hurts performance -> Only use if performing further edits after updating object
         # @return [JSON object] HTTP response JSON object. Returns a Categories objects array if generate_objects flag is set

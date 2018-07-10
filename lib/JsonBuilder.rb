@@ -6,8 +6,8 @@ module JsonBuilder
             value = self.instance_variable_get(var)
             next if value.nil?
             key = var.gsub('@','').to_sym
-            if value.is_a?(String)
-                json_obj[key] = value
+            if value.is_a?(String) || value.is_a?(Integer)
+                json_obj[key] = value.to_s
             elsif value.is_a?(Array) && !value.empty?
                 if value.first.respond_to?(:json)
                     json_obj[key] = value.map { |obj| obj.json }
