@@ -579,101 +579,101 @@ RSpec.describe RestClient do
     ############
     # Projects #
     ############
-    context 'when dealing with projects' do
-        # context 'with location' do
-        #     before(:all) do
-        #         @project = Projects.new('RSpecTest','1000.123')
-        #     end
-        #     describe '#create_projects' do
-        #         it 'creates a project' do
-        #             @project.set_location('40.7128 N , 74.0060 W')
-        #             @project = @client.create_projects(@project,true).first
-        #             expect(@project.is_a?(Projects)).to be true
-        #         end
-        #     end
-        #     describe '#get_projects' do
-        #         it 'retrieves a project' do
-        #             object = @client.get_projects.first
-        #             expect(object.is_a?(Projects)).to be true
-        #         end
-        #     end
-        #     describe '#update_projects' do
-        #         it 'modifies a project' do
-        #             @query.clear
-        #             @query.add_option('name','RSpecTest')
-        #             project = @client.get_projects(@query).first
-        #             project.name = 'RSpecTest-Updated'
-        #             expect(@client.update_projects(project).code).to eq '200'
-        #         end
-        #     end
-        #     describe '#delete_projects' do
-        #         it 'deletes a project' do
-        #             @query.clear
-        #             @query.add_option('name','RSpecTest-Updated')
-        #             @query.add_option('textMatching','exact')
-        #             project = @client.get_projects(@query).first
-        #             expect(@client.delete_projects(project).empty?).to eq true
-        #         end
-        #     end
-        # end
+    # context 'when dealing with projects' do
+    #     context 'with location' do
+    #         before(:all) do
+    #             @project = Projects.new('RSpecTest','1000.123')
+    #         end
+    #         describe '#create_projects' do
+    #             it 'creates a project' do
+    #                 @project.set_location('40.7128 N , 74.0060 W')
+    #                 @project = @client.create_projects(@project,true).first
+    #                 expect(@project.is_a?(Projects)).to be true
+    #             end
+    #         end
+    #         describe '#get_projects' do
+    #             it 'retrieves a project' do
+    #                 object = @client.get_projects.first
+    #                 expect(object.is_a?(Projects)).to be true
+    #             end
+    #         end
+    #         describe '#update_projects' do
+    #             it 'modifies a project' do
+    #                 @query.clear
+    #                 @query.add_option('name','RSpecTest')
+    #                 project = @client.get_projects(@query).first
+    #                 project.name = 'RSpecTest-Updated'
+    #                 expect(@client.update_projects(project).code).to eq '200'
+    #             end
+    #         end
+    #         describe '#delete_projects' do
+    #             it 'deletes a project' do
+    #                 @query.clear
+    #                 @query.add_option('name','RSpecTest-Updated')
+    #                 @query.add_option('textMatching','exact')
+    #                 project = @client.get_projects(@query).first
+    #                 expect(@client.delete_projects(project).empty?).to eq true
+    #             end
+    #         end
+    #     end
 
-        context 'with nested resources' do
-            project = nil
-            before(:all) do
-                album_name = Helpers.generate_unique_name()
-                @album   = Albums.new(album_name)
-                @album   = @client.create_albums(@album,true).first
+    #     context 'with nested resources' do
+    #         project = nil
+    #         before(:all) do
+    #             album_name = Helpers.generate_unique_name()
+    #             @album   = Albums.new(album_name)
+    #             @album   = @client.create_albums(@album,true).first
 
-                project_keyword_name = Helpers.generate_unique_name()
-                project_keyword_category_id = '13'
-                @project_keyword = ProjectKeywords.new(project_keyword_name,
-                                                       project_keyword_category_id)
-                @project_keyword = @client.create_project_keywords(@project_keyword,true).first
+    #             project_keyword_name = Helpers.generate_unique_name()
+    #             project_keyword_category_id = '13'
+    #             @project_keyword = ProjectKeywords.new(project_keyword_name,
+    #                                                    project_keyword_category_id)
+    #             @project_keyword = @client.create_project_keywords(@project_keyword,true).first
 
-                field_name = Helpers.generate_unique_name()
-                @field = Fields.new(field_name,'project','singleLine')
-                @field = @client.create_fields(@field,true).first
-            end
-            describe '#create_projects' do
-                it 'creates a project' do
-                    project = Projects.new('RSpecTest','1234.56')
-                    project = @client.create_projects(project,true).first
-                    expect(project.is_a?(Projects)).to be true
-                end
-            end
-            describe '#updates_projects' do
-                it 'updates a project' do
-                    project.project_keywords << NestedProjectKeywordItems.new(@project_keyword.id)
-                    project.fields << NestedFieldItems.new(@field.id,['RSpect Test Sample Data'])
-                    project.albums << NestedAlbumItems.new(@album.id)
-                    expect(@client.update_projects(project).code).to eq '200'
-                end
-            end
-            describe '#get_projects' do
-                it 'retrieves a project' do
-                    @query.clear
-                    @query.add_option('name','RSpecTest')
-                    @query.add_option('textMatching','exact')
-                    @query.add_option('albums','all')
-                    @query.add_option('projectKeywords','all')
-                    @query.add_option('fields','all')
-                    @project = @client.get_projects(@query).first
-                end
-                it 'has a field' do
-                    expect(project.fields.first.id).to eq @field.id
-                end
-                it 'has a project keyword' do
-                    expect(project.project_keywords.first.id).to eq @project_keyword.id
-                end
-                it 'has an album' do
-                    expect(project.albums.first.id).to eq @album.id
-                end
-            end
-            after(:all) do
-                @client.delete_projects(project)
-            end
-        end
-    end
+    #             field_name = Helpers.generate_unique_name()
+    #             @field = Fields.new(field_name,'project','singleLine')
+    #             @field = @client.create_fields(@field,true).first
+    #         end
+    #         describe '#create_projects' do
+    #             it 'creates a project' do
+    #                 project = Projects.new('RSpecTest','1234.56')
+    #                 project = @client.create_projects(project,true).first
+    #                 expect(project.is_a?(Projects)).to be true
+    #             end
+    #         end
+    #         describe '#updates_projects' do
+    #             it 'updates a project' do
+    #                 project.project_keywords << NestedProjectKeywordItems.new(@project_keyword.id)
+    #                 project.fields << NestedFieldItems.new(@field.id,['RSpect Test Sample Data'])
+    #                 project.albums << NestedAlbumItems.new(@album.id)
+    #                 expect(@client.update_projects(project).code).to eq '200'
+    #             end
+    #         end
+    #         describe '#get_projects' do
+    #             it 'retrieves a project' do
+    #                 @query.clear
+    #                 @query.add_option('name','RSpecTest')
+    #                 @query.add_option('textMatching','exact')
+    #                 @query.add_option('albums','all')
+    #                 @query.add_option('projectKeywords','all')
+    #                 @query.add_option('fields','all')
+    #                 @project = @client.get_projects(@query).first
+    #             end
+    #             it 'has a field' do
+    #                 expect(project.fields.first.id).to eq @field.id
+    #             end
+    #             it 'has a project keyword' do
+    #                 expect(project.project_keywords.first.id).to eq @project_keyword.id
+    #             end
+    #             it 'has an album' do
+    #                 expect(project.albums.first.id).to eq @album.id
+    #             end
+    #         end
+    #         after(:all) do
+    #             @client.delete_projects(project)
+    #         end
+    #     end
+    # end
 
     # ############
     # # Searches #
