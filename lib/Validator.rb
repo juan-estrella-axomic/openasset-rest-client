@@ -47,20 +47,19 @@ class Validator
 
     #Validate the right object type is passed for Noun's constructor
     def self.validate_argument(arg,val='NOUN',options=nil) # Options lets us specify more allowed arg types
+        obj = {}
         unless arg.is_a?(NilClass) || arg.is_a?(Hash)
-            options = options ? ", #{options}, " : ''
-            msg = "Argument Validation Error: Expected no argument #{options} or a Hash to create #{val} object." +
+            options = options ? ", #{options}, " : ' '
+            msg = "Argument Validation Error: Expected no argument#{options}or a Hash to create #{val} object." +
                   "\nInstead got a(n) #{arg.class} with contents => #{arg.inspect}"
             Logging::logger.error(msg)
             abort
         end
         if arg.is_a?(Hash)
             # Convert all keys to strings in case user passes symbols as keys so values can be extracted
-            arg = arg.each_with_object({}) { |pair,hash| hash[pair.first.to_s] = pair.last }
-        else
-            arg = Hash.new
+            obj = arg.each_with_object({}) { |pair,hash| hash[pair.first.to_s] = pair.last }
         end
-        arg # Return arg or empty hash in case arg is nil
+        obj # Return arg or empty hash in case arg is nil
     end
 
     def self.process_http_response(response,verbose=nil,resource='',http_method='')

@@ -27,16 +27,17 @@ class Searches
         json_obj = nil
 
         if args.length > 1 #We only want one arguement or 2 non-null ones
-            unless args.length == 2 && !args.include?(nil) && args[0].is_a?(String) && args[1].is_a?(Array) &&
-                    (args[1].first.is_?(NilClass) || args[1].first.is_a?(SearchItems))
+            arg1 = args[0]
+            arg2 = args[1].is_a?(Array) ? args[1] : [ args[1] ]
+            if !args.include?(nil) && arg1.is_a?(String) && arg2.first.is_a?(SearchItems)
+                 #set grab the agruments and set up the json object
+                 json_obj = { "name" => arg1, "search_items" => arg2 }
+            else
                 warn "Argument Error:\n\tExpected either\n\t1. No Arguments\n\t2. A Hash\n\t" +
                      "3. Two separate arguments. The first as a string and the second as a SearchItems object" +
                      " e.g. Searches.new(name,search_items_object) in that order." +
                      "\n\tInstead got #{args.inspect} => Creating empty Searches object."
                 json_obj = {}
-            else
-                #set grab the agruments and set up the json object
-                json_obj = {"name" => args[0], "search_items" => args[1]}
             end
         else
             json_obj = Validator::validate_argument(args.first,'Searches')
@@ -62,7 +63,7 @@ class Searches
         if json_obj['search_items'].is_a?(Array) && !json_obj['search_items'].empty?
             #turn the nested search items from the json into objects
             @search_items = json_obj['search_items'].map do |item|
-                SearchItems.new(item)
+                item.is_a?(Hash) ? SearchItems.new(item) : item
             end
         end
 

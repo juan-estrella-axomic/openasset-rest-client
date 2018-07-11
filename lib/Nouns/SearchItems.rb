@@ -13,7 +13,7 @@ class SearchItems
     #         search =  SearchItems.new
     #         search =  SearchItems.new('albums','0','>','34') => Files in albums with id greater than 34
     def initialize(data)
-        json_obj = Validator.validate_argument(data,'SearchItems')
+        json_obj = Validator.validate_argument(data,'Search Items')
 
         @code
         @exlcude

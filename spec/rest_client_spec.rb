@@ -675,42 +675,45 @@ RSpec.describe RestClient do
     #     end
     # end
 
-    # ############
-    # # Searches #
-    # ############
-    # context 'when dealing with searches' do
-    #     describe '#create_searches' do
-    #         it 'creates a search' do
-    #             args = {
-    #                 'code'       => 'rank',
-    #                 'exclude'    => '0',
-    #                 'operator'   => '<',
-    #                 'values/ids' => ['6']
-    #             }
-    #             suffix = Helpers.current_time_in_milliseconds()
-    #             search_item = SearchItems.new(args)
-    #             search = Searches.new("RSpecTestSearch_#{@suffix}",search_items)
-    #             object = @client.create_searches(search,true).first
-    #             expect(object.is_a?(Searhes)).to be true
-    #         end
-    #     end
-    #     describe '#get_searches' do
-    #         it 'retrieves a search' do
-    #             object = @client.get_searches.first
-    #             expect(object.is_a?(Searches)).to be true
-    #         end
-    #     end
-    #     describe '#update_searches' do
-    #         it 'modifies a search' do
-    #             @query.clear
-    #             @query.add_option('name',"RSpecTestSearch_#{suffix}")
-    #             @query.add_option('textMatching','exact')
-    #             search = @client.get_searches(@query).first
-    #             search.name = "RSpecTestSearch-Updated_#{suffix}"
-    #             expect(@client.update_searchess(searche).code).to eq '200'
-    #         end
-    #     end
-    # end
+    ############
+    # Searches #
+    ############
+    # BUG in API ignores the required name field during POST
+    context 'when dealing with searches' do
+        name = Helpers.generate_unique_name()
+        id = 0
+        describe '#create_searches' do
+            it 'creates a search' do
+                args = {
+                    'code'       => 'rank',
+                    'exclude'    => '0',
+                    'operator'   => '<',
+                    'values' => ['6']
+                }
+                search_item = SearchItems.new(args)
+
+                search = Searches.new(name,search_item)
+                object = @client.create_searches(search,true).first
+                id = object.id if object.respond_to?(:id)
+                expect(object.is_a?(Searches)).to be true
+            end
+        end
+        describe '#get_searches' do
+            it 'retrieves a search' do
+                object = @client.get_searches.first
+                expect(object.is_a?(Searches)).to be true
+            end
+        end
+        describe '#update_searches' do
+            it 'modifies a search' do
+                @query.clear
+                @query.add_option('id',id)
+                search = @client.get_searches(@query).first
+                search.name = "#{name}_Updated"
+                expect(@client.update_searches(search).code).to eq '200'
+            end
+        end
+    end
 
     # #########
     # # Sizes #
