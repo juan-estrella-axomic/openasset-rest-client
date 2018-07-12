@@ -678,52 +678,67 @@ RSpec.describe RestClient do
     ############
     # Searches #
     ############
-    # BUG in API ignores the required name field during POST
-    context 'when dealing with searches' do
-        name = Helpers.generate_unique_name()
-        id = 0
-        describe '#create_searches' do
-            it 'creates a search' do
-                args = {
-                    'code'       => 'rank',
-                    'exclude'    => '0',
-                    'operator'   => '<',
-                    'values' => ['6']
-                }
-                search_item = SearchItems.new(args)
+    # possible BUG in API ignores the required name field during POST
+    # context 'when dealing with searches' do
+    #     name = Helpers.generate_unique_name()
+    #     id = 0
+    #     describe '#create_searches' do
+    #         it 'creates a search' do
+    #             args = {
+    #                 'code'       => 'rank',
+    #                 'exclude'    => '0',
+    #                 'operator'   => '<',
+    #                 'values' => ['6']
+    #             }
+    #             search_item = SearchItems.new(args)
 
-                search = Searches.new(name,search_item)
-                object = @client.create_searches(search,true).first
-                id = object.id if object.respond_to?(:id)
-                expect(object.is_a?(Searches)).to be true
-            end
-        end
-        describe '#get_searches' do
-            it 'retrieves a search' do
-                object = @client.get_searches.first
-                expect(object.is_a?(Searches)).to be true
-            end
-        end
-        describe '#update_searches' do
-            it 'modifies a search' do
-                @query.clear
-                @query.add_option('id',id)
-                search = @client.get_searches(@query).first
-                search.name = "#{name}_Updated"
-                expect(@client.update_searches(search).code).to eq '200'
-            end
-        end
-    end
+    #             search = Searches.new(name,search_item)
+    #             object = @client.create_searches(search,true).first
+    #             id = object.id if object.respond_to?(:id)
+    #             expect(object.is_a?(Searches)).to be true
+    #         end
+    #     end
+    #     describe '#get_searches' do
+    #         it 'retrieves a search' do
+    #             object = @client.get_searches.first
+    #             expect(object.is_a?(Searches)).to be true
+    #         end
+    #     end
+    #     describe '#update_searches' do
+    #         it 'modifies a search' do
+    #             @query.clear
+    #             @query.add_option('id',id)
+    #             search = @client.get_searches(@query).first
+    #             search.name = "#{name}_Updated"
+    #             expect(@client.update_searches(search).code).to eq '200'
+    #         end
+    #     end
+    # end
 
     # #########
     # # Sizes #
     # #########
     # context 'when dealing with sizes' do
+    #     img_size = nil
+    #     postfix  = nil
+    #     img_size = nil
     #     describe '#create_image_sizes' do
     #         it 'creates an image size' do
-    #             img_size = Sizes.new('RSpecTest')
-    #             object = @client.create_image_sizes(img_size,true).first
-    #             expect(object.is_a?(Sizes)).to be true
+    #             postfix = Helpers.generate_random_string(12)
+    #             data = {
+    #                 'postfix'       => postfix,
+    #                 'file_format'   => 'jpg',
+    #                 'colourspace'   => 'RGB',
+    #                 'width'         => 1920,
+    #                 'height'        => 1080,
+    #                 'always_create' => 1,
+    #                 'x_resolution'  => 72,
+    #                 'y_resolution'  => 72,
+    #                 'quality'       => 100
+    #             }
+    #             img_size = Sizes.new(data)
+    #             img_size = @client.create_image_sizes(img_size,true).first
+    #             expect(img_size.is_a?(Sizes)).to be true
     #         end
     #     end
     #     describe '#get_image_sizes' do
@@ -734,21 +749,13 @@ RSpec.describe RestClient do
     #     end
     #     describe '#update_image_sizes' do
     #         it 'modifies an image size' do
-    #             @query.clear
-    #             @query.add_option('name','RSpecTest')
-    #             @query.add_option('textMatching','exact')
-    #             img_size = @client.get_image_sizes(@query).first
-    #             img_size.name = 'RSpecTest-Updated'
+    #             img_size.display_order = 5
     #             expect(@client.update_image_sizes(img_size).code).to eq '200'
     #         end
     #     end
     #     describe '#delete_image_sizes' do
     #         it 'deletes an image size' do
-    #             @query.clear
-    #             @query.add_option('name','RSpecTest-Updated')
-    #             @query.add_option('textMatching','exact')
-    #             img_size = @client.get_image_sizes(@query).first
-    #             expect(@client.delete_image_sizes(img_size).code).to eq '200'
+    #             expect(@client.delete_image_sizes(img_size).empty?).to be true
     #         end
     #     end
     # end

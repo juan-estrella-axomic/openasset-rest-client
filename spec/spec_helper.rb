@@ -116,4 +116,7 @@ module Helpers
     suffix = current_time_in_milliseconds()
     "RSpecTest_#{suffix}"
   end
+  def self.generate_random_string(len=10)
+    (0...len).map { (97 + rand(26)).chr }.join
+  end
 end

@@ -15,41 +15,23 @@ class Sizes
 
     # Creates a Sizes object
     #
-    # @param args [ Hash, String, Integer, or nil] Default => nil
+    # @param args [ Hash or nil] Default => nil
     # @return [Sizes object]
     #
     # @example
     #         size =  Sizes.new
-    #         size =  Sizes.new(postfix,file_format,colourspace,width,height,always_create)
-    #         size =  Sizes.new('pptlarge','jpg','rgb','6000','4000',true)
-    def initialize(*args)
-        json_obj = nil
-        if args.length > 1 #We only want one arguement or 6 non-null ones
-            unless args.length == 6 && !args.include?(nil) && args[0].is_a?(String) && args[1].is_a?(String) && args[2].is_a?(String) &&
-                ((args[3].is_a?(String) && ((args[3] =~ /^[0-9]$/) == 0)) || args[3].is_a?(Integer))
-
-                warn "Argument Error:\n\tExpected either\n\t1. No Arguments\n\t2. A Hash\n\t" +
-                     "3. Two separate string arguments." +
-                     " e.g. Sizes.new(postfix,file_format,colourspace,width,height,always_create) in that order." +
-                     "\n\tInstead got #{args.inspect} => Creating empty Sizes object."
-                json_obj = {} # return empty object
-            else
-                #set grab the agruments and set up the json object
-                #set the always create flag to the format expected by the api '0' or '1'
-                json_obj = {}
-                always_create_flag = '0'
-                always_create_flag = '1'   if args[5] == true || args[5] == 1 || args[5] == '1' || args[5].downcase == 'true'
-
-                json_obj['postfix']       = args[0]
-                json_obj['file_format']   = args[1]
-                json_obj['colourspace']   = args[2]
-                json_obj['width']         = args[3]
-                json_obj['height']        = args[4]
-                json_obj['always_create'] = always_create_flag
-            end
-        else
-            json_obj = Validator::validate_argument(args.first,'Sizes')
-        end
+    #         size =  Sizes.new({
+    #                'postfix'       => postfix,
+    #                'file_format'   => 'jpg',
+    #                'colourspace'   => 'RGB',
+    #                'width'         => 1920,
+    #                'height'        => 1080,
+    #                'always_create' => 1,
+    #                'x_resolution'  => 72,
+    #                'y_resolution'  => 72
+    #            })
+    def initialize(data=nil)
+        json_obj = Validator.validate_argument(data,'Sizes')
 
         @alive = json_obj['alive']
         @always_create = json_obj['always_create']
