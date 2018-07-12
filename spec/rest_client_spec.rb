@@ -763,16 +763,13 @@ RSpec.describe RestClient do
     # #################
     # # Text Rewrites #
     # #################
-    # context 'when dealing with text rewrites' do
-    #     describe '#get_text_rewrites' do
-    #         it 'retrieves a text rewrite' do
-    #             object = @client.get_text_rewrites.first
-    #             test = false
-    #             test = true if object.nil? || object.is_a?(TextRewrites)
-    #             expect(test).to be true
-    #         end
-    #     end
-    # end
+    context 'when dealing with text rewrites' do
+        describe '#get_text_rewrites' do
+            it 'retrieves a text rewrite' do
+                expect(@client.get_text_rewrites.first.is_a?(TextRewrites)).to be true
+            end
+        end
+    end
 
     # #########
     # # Users #
