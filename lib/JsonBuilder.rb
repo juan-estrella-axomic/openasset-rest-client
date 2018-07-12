@@ -11,7 +11,7 @@ module JsonBuilder
             elsif value.is_a?(Array)
                 if value.first.respond_to?(:json)
                     json_obj[key] = value.map { |obj| obj.json }
-                else
+                elsif !value.empty?
                     json_obj[key] = value
                 end
             else # Value is an object so recurse

@@ -332,60 +332,56 @@ RSpec.describe RestClient do
     #     end
     # end
     # sleep 1
-    # ##########
-    # # Groups #
-    # ##########
-    # context 'when dealing with groups with nested resources' do
-    #     before(:all) do # Prep: create nested user
-    #         user = Users.new('rspec@axomic.com','RTest','pass')
-    #         @user = @client.create_users(user,true).first
-    #         @nested_user = NestedUserItems.new(@user.id)
-    #     end
-    #     describe '#create_groups' do
-    #         it 'creates a group' do
-    #             g = Groups.new('RTest')
-    #             group = @client.create_groups(g,true).first
-    #             expect(group.is_a?(Groups)).to be true
-    #         end
-    #     end
-    #     describe '#update_groups' do
-    #         it 'modifies a group' do
-    #             @query.clear
-    #             @query.add_option('name','RTest')
-    #             group = @client.get_groups(@query,true).first
-    #             group.name = 'RSpecTest-Updated'
-    #             group.users << @nested_user
-    #             expect(@client.update_groups(group).code).to eq '200'
-    #         end
-    #     end
-    #     describe '#get_groups' do
-    #         group = nil
-    #         it 'retrieves a group' do
-    #             @query.clear
-    #             @query.add_option('name','RSpecTest-Updated')
-    #             @query.add_option('textMatching','exact')
-    #             @query.add_option('users','all')
-    #             group = @client.get_groups(@query).first
-    #             expect(group.is_a?(Groups)).to be true
-    #         end
-    #         it 'has the created user' do
-    #             expect(group.users.first.id).to eq @user.id
-    #         end
-    #     end
-
-    #     describe '#delete_groups' do
-    #         it 'deletes a group' do
-    #             @query.clear
-    #             @query.add_option('name','RSpecTest-Updated')
-    #             @query.add_option('textMatching','exact')
-    #             group = @client.get_groups(@query).first
-    #             expect(@client.delete_groups(group).empty?).to be true
-    #         end
-    #     end
-    #     after(:all) do # Clean up: delete created user
-    #         @client.delete_users(@user)
-    #     end
-    # end
+    ##########
+    # Groups #
+    ##########
+    context 'when dealing with groups with nested resources' do
+        group = nil
+        before(:all) do # Prep: create nested user
+            user = Users.new('rspec@axomic.com','RTest','pass')
+            @user = @client.create_users(user,true).first
+            @nested_user = NestedUserItems.new(@user.id)
+        end
+        describe '#create_groups' do
+            it 'creates a group' do
+                g = Groups.new('RTest')
+                group = @client.create_groups(g,true).first
+                expect(group.is_a?(Groups)).to be true
+            end
+        end
+        describe '#update_groups' do
+            it 'modifies a group' do
+                group.name = 'RSpecTest-Updated'
+                group.users << @nested_user
+                expect(@client.update_groups(group).code).to eq '200'
+            end
+        end
+        describe '#get_groups' do
+            it 'retrieves a group' do
+                @query.clear
+                @query.add_option('name','RSpecTest-Updated')
+                @query.add_option('textMatching','exact')
+                @query.add_option('users','all')
+                group = @client.get_groups(@query).first
+                expect(group.is_a?(Groups)).to be true
+            end
+            it 'has the created user' do
+                expect(group.users.first.id).to eq @user.id
+            end
+        end
+        describe '#delete_groups' do
+            it 'deletes a group' do
+                @query.clear
+                @query.add_option('name','RSpecTest-Updated')
+                @query.add_option('textMatching','exact')
+                group = @client.get_groups(@query).first
+                expect(@client.delete_groups(group).empty?).to be true
+            end
+        end
+        after(:all) do # Clean up: delete created user
+            @client.delete_users(@user)
+        end
+    end
     # sleep 1
     # ######################
     # # Keyword Categories #

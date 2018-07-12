@@ -5,8 +5,11 @@ require_relative '../JsonBuilder'
 require_relative '../MyLogger'
 class Users
     include JsonBuilder
-    # @!parse attr_accessor :alive, :full_name, :id, :username, :groups, :password
-    attr_accessor :alive, :full_name, :id, :username, :groups, :password
+    # @!parse attr_accessor :email, :valid, :id, :username, :full_name, :expiry_date
+    attr_accessor :email, :valid, :id, :username, :full_name, :expiry_date
+
+    # @!parse attr_accessor :protected, :current_album_id, :alive, :password, :groups
+    attr_accessor :protected, :current_album_id, :alive, :password, :groups
 
     # Creates a Users object
     #
@@ -32,10 +35,15 @@ class Users
             json_obj = Validator::validate_argument(args.first,'Users')
         end
 
-        @alive = json_obj['alive']
-        @full_name = json_obj['full_name']
+        @email = json_obj['email']
+        @valid = json_obj['valid']
         @id = json_obj['id']
         @username = json_obj['username']
+        @full_name = json_obj['full_name']
+        @expiry_date = json_obj['expiry_date']
+        @protected = json_obj['protected']
+        @current_album_id = json_obj['current_album_id']
+        @alive = json_obj['alive']
         @password = json_obj['password'] # only used for POST and PUT
         @groups = []
 

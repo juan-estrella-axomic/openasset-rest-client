@@ -6,8 +6,8 @@ class Groups
 
     include JsonBuilder
 
-    # @!parse attr_accessor :alive, :id, :name
-    attr_accessor :alive, :id, :name, :users
+    # @!parse attr_accessor :hidden, :alive, :id, :name, :default_for_new_users, :expires, :expiry_date, :users
+    attr_accessor :hidden, :alive, :id, :name, :default_for_new_users, :expires, :expiry_date, :users
 
     # Creates a Groups object
     #
@@ -27,9 +27,13 @@ class Groups
             json_obj = Validator::validate_argument(args.first,'Groups')
         end
 
+        @hidden = json_obj['hidden']
         @alive = json_obj['alive']
         @id = json_obj['id']
         @name = json_obj['name']
+        @default_for_new_users = json_obj['default_for_new_users']
+        @expires = json_obj['expires']
+        @expiry_date = json_obj['expiry_date']
         @users = []
 
         if json_obj['users'].is_a?(Array) && !json_obj['users'].empty?
