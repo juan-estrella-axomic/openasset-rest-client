@@ -13,8 +13,6 @@ RSpec.describe RestClient do
         @suffix = Helpers.current_time_in_milliseconds()
     end
 
-    # #let(:@query) { RestOptions.new }
-
     # #################
     # # Access Levels #
     # #################
@@ -26,7 +24,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # ##########
     # # Albums #
     # ##########
@@ -66,7 +64,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # ####################
     # # Alternate Stores #
     # ####################
@@ -78,7 +76,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # ################
     # # Apect Ratios #
     # ################
@@ -90,7 +88,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # ##############
     # # Categories #
     # ##############
@@ -118,7 +116,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # #####################
     # # Copyright Holders #
     # #####################
@@ -138,7 +136,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # #####################
     # # Copyright Polices #
     # #####################
@@ -180,7 +178,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # #####################
     # # Data Integrations #
     # #####################
@@ -192,7 +190,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # ##########
     # # Fields #
     # ##########
@@ -231,7 +229,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # ########################
     # # Field Lookup Strings #
     # ########################
@@ -271,10 +269,10 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
-    #########
-    # Files #
-    #########
+    # sleep 1
+    # #########
+    # # Files #
+    # #########
     # context 'when dealing with files' do
     #     describe '#upload_files' do
     #         it 'uploads a file' do
@@ -333,19 +331,19 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # ##########
     # # Groups #
     # ##########
     # context 'when dealing with groups with nested resources' do
     #     before(:all) do # Prep: create nested user
-    #         user = Users.new('rspec@axomic.com','RSpec Test','pass')
+    #         user = Users.new('rspec@axomic.com','RTest','pass')
     #         @user = @client.create_users(user,true).first
     #         @nested_user = NestedUserItems.new(@user.id)
     #     end
     #     describe '#create_groups' do
     #         it 'creates a group' do
-    #             g = Groups.new('RSpecTest')
+    #             g = Groups.new('RTest')
     #             group = @client.create_groups(g,true).first
     #             expect(group.is_a?(Groups)).to be true
     #         end
@@ -353,7 +351,7 @@ RSpec.describe RestClient do
     #     describe '#update_groups' do
     #         it 'modifies a group' do
     #             @query.clear
-    #             @query.add_option('name','RSpecTest')
+    #             @query.add_option('name','RTest')
     #             group = @client.get_groups(@query,true).first
     #             group.name = 'RSpecTest-Updated'
     #             group.users << @nested_user
@@ -388,7 +386,7 @@ RSpec.describe RestClient do
     #         @client.delete_users(@user)
     #     end
     # end
-
+    # sleep 1
     # ######################
     # # Keyword Categories #
     # ######################
@@ -423,11 +421,11 @@ RSpec.describe RestClient do
     #             @query.add_option('name','RSpecTest-Updated')
     #             @query.add_option('textMatching','exact')
     #             keyword_category = @client.get_keyword_categories(@query).first
-    #             expect(@client.delete_keyword_categories(keyword_category).code).to eq '204'
+    #             expect(@client.delete_keyword_categories(keyword_category).empty?).to be true
     #         end
     #     end
     # end
-
+    # sleep 1
     # ############
     # # Keywords #
     # ############
@@ -464,11 +462,11 @@ RSpec.describe RestClient do
     #             @query.add_option('keyword_category_id','5')
     #             @query.add_option('textMatching','exact')
     #             keyword = @client.get_keywords(@query).first
-    #             expect(@client.delete_keywords(keyword).code).to eq '204'
+    #             expect(@client.delete_keywords(keyword).empty?).to be true
     #         end
     #     end
     # end
-
+    # sleep 1
     # #################
     # # Photographers #
     # #################
@@ -498,7 +496,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # ##############################
     # # Project Keyword Categories #
     # ##############################
@@ -536,7 +534,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # ####################
     # # Project Keywords #
     # ####################
@@ -576,9 +574,9 @@ RSpec.describe RestClient do
     #     end
     # end
 
-    ############
-    # Projects #
-    ############
+    # ############
+    # # Projects #
+    # ############
     # context 'when dealing with projects' do
     #     context 'with location' do
     #         before(:all) do
@@ -674,11 +672,11 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
-    ############
-    # Searches #
-    ############
-    # possible BUG in API ignores the required name field during POST
+    # sleep 1
+    # ############
+    # # Searches #
+    # ############
+    # # possible BUG in API ignores the required name field during POST
     # context 'when dealing with searches' do
     #     name = Helpers.generate_unique_name()
     #     id = 0
@@ -714,7 +712,7 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # #########
     # # Sizes #
     # #########
@@ -759,58 +757,58 @@ RSpec.describe RestClient do
     #         end
     #     end
     # end
-
+    # sleep 1
     # #################
     # # Text Rewrites #
     # #################
-    context 'when dealing with text rewrites' do
-        describe '#get_text_rewrites' do
-            it 'retrieves a text rewrite' do
-                expect(@client.get_text_rewrites.first.is_a?(TextRewrites)).to be true
-            end
-        end
-    end
-
-    # #########
-    # # Users #
-    # #########
-    context 'when dealing with users' do
-        context 'with nested groups' do
-            user = nil
-            admin_group_id = 1
-            describe '#create_users' do
-                it 'creates a user' do
-                    password = Helpers.generate_random_string()
-                    data = {
-                        'username'  => 'jdoe@axomic.com',
-                        'full_name' => 'John Doe',
-                        'password'  => password
-                    }
-                    user = @client.create_users(data,true).first
-                    expect(user.is_a?(Users)).to be true
-                end
-            end
-            describe '#update_users' do
-                it 'modifies a user' do
-                    user.full_name = 'Jane Doe'
-                    user.groups << NestedGroupItems.new(admin_group_id)
-                    expect(@client.update_users(user).code).to eq '200'
-                end
-            end
-            describe '#get_users' do
-                it 'retrieves a user' do
-                    object = @client.get_users.first
-                    expect(user.is_a?(Users)).to be true
-                end
-                it 'is assigned to a group' do
-                    expect(user.groups.first.id).to eq admin_group_id
-                end
-            end
-            describe '#delete_users' do
-                it 'deletes a user' do
-                    expect(@client.delete_users(user).empty?).to be true
-                end
-            end
-        end
-    end
+    # context 'when dealing with text rewrites' do
+    #     describe '#get_text_rewrites' do
+    #         it 'retrieves a text rewrite' do
+    #             expect(@client.get_text_rewrites.first.is_a?(TextRewrites)).to be true
+    #         end
+    #     end
+    # end
+    # sleep 1
+    # # #########
+    # # # Users #
+    # # #########
+    # context 'when dealing with users' do
+    #     context 'with nested groups' do
+    #         user = nil
+    #         admin_group_id = 1
+    #         describe '#create_users' do
+    #             it 'creates a user' do
+    #                 password = Helpers.generate_random_string()
+    #                 data = {
+    #                     'username'  => 'jdoe@axomic.com',
+    #                     'full_name' => 'John Doe',
+    #                     'password'  => password
+    #                 }
+    #                 user = @client.create_users(data,true).first
+    #                 expect(user.is_a?(Users)).to be true
+    #             end
+    #         end
+    #         describe '#update_users' do
+    #             it 'modifies a user' do
+    #                 user.full_name = 'Jane Doe'
+    #                 user.groups << NestedGroupItems.new(admin_group_id)
+    #                 expect(@client.update_users(user).code).to eq '200'
+    #             end
+    #         end
+    #         describe '#get_users' do
+    #             it 'retrieves a user' do
+    #                 object = @client.get_users.first
+    #                 expect(user.is_a?(Users)).to be true
+    #             end
+    #             it 'is assigned to a group' do
+    #                 expect(user.groups.first.id).to eq admin_group_id
+    #             end
+    #         end
+    #         describe '#delete_users' do
+    #             it 'deletes a user' do
+    #                 expect(@client.delete_users(user).empty?).to be true
+    #             end
+    #         end
+    #     end
+    # end
 end
