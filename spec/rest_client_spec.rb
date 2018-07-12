@@ -774,53 +774,43 @@ RSpec.describe RestClient do
     # #########
     # # Users #
     # #########
-    # context 'when dealing with users' do
-    #     context 'with nested groups' do
-    #         before(:all) do
-    #             @suffix = Helpers.current_time_in_milliseconds()
-    #             @name   = "RSpecTest_#{@suffix}"
-    #             @group  = Groups.new(name)
-    #             @group  = @client.create_groups(@group,true).first
-    #             data = {
-    #                 :username  => 'jdoe@axomic.com',
-    #                 :full_name => 'John Doe',
-    #                 :password  => 'pass'
-    #             }
-    #             @user = Users.new(data)
-    #         end
-    #         describe '#create_users' do
-    #             it 'creates a user' do
-    #                 @user = @client.create_users(@user,true).first
-    #                 expect(@user.is_a?(Users)).to be true
-    #             end
-    #         end
-    #         describe '#update_users' do
-    #             it 'modifies a user' do
-    #                 @user.full_name = 'Jane Doe'
-    #                 @user.groups << NestedGroupItems.new(@group.id)
-    #                 expect(@client.update_users(@user).code).to eq '200'
-    #             end
-    #         end
-    #         describe '#get_users' do
-    #             it 'retrieves a user' do
-    #                 @query.clear
-    #                 @query.add_option('id',@user.id)
-    #                 @query.add_option('groups','all')
-    #                 @user = @client.get_users(@query).first
-    #                 expect(@user.is_a?(Users)).to be true
-    #             end
-    #             it 'is assigned to a group' do
-    #                 expect(@user.groups.first.id).to eq @group.id
-    #             end
-    #         end
-    #         describe '#delete_users' do
-    #             it 'deletes a user' do
-    #                 expect(@client.delete_users(@user).code).to eq '204'
-    #             end
-    #         end
-    #         after(:all) do
-    #             @client.delete_groups(@group)
-    #         end
-    #     end
-    # end
+    context 'when dealing with users' do
+        context 'with nested groups' do
+            user = nil
+            admin_group_id = 1
+            describe '#create_users' do
+                it 'creates a user' do
+                    password = Helpers.generate_random_string()
+                    data = {
+                        'username'  => 'jdoe@axomic.com',
+                        'full_name' => 'John Doe',
+                        'password'  => password
+                    }
+                    user = @client.create_users(data,true).first
+                    expect(user.is_a?(Users)).to be true
+                end
+            end
+            describe '#update_users' do
+                it 'modifies a user' do
+                    user.full_name = 'Jane Doe'
+                    user.groups << NestedGroupItems.new(admin_group_id)
+                    expect(@client.update_users(user).code).to eq '200'
+                end
+            end
+            describe '#get_users' do
+                it 'retrieves a user' do
+                    object = @client.get_users.first
+                    expect(user.is_a?(Users)).to be true
+                end
+                it 'is assigned to a group' do
+                    expect(user.groups.first.id).to eq admin_group_id
+                end
+            end
+            describe '#delete_users' do
+                it 'deletes a user' do
+                    expect(@client.delete_users(user).empty?).to be true
+                end
+            end
+        end
+    end
 end
