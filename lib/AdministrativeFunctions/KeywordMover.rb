@@ -3,7 +3,7 @@ require_relative 'Constants'
 module KeywordMover
 
     include Constants
- 
+
 	# @!visibility private
 	def move_keywords_to_fields(objects,keywords,field,field_separator,mode)
         objects_to_update = []
@@ -19,7 +19,7 @@ module KeywordMover
         object_name = (objects.first.is_a?(Projects) ? '@name' : '@filename')
 
         # Check the source_field field type
-        built_in = (field.built_in == '1') ? true : false
+        built_in = (field.built_in.to_s == '1') ? true : false
 
         # Retrieve existing field lookup strings if the field is a restricted field type
         if RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type) || ['photographer_id','copyright_holder_id'].include?(field.rest_code)
@@ -33,28 +33,30 @@ module KeywordMover
                 existing_field_lookup_strings = get_field_lookup_strings(field,op)
             end
         end
-        
+
         objects.each do |object|
 
             next if object.instance_variable_get("#{keyword_accessor}").empty?
-            
+
             if object.is_a?(Files)
                 object.original_filename = nil
             end
 
             nested_kwd_ids = object.instance_variable_get("#{keyword_accessor}").map { |kwd| kwd.id.to_s }
-    
+
             # Retrieve the actual keyword objects associated with the nested ids
             keyword_data = keywords.find_all { |k_obj| nested_kwd_ids.include?(k_obj.id.to_s) }
             keyword_data.sort_by! { |k| k.name.downcase }
-    
+
             field_string = keyword_data.map(&:name).join(field_separator)
 
             next if field_string.empty?
             msg = ''
+
             if built_in
                 data = ''
                 field_name = field.name.downcase.gsub(' ','_')
+                p field_name
 
                 if mode == 'append'
                     data = object.instance_variable_get("@#{field_name}").to_s.strip
@@ -64,7 +66,7 @@ module KeywordMover
                 end
 
                 if IMAGE_BUILT_IN_FIELD_CODES.include?(field.code.downcase) ||
-                    IMAGE_BUILT_IN_FIELD_NAMES.include?(field.name.downcase)    # This handles copyright holder and photographer fields
+                    IMAGE_BUILT_IN_FIELD_NAMES.include?(field.name.downcase)  #||  # This handles copyright holder and photographer fields
                     #PROJECT_BUILT_IN_FIELD_NAMES.include?(field.name.downcase)
 
                     names = keyword_data.map(&:name).reverse # So top keyword in UI shows in field
@@ -74,12 +76,12 @@ module KeywordMover
                     op = RestOptions.new
 
                     names.each do |value|
-                
+
                         current_value = value.to_s.strip
                         if rest_code == 'copyright_holder_id'
                             # Create Copyright holder if needed
                             copyright_holder = existing_copyright_holders.find { |cp| cp.name == current_value }
-                         
+
                             unless copyright_holder
                                 obj = CopyrightHolders.new(current_value)
                                 copyright_holder = create_copyright_holders(obj,true).first
@@ -89,7 +91,7 @@ module KeywordMover
                                 end
                                 existing_copyright_holders << copyright_holder
                             end
-                            object.copyright_holder_id = copyright_holder.id       
+                            object.copyright_holder_id = copyright_holder.id
                         elsif rest_code == 'photographer_id'
                             # Create Photographer if needed
                             photographer = existing_photographers.find { |ph| ph.name == current_value }
@@ -112,8 +114,8 @@ module KeywordMover
                       " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
             else # Custom field
                 # Check if there's already a value in the field
-                index = object.fields.find_index { |f_obj| f_obj.id.to_s == field.id.to_s }        
-        
+                index = object.fields.find_index { |f_obj| f_obj.id.to_s == field.id.to_s }
+
                 if index # There's data in the field
                     if mode == 'append'
                         if NORMAL_FIELD_TYPES.include?(field.field_display_type)
@@ -123,17 +125,17 @@ module KeywordMover
                             object.fields[index].values = [existing + new_data]
                             msg = "Appending #{field_string.inspect} into #{field.name.inspect} field" +
                                   " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
-                                   
+
                         elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
-        
+
                             existing_field_lookup_strings = create_missing_field_lookup_strings(keyword_data,existing_field_lookup_strings)
                             value = keyword_data.first.name
                             msg = "Inserting #{value.inspect} into #{field.name.inspect} field" +
                                   " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
                             # Assign the value to the field
                             object.fields[index].values = [value]   unless keyword_data.empty?
-                        
-                        else      
+
+                        else
                             msg = "#{object_type} keyword move operation not allowed to field display type " +
                                   "#{field.field_display_type.inspect}."
                             logger.error(msg)
@@ -141,11 +143,11 @@ module KeywordMover
                         end
                     elsif  mode == 'overwrite'
                         if NORMAL_FIELD_TYPES.include?(field.field_display_type)
-        
+
                             object.fields[index].values = [field_string]
                             msg = "Inserting #{field_string.inspect} into #{field.name.inspect} field" +
                                   " for #{object_type} => #{object.instance_variable_get("#{object_name}").to_s.inspect}."
-                        
+
                         elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
 
                             existing_field_lookup_strings = create_missing_field_lookup_strings(keyword_data,existing_field_lookup_strings)
@@ -154,32 +156,32 @@ module KeywordMover
                                   " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
                             # Assign the value to the field
                             object.fields[index].values = [value]   unless keyword_data.empty?
-                        
+
                         else
                             msg = "#{object_type} keyword move operation not allowed to field display type " +
                                   "#{field.field_display_type.inspect}."
                             logger.error(msg)
                             abort
-                        end 
+                        end
                     end
                 else # No data in the field
                     if NORMAL_FIELD_TYPES.include?(field.field_display_type)
-        
+
                         object.fields << NestedFieldItems.new(field.id.to_s, [field_string])
                         msg = "Inserting #{field_string.inspect} into #{field.name.inspect} field" +
                               " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
-        
+
                     elsif RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type)
-                        
+
                         existing_field_lookup_strings = create_missing_field_lookup_strings(keyword_data,existing_field_lookup_strings)
                         value = keyword_data.first.name
                         msg = "Inserting #{value.inspect} into #{field.name.inspect} field" +
                                 " for #{object_type} => #{object.instance_variable_get("#{object_name}").inspect}."
                         # Insert the value to the field if there is one
                         object.fields << NestedFieldItems.new(field.id,[value]) unless keyword_data.empty?
-                        
+
                     else
-        
+
                         msg = "#{object_type} keyword move operation not allowed to field display type " +
                               "#{field.field_display_type.inspect}."
                         logger.error(msg)
@@ -187,24 +189,24 @@ module KeywordMover
 
                     end
                 end
-        
+
             end
             logger.info(msg)
             objects_to_update << object
-        end   
+        end
         objects_to_update
     end
 
     def create_missing_field_lookup_strings(keyword_data,existing)
         collection = existing
         keyword_data.each do |fk|
-            fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }            
+            fls_found = existing_field_lookup_strings.find { |fls| fls.value.downcase == fk.name.downcase }
             # Create the field lookup string if not found and add to existing
             unless fls_found
                 data = {:value => fk.name}
                 fls_found = create_field_lookup_strings(field,data,true).first
                 collection.push(fls_found)
-            end     
+            end
         end
         collection
     end
@@ -228,7 +230,7 @@ module KeywordMover
         # Perform file update
         msg = "Batch #{num} of #{iterations} => Attempting to perform file updates."
         logger.info(msg.white)
-        
+
         run_smart_update(processed_files,updated_count)
     end
 end
