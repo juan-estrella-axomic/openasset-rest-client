@@ -19,7 +19,7 @@ module KeywordMover
         object_name = (objects.first.is_a?(Projects) ? '@name' : '@filename')
 
         # Check the source_field field type
-        built_in = (field.built_in.to_s == '1') ? true : false
+        built_in = (field.built_in.to_i == 1) ? true : false
 
         # Retrieve existing field lookup strings if the field is a restricted field type
         if RESTRICTED_LIST_FIELD_TYPES.include?(field.field_display_type) || ['photographer_id','copyright_holder_id'].include?(field.rest_code)
