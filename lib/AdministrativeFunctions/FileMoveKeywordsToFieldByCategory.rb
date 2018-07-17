@@ -56,8 +56,8 @@ module FileMoveKeywordsToFieldByCategory
 
                 break if answer == 'yes' || answer == 'y'
 
-            end          
-        
+            end
+
         end
 
         unless ['append','overwrite'].include?(insert_mode.to_s)
@@ -87,7 +87,7 @@ module FileMoveKeywordsToFieldByCategory
         end
 
         op.clear
-        
+
         # Get file ids
         msg = "Retrieving file ids in category => #{category_found.name.inspect}."
         logger.info(msg.green)
@@ -119,10 +119,12 @@ module FileMoveKeywordsToFieldByCategory
 
         file_ids.each_slice(batch_size).with_index(1) do |subset,num|
 
-            move_keywords_to_fields_and_update_oa(subset,keywords,target_field_found,field_separator,insert_mode,num,iterations,op,total_files_updated)
+            move_keywords_to_fields_and_update_oa(subset,
+                keywords,target_field_found,field_separator,
+                insert_mode,num,iterations,op,total_files_updated)
             total_files_updated += subset.length
 
         end
-        logger.info('Done.')    
+        logger.info('Done.')
     end
 end

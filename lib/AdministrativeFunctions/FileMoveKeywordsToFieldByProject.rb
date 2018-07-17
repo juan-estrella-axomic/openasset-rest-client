@@ -19,7 +19,7 @@ module FileMoveKeywordsToFieldByProject
                                                   batch_size,
                                                   true)
 
-        file_keyword_categories_found = 
+        file_keyword_categories_found =
             (args.target_keyword_category.is_a?(Array)) ? args.target_keyword_category : [args.target_keyword_category]
         project_found                 = args.container
         target_field_found            = args.source_field
@@ -57,8 +57,8 @@ module FileMoveKeywordsToFieldByProject
 
                 break if answer == 'yes' || answer == 'y'
 
-            end          
-        
+            end
+
         end
 
         unless ['append','overwrite'].include?(insert_mode.to_s)
@@ -83,16 +83,16 @@ module FileMoveKeywordsToFieldByProject
 
         if keywords.empty?
             msg = "No keywords found in keyword category => #{file_keyword_categories_found.first.name.inspect}."
-            logger.error(msg)            
+            logger.error(msg)
             abort
         end
 
         op.clear
-        
+
         # Get file ids
         msg = "Retrieving file ids in project => #{project_found.name.inspect}."
         logger.info(msg.green)
-        
+
         op.add_option('limit','0')
         op.add_option('displayFields','id')
         op.add_option('project_id',"#{project_found.id}") # Returns files in specified project
@@ -121,10 +121,12 @@ module FileMoveKeywordsToFieldByProject
 
         file_ids.each_slice(batch_size).with_index(1) do |subset,num|
 
-            move_keywords_to_fields_and_update_oa(subset,keywords,target_field_found,field_separator,insert_mode,num,iterations,op,total_files_updated)
+            move_keywords_to_fields_and_update_oa(subset,
+                keywords,target_field_found,field_separator,
+                insert_mode,num,iterations,op,total_files_updated)
             total_files_updated += subset.length
 
         end
-        logger.info('Done.')      
+        logger.info('Done.')
     end
 end

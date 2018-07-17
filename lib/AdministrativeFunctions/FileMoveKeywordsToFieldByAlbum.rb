@@ -22,8 +22,8 @@ module FileMoveKeywordsToFieldByAlbum
                                                    true)
 
         return if args.nil?
-        
-        file_keyword_categories_found = 
+
+        file_keyword_categories_found =
             (args.target_keyword_category.is_a?(Array)) ? args.target_keyword_category : [args.target_keyword_category]
 
         target_field_found            = args.source_field
@@ -39,7 +39,7 @@ module FileMoveKeywordsToFieldByAlbum
         total_files_updated           = 0  # For better readability
         offset                        = 0
         iterations                    = 0
-        limit                         = batch_size.to_i.abs 
+        limit                         = batch_size.to_i.abs
         op                            = RestOptions.new
 
         # Validate insert mode and warn user of restricted field type
@@ -63,8 +63,8 @@ module FileMoveKeywordsToFieldByAlbum
 
                 break if answer == 'yes' || answer == 'y'
 
-            end          
-        
+            end
+
         end
 
         unless ['append','overwrite'].include?(insert_mode.to_s)
@@ -73,11 +73,11 @@ module FileMoveKeywordsToFieldByAlbum
             logger.error(msg)
             abort
         end
-        
+
         # Get keywords
         msg = "Retrieving keywords for keyword category => #{file_keyword_categories_found.first.name.inspect}."
         logger.info(msg.green)
-        
+
         file_keyword_category_ids = file_keyword_categories_found.map(&:id)
 
         op.add_option('limit','0')
@@ -119,10 +119,12 @@ module FileMoveKeywordsToFieldByAlbum
 
         file_ids.each_slice(batch_size).with_index(1) do |subset,num|
 
-            move_keywords_to_fields_and_update_oa(subset,keywords,target_field_found,field_separator,insert_mode,num,iterations,op,total_files_updated)
+            move_keywords_to_fields_and_update_oa(subset,
+                keywords,target_field_found,field_separator,
+                insert_mode,num,iterations,op,total_files_updated)
             total_files_updated += subset.length
 
         end
-        logger.info('Done.')   
+        logger.info('Done.')
     end
 end
