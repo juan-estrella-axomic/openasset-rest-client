@@ -51,6 +51,7 @@ class Projects < Generic
         @name = json_obj['name']
         @name_alias_1 = json_obj['name_alias_1']
         @name_alias_2 = json_obj['name_alias_2']
+        @data_integration_id = json_obj['data_integration_id']
         @location = nil
         @project_keywords = []
         @fields = []

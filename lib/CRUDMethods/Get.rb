@@ -22,6 +22,7 @@ module Get
                 options.add_option('albums','all')
                 options.add_option('withLocation','1')
                 options.add_option('withHeroImage','1')
+                options.add_option('remoteFields','data_integration_id')
             when 'Fields'
                 options.add_option('fieldLookupStrings','all')
             when 'Searches'
