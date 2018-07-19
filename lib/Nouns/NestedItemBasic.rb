@@ -24,7 +24,7 @@ class NestedItemBasic
         end
 
         # Always set the id attribute
-        @id = json_obj['id']
+        @id = json_obj['id'].to_i
 
         # Create and set second attributes if needed
         second_variable_name = nil

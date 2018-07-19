@@ -43,7 +43,6 @@ class Authenticator
         @url = Validator.validate_and_process_url(url)
         @username = un.to_s
         @password = SecureString.new(pw.to_s)
-        @password.encrypt
         @uri = @url + @@API_CONST + @@VERSION_CONST
         @token_endpoint = @url + @@API_CONST + @@VERSION_CONST + @@SERVICE_CONST
         @token = {:id => nil, :value => nil}
@@ -64,23 +63,27 @@ class Authenticator
     end
 
     def get_credentials(attempts=0,token_validation_failed=false)
-
+        #puts "In get credentials"
         if attempts.eql?(3)
             logger.error("Too many failed login attempts.")
             abort
         end
 
-        # Use previously enterd credentials in the event of http redirect
+        # Use previously entered credentials in the event of http redirect
         u = @username
         p = @password
 
-        while u == '' || p == '' || token_validation_failed
+        if token_validation_failed
+            puts "TOKEN VALIDATION ERROR: Please log in again to recover.\n"
+            token_validation_failed = false
+        end
+
+        while u == '' || p == ''
+
             if u.empty?
                 puts "REMINDER: Some actions require administrative rights."
-            elsif token_validation_failed
-                puts "TOKEN VALIDATION ERROR: Please log in again to recover."
-                token_validation_failed = false
             end
+
             if u.empty?
                 print "Enter username: "
                 u=gets.strip.chomp
@@ -113,7 +116,7 @@ class Authenticator
     end
 
     def create_token(attempts=0,token_validation_failed=false) #Runs FIRST
-
+        #puts "In create token"
         get_credentials(attempts,token_validation_failed)
         uri = URI.parse(@token_endpoint)
         token_creation_data = '{"name" : "rest-client-ruby"}'
@@ -132,7 +135,7 @@ class Authenticator
                 attempts += 1
                 retry
             end
-            logger.error("Connection failed. The server is not responding. - #{e}")
+            logger.error("Connection failed. The server is not responding. <create_token> - #{e}")
             exit(-1)
         end
 
@@ -223,6 +226,7 @@ class Authenticator
     end
 
     def validate_token #for code readability
+        #puts "validate token"
         token_valid?
     end
 
@@ -300,6 +304,7 @@ class Authenticator
     end
 
     def setup_authentication
+        #puts "In setup authentication"
         if is_axomic_user?
             get_axomic_session()
         else
@@ -319,6 +324,7 @@ class Authenticator
     end
 
     def session_valid?
+        #puts "In session valid?"
         uri = URI.parse(@uri + '/Headers')
         begin
             attempts ||= 1
@@ -333,7 +339,7 @@ class Authenticator
                 attempts += 1
                 retry
             end
-            logger.error("Connection failed. The server is not responding. - #{e}")
+            logger.error("Connection failed. The server is not responding <session_valid?>. - #{e}")
             exit(-1)
         end
         #puts "In session_valid? - after req"
@@ -349,6 +355,7 @@ class Authenticator
     end
 
     def store_session_data(session,token,token_id)
+        #puts "In store session data"
 
         enc_session_key = Security::encrypt(session)
         enc_token       = Security::encrypt(token)
@@ -424,6 +431,7 @@ class Authenticator
     end
 
     def get_session
+        #puts "In get session"
         if is_axomic_user?
             get_credentials() if @password.empty?
             setup_authentication()
@@ -437,9 +445,12 @@ class Authenticator
                 setup_authentication()
             end
         elsif  @session_key.nil?         #check for uninitialized session -> @session = nil
+            #puts "session key nil"
             setup_authentication()
         elsif !session_valid?             #check for expired session
+            #puts "session key invalid"
             if !token_valid?
+                puts "token invalid"
                 create_token(0,true)     # seeds the number of login attempts for get_credentials() "0" and sets the failed token validation flag
                 validate_token()
             end

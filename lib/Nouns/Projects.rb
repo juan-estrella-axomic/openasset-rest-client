@@ -53,7 +53,7 @@ class Projects < Generic
         @name_alias_2 = json_obj['name_alias_2']
         @data_integration_id = json_obj['data_integration_id']
         @location = nil
-        @project_keywords = []
+        @projectKeywords = []
         @fields = []
         @albums = []
 
@@ -62,7 +62,7 @@ class Projects < Generic
         end
 
         if json_obj['projectKeywords'].is_a?(Array) && !json_obj['projectKeywords'].empty?
-            @project_keywords = json_obj['projectKeywords'].map do |item|
+            @projectKeywords = json_obj['projectKeywords'].map do |item|
                 NestedProjectKeywordItems.new(item['id'])
             end
         end
