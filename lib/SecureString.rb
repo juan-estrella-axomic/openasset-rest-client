@@ -9,8 +9,7 @@ class SecureString
         @decipher
         @key
         @iv
-        @encrypt = true
-
+        @encrypted = true
         @value = str.to_s
     end
 
