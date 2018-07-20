@@ -101,6 +101,7 @@ class Files < Generic
         @md5_now = json_obj['md5_now']
         @original_filename = json_obj['original_filename']
         @photographer_id = json_obj['photographer_id']
+        @deleted = json_obj['deleted']
         @processing_failures = json_obj['processing_failures']
         @project_id = json_obj['project_id']
         @rank = json_obj['rank']
