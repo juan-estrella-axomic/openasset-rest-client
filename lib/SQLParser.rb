@@ -1,4 +1,12 @@
 module SQLParser
+
+	# ORDER IS IMPORTANT: putting '=' first will break
+	# string_regex and numeric_regex parsing of '!=' operator
+	VALID_COMPARISON_OPERATORS = [ '!=', '<', '>', '=', 'like', 'in' ]
+	
+	def self.operator_valid?(operatore)
+		VALID_COMPARISON_OPERATORS.include?(operator) ? true : false
+	end
 	
 	def self.parse_query(original_query)
 
@@ -20,12 +28,8 @@ module SQLParser
 		query.gsub!(/\s*where\s*/,'')
 		query.gsub!('<>','!=')
 
-		# ORDER IS IMPORTANT: putting '=' first will break
-		# string_regex and numeric_regex parsing of '!=' operator
-		comp_operators = [ '!=', '<', '>', '=', 'like' ]
-
 		# Trim spaces between operators and operands
-		comp_operators.each do |op|
+		VALID_COMPARISON_OPERATORS.each do |op|
 			regex = Regexp.new("\\s+#{op}\\s+")
 			query.gsub!(regex,op)
 		end
@@ -46,7 +50,7 @@ module SQLParser
 		query_expressions = query_copy.split(/\s+/)
 		query_expressions.each.with_index do |exp,i|
 			operator_found = false
-			comp_operators.each do |op|
+			VALID_COMPARISON_OPERATORS.each do |op|
 				operator_found = true if exp.include?(op)
 			end
 			unless operator_found
@@ -64,7 +68,7 @@ module SQLParser
 				next
 			end
 
-			comp_operators.each do |op|
+			VALID_COMPARISON_OPERATORS.each do |op|
 				if next_value.include?(op)
 					method_name = nil
 					value = nil
@@ -91,23 +95,26 @@ module SQLParser
 								q = original_query
 								q.insert(index," <= RIGHT HERE ***")
 								msg = "Syntax Error: Mismatched quotes in query: #{q}"
+								abort(msg)
 							end
 						end
 
 						# Check for 'like' clause in value
 						like_clause_regex = %r{(\w+)((?:like))(\"|\')(%?)(.*)(%?)(\"|\')}
+						in_clause_regex = %r{(\w+)((?:in))(\()(.*)(\))}
 						if like_clause_regex.match(next_value)
 							match = like_clause_regex.match(next_value)
 							method_name = match[1]
 							value = match[5]
-							regex_str = match[4].empty? ? value : "(.*)(#{value})"
-							regex_str += match[6].empty? ? '' : '(.*)'
-							#regex_lookup = { 'regex' => regex_str }
-
-							# Empty out value since we are building a regex check
-							# End result should look like this => [ 'name', { regex => "(.*)(#{value})(.*)" }, '' ]
-							op = "/#{regex_str}/"
-							
+							regex_str = match[4].empty? ? "^#{value}" : "(.*)(#{value})"
+							regex_str += match[6].empty? ? '$' : '(.*)'
+							op = { 'regex' => "/#{regex_str}/" }
+						elsif in_clause_regex.match(next_value)
+							# Extract data in query 'where id in (1,2,3)' => method_name = id | value = "1,2,3"
+							match = like_clause_regex.match(next_value)
+							method_name = match[1]
+							value = match[4]
+							op = 'in'
 						end
 					elsif numeric_regex.match(next_value) # Operand is a numeric value
 						match = numeric_regex.match(next_value)
@@ -125,6 +132,9 @@ module SQLParser
 							   ORIGINAL QUERY => #{query}")
 					end 
 
+					# Validate operator
+					abort("Syntax Error: Invalid operator => #{op}") unless operator_valid?(op)
+					
 					# Replace SQL style operator with valid comparison operator 
 					op = op.eql?("=") ? "==" : op
 

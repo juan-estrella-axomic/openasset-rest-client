@@ -19,35 +19,47 @@ module FileFinder
 			end
 		end
 		result = nil
-		case operator
-		when "!="
+		
+		if operator.eql?("!=")
 			result = operand1 != operand2 ? true : false
-		when "<"
+		elsif operator.eql?("<")
 			result = operand1 < operand2 ? true : false
-		when ">"
+		elsif operator.eql?(">")
 			result = operand1 > operand2 ? true : false
-		when "=="
+		elsif operator.eql?("==")
 			result = operand1 == operand2 ? true : false
+		elsif operator.eql?("in")
+			operand2 = operand2.split(',').map(&:to_s)
+			result = operand2.include?(operand1) ? true : false
+		elsif operator.is_a?(Regexp)
+			result = operator.match(operand1) ? true : false
 		else 
-			result = operator
+			abort('Unknown error in evaluator.')
 		end
 		result
 	end
 
 	def self.find_files(expressions,files=[])
 		matches = []
+		boolean_operator_lookup = {
+			'and' => '&&',
+			'or'  => '||'
+		}
 		files.each do |file|
 			completed_expression = []
 
 			expressions.each do |exp|
 
 				if exp == 'and' || exp == 'or'
-					completed_expression << exp
+					completed_expression << boolean_operator_lookup[exp]
 					next
 				end
 
 				# Capture method to be called on files object
 				method_name = exp[0]
+
+				# Validate method name
+				abort("Invalid operand #{method_name}") unless file.respond_to?(method_name.to_sym)
 
 				# Self explanatory
 				comparison_operator = exp[1]
@@ -56,7 +68,7 @@ module FileFinder
 				value = exp[2]
 
 				# Capture method call return value
-				file_attr_data = method_name.gsub('(','')#file.send(method_name.gsub('(',''))
+				file_attr_data = file.send(method_name.gsub('(',''))
 
 				# Capture any preceding parentheses: Later used to retain order of operations 
 				preceding_parenthesis = /\(+/.match(method_name) #method_name[0] == '(' ? '(' : ''
@@ -77,19 +89,20 @@ module FileFinder
 				end
 
 				# Extract regex str and evaluate against file data
-				result = comparison_operator
 				if comparison_operator.is_a?(Hash)
 					regex_str = comparison_operator['regex']
-					value = file.send(method_name.to_sym)
-					result = /#{regex_str}/.match("#{value}")
-					result = result.nil? ? false : true
-					comparison_operator = result
-					method_name = ''
-					value = ''
+					comparison_operator = Regexp.new(regex_str)
+					file_attr_data = file.send(method_name.to_sym).to_s	
+					value = value.to_s
+				end
+
+				if comparison_operator == 'in'
+					file_attr_data = file.send(method_name.to_sym).to_s
+					value = value.to_s
 				end
 
 				# Evaluate expression
-				result = evaluate(file_attr_data,result,value)
+				result = evaluate(file_attr_data,comparison_operator,value)
 	
 				# Format expression and insert
 				#s = "#{preceding_parenthesis}#{file_attr_data} #{comparison_operator} #{value}#{trailing_parenthesis}"
@@ -99,11 +112,13 @@ module FileFinder
 				completed_expression << exp_str
 			end
 
-			# Convert independent expressions to one string => e.g "(true and false) or true"
+			# Convert independent expressions to one string => e.g "(true && false) || true"
 			completed_expression = completed_expression.join(' ')
 
 			# Grab file if it meets search criteria
-			result = eval(completed_expression) # (true and false) or true => true
+			# SECURITY: This is what a completed_expression 
+			# BEFORE being passed to eval would look like: "(true && false) || true" => true
+			result = eval(completed_expression) 
 			matches << file if result == true
         end
         matches
