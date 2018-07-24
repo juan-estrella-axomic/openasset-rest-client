@@ -12,17 +12,17 @@ require_relative 'Nouns/Files'
 require_relative 'MyLogger'
 
 module CSVHelper
-    
+
     # Generate csv reports from Noun collections. Call on an array of Files Objects, Strings or Array of Strings
     #
     # @param client [String, Integer] Name of the csv being generated
     # @return [Boolean] Returns false on error.
-    # 
+    #
     # @example
     #       projects = rest_client.get_projects()
     #       projects.export_to_csv('SE1')
     #       -- ONE LINER --
-    #       rest_client.get_projects().export_to_csv('SE1') 
+    #       rest_client.get_projects().export_to_csv('SE1')
     def export_to_csv(client=nil)
         name = client.to_s || 'Client_Name'
         object_variables = nil
@@ -34,7 +34,7 @@ module CSVHelper
             Logging::logger.warn(msg.yellow)
             return
         end
-       
+
         #processs the objects to extract the headers and rows for csv report
         #get the instance variables of the first object we will use it to
         #build the headers of the csv file and to retieve the values of the object
@@ -55,22 +55,22 @@ module CSVHelper
 
                 #Create csv header and filter out nested resources
                 csv_header = object_variables.map do |obj_var|
-                    unless object.instance_variable_get(obj_var).is_a?(Array)                  
+                    unless object.instance_variable_get(obj_var).is_a?(Array)
                          obj_var.to_s.gsub('@','').upcase.encode!("UTF-8", invalid: :replace, undef: :replace)
                     end
-                end 
-                
-                csv_header.reject! { |v| v.to_s.empty? }.sort!
+                end
+
+                csv_header = csv_header.reject { |v| v.to_s.empty? }.sort
                 csv << csv_header
 
                 #loop through each of the NOUN objects
                 self.each do |noun_obj|
                     abort("noun_obj is nil") unless noun_obj
                     csv_values = Array.new
-                    
+
                     #loop through the object variables
                     csv_header.each do |variable_name|
-                        
+
                         #build the line to be inserted into csv file by
                         if variable_name
                             data = noun_obj.instance_variable_get('@' + variable_name.downcase)
@@ -79,7 +79,7 @@ module CSVHelper
                                 csv_values << data.to_s.encode!("UTF-8", invalid: :replace, undef: :replace)
                             end
                         end
-                        
+
                     end
 
                     #write values to the spreadsheet
@@ -99,7 +99,7 @@ module CSVHelper
                     csv << arr
                 end
             else
-                msg = "Oops. Items in the collection are #{self.first.class.to_s} " + 
+                msg = "Oops. Items in the collection are #{self.first.class.to_s} " +
                       "instead of NOUN objects or Strings."
                 Logging::logger.error(msg.red)
                 return
@@ -115,7 +115,7 @@ module DownloadHelper
     #                               Accepts image size id or postfix string value like 'medium' for example
     # @param download_location [String] Folder where files will be downloaded to.
     # @return [Boolean] Returns false on error.
-    # 
+    #
     # @example
     #       files_obj_array = rest_client.get_files()
     #       files_obj_array.download('medium','se1_downloads')
@@ -124,9 +124,9 @@ module DownloadHelper
     #       -- ONE LINER --
     #       rest_client.get_files().download('medium','se1_downloads')
     #       rest_client.get_files().download('medium','se1_downloads','http')
-    #       rest_client.get_files().download({:size => 'medium', :location => 'se1_downloads', :uri_scheme => 'http'}) 
+    #       rest_client.get_files().download({:size => 'medium', :location => 'se1_downloads', :uri_scheme => 'http'})
     def download(*args)
-        
+
         size = nil
         download_location = nil
         uri_scheme = nil
@@ -161,7 +161,7 @@ module DownloadHelper
             msg = "Oops. The collection is empty. There are no Files to download."
             Logging::logger.warn(msg.yellow)
             return false
-        end 
+        end
 
         unless self.first.is_a?(Files) || self.first.is_a?(String)
             msg = "Error: 'download' method requires that the array only contains " +
@@ -169,7 +169,7 @@ module DownloadHelper
             Logging::logger.error(msg.red)
             return false
         end
-        
+
         uri_with_protocol = Regexp::new('^(https:\/\/|http:\/\/)\w+.+\w+.\w+.com$', true)
 
         #loop through objects in the Array
@@ -179,25 +179,25 @@ module DownloadHelper
                 next unless file_path # Skip file if the size hasn't been created
                 url = ''
                 if (uri_with_protocol =~ uri_scheme) == 0 # Specify full url in options object for On-Premise client
-                    url = uri_scheme + file_path 
+                    url = uri_scheme + file_path
                 else                                      # Cloud
                     url = uri_scheme + "://" + file_path
                 end
-                url.gsub!(/(?<!:)\/\//,'/') # changes changes // to / but ignores ://      
+                url.gsub!(/(?<!:)\/\//,'/') # changes changes // to / but ignores ://
                 uri = URI.parse(url)
                 filename = url.split('/').last
-                location = download_location + '/' + filename 
+                location = download_location + '/' + filename
                 Downloader::download(uri,location)
             elsif item.is_a?(String) && item.include?('openasset.com')
                 #remove white space and new line characters
                 url = item.chomp.strip
                 #check if uri scheme is specified and
                 unless (uri_with_protocol =~ url) == 0 #starting position of regex string
-                    url = uri_scheme + "://" + url 
+                    url = uri_scheme + "://" + url
                 end
-                url.gsub!(/(?<!:)\/\//,'/') # changes changes // to / but ignores ://  
+                url.gsub!(/(?<!:)\/\//,'/') # changes changes // to / but ignores ://
                 uri = URI.parse(url) #for the http request in the downloader
-                filename = url.split('/').last  
+                filename = url.split('/').last
                 location = download_location + '/' + filename
                 Downloader::download(uri,location)
             elsif item.is_a?(String) #for non OpenAsset downloads
@@ -206,9 +206,9 @@ module DownloadHelper
                 url_with_http = Regexp::new('^(https:\/\/|http:\/\/)', true)
                 #check if uri scheme is specified and
                 unless (url_with_http =~ url) == 0 #starting position of regex string
-                    url = uri_scheme + "://" + url 
-                end 
-                filename = url.split('/').last  
+                    url = uri_scheme + "://" + url
+                end
+                filename = url.split('/').last
                 location = download_location + '/' + filename
                 url.gsub!(/(?<!:)\/\//,'/') # changes changes // to / but ignores ://
                 uri = URI.parse(url)
