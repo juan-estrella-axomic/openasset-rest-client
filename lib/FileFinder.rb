@@ -45,7 +45,8 @@ module FileFinder
 			'and' => '&&',
 			'or'  => '||'
 		}
-		files.each do |file|
+		expressions = SQLParser.parse_query(expressions) ################################################3
+		#files.each do |file| #########################################################3
 			completed_expression = []
 
 			expressions.each do |exp|
@@ -59,7 +60,7 @@ module FileFinder
 				method_name = exp[0]
 
 				# Validate method name
-				abort("Invalid operand #{method_name}") unless file.respond_to?(method_name.to_sym)
+				# abort("Invalid operand #{method_name}") unless file.respond_to?(method_name.to_sym) #####################################333
 
 				# Self explanatory
 				comparison_operator = exp[1]
@@ -68,7 +69,8 @@ module FileFinder
 				value = exp[2]
 
 				# Capture method call return value
-				file_attr_data = file.send(method_name.gsub('(',''))
+				file_attr_data = method_name.gsub('(','')
+				#file_attr_data = file.send(method_name.gsub('(',''))
 
 				# Capture any preceding parentheses: Later used to retain order of operations 
 				preceding_parenthesis = /\(+/.match(method_name) #method_name[0] == '(' ? '(' : ''
@@ -97,7 +99,8 @@ module FileFinder
 				end
 
 				if comparison_operator == 'in'
-					file_attr_data = file.send(method_name.to_sym).to_s
+					#file_attr_data = file.send(method_name.to_sym).to_s
+					file_attr_data = method_name.to_s ##############################################################
 					value = value.to_s
 				end
 
@@ -120,8 +123,9 @@ module FileFinder
 			# BEFORE being passed to eval would look like: "(true && false) || true" => true
 			result = eval(completed_expression) 
 			matches << file if result == true
-        end
+        #end ##################################################################################3
         matches
     end
     
 end
+FileFinder.find_files(%q{where id="5" and name = "joe's pub" or name like "joe " or id in (1,2,3)})
