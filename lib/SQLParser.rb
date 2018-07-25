@@ -1,14 +1,32 @@
-module SQLParser
+class SQLParser
 
 	# ORDER IS IMPORTANT: putting '=' first will break
 	# string_regex and numeric_regex parsing of '!=' operator
-	VALID_COMPARISON_OPERATORS = [ '!=', '<', '>', '=', 'like', 'in' ]
+	VALID_COMPARISON_OPERATORS = [ '!=', '<', '>', '=', 'not like', 'like', 'not in', 'in' ]
 
-	def self.operator_valid?(operator)
+	attr_reader :case_sensitivity
+
+	private
+	def initialize(case_sensitive=false)
+		@case_sensitivity = case_sensitive ? nil : Regexp::IGNORECASE
+	end
+
+
+	def operator_valid?(operator)
 		VALID_COMPARISON_OPERATORS.include?(operator) ? true : false
 	end
 
-	def self.parse_query(original_query)
+	public
+	def case_sensitivity=(val)
+		val = val.to_s.strip.downcase
+		unless val.eql?('true') || val.eql?(false)
+			puts 'The case_sensitive= method only accepts true or false. Default is false'
+			return
+		end
+		@case_sensitivity = val.eql?('true') ? nil : Regexp::IGNORECASE
+	end
+
+	def parse_query(original_query)
 
 		# Trim query string
 		original_query.strip!
@@ -17,65 +35,59 @@ module SQLParser
 			return
 		end
 
-		# Captures <field|comparison operator|value> expressions e.g name="joe schmoe's deli" or id=5
-		string_finder = Regexp.new(/([a-zA-Z_]+)(=)([\"?\'?])(?:([\w\s(\"|\')]+)(\3))/)
+		# Check for mismatched partheses
+		open_paren_count   = original_query.count('(')
+		closed_paren_count = original_query.count(')')
+		unless open_paren_count == closed_paren_count
+			msg = 'Syntax Error: '
+			if open_paren_count > closed_paren_count # ( ( )
+				msg += "ended query with unmatched parenthesis => #{original_query}"
+			else # ( ) )
+				msg += "unmatched close parenthesis in query => #{original_query}"
+			end
+			puts msg
+			return
+		end
 
 		expressions = []
 		criteria    = []
 
 		# make a working copy of the query
-		query = original_query.dup.downcase
-		query.gsub!(/\s*where\s*/,'')
+		query = original_query.dup#.downcase
+		query.gsub!(/^\s*where\s*/,'')
 		query.gsub!('<>','!=')
 
 		# Trim spaces between operators and operands
 		VALID_COMPARISON_OPERATORS.each do |op|
-			regex = Regexp.new("\\s+#{op}\\s+")
-			query.gsub!(regex,"--[:space:]--#{op}--[:space:]--")
+			regex = Regexp.new("\\s+#{op}\\s+", Regexp::IGNORECASE)
+			query.gsub!(regex,"--[:space:]--#{op.downcase}--[:space:]--")
 		end
 
-		# IMPORTANT: Remove quotes from numeric operands otherwise parser breaks later on
-		#.gsub!(/^(\w+)(=)(\"?\'?)(?:([0-9]+)(\3))$/,$1+$2+$4) # id="5" => id=5
-
-		# Temporarily replace spaces with asterisks before splitting
-		# query string by space
-		# if string_finder.match(query)
-		# 	data = string_finder.match(query)[0]
-		# 	replacement = data.gsub(' ','[:space:]')
-		# 	query.gsub!(data,replacement)
-		# end
-
-		# Split query copy by space
-		#criteria = query.split(/\s+/)
-
-		# check for missing operators
 		query_copy = query.gsub(/\s+and\s+/,'--[:ANDoperator:]--').gsub(/\s+or\s+/,'--[:ORoperator:]--')
-
-		#puts query_copy
-
-		#query_copy = query_copy.gsub('******',' ')
 		query_expressions = query_copy.split(/(--\[:ANDoperator:\]--|--\[:ORoperator:\]--)/)
 
-
+		# Check for missing operators
 		query_expressions.each.with_index do |exp,i|
 
 			next if exp == "--[:ANDoperator:]--" || exp == "--[:ORoperator:]--"
-
-			if /^(\w+)(--\[:space:\]--)?(=)(--\[:space:\]--)?(\"?\'?)(?:([0-9]+)(\3))$/.match(exp)
-				# IMPORTANT: Remove quotes from numeric operands otherwise parser breaks later on
-				exp.gsub!(/^(\w+)(--\[:space:\]--)?(=)(--\[:space:\]--)?(\"?\'?)(?:([0-9]+)(\5))$/,$1+$3+$6) # id="5" => id=5
+			quoted_number_regex = %r{^([\s\(]*)(\w+)(--\[:space:\]--)?(=)(--\[:space:\]--)?(\"?\'?)(?:([0-9]+)(\6))([\s\)]*)$}
+			if quoted_number_regex.match(exp)
+				# Remove quotes from numeric operands
+				exp.gsub!(/("|')/,'')
 			end
-			puts exp
 			operator_found = false
 			VALID_COMPARISON_OPERATORS.each do |op|
-				operator_found = true if exp.include?(op) || op.is_a?(Hash)
+				operator_found = true if exp.include?(op)
 			end
 			unless operator_found
 				#abort("Syntax Error: Missing comparison operator in expression: #{exp} -> ??? <- #{query_expressions[i+1]}")
-				abort("Syntax Error: Missing comparison operator in expression: #{exp} -> ??? <- #{query_expressions[i+1]}")
+				puts "Syntax Error: Missing comparison operator in expression: #{exp} -> ??? <- #{query_expressions[i+1]}"
+				return
 			end
 		end
+
 		criteria = query_expressions
+		exp_data = []
 
 		# Parse query: Build array of expressions
 		while next_value = criteria.shift
@@ -89,21 +101,32 @@ module SQLParser
 			end
 
 			VALID_COMPARISON_OPERATORS.each do |op|
+				next_value.gsub!(/not\s+like/,'not like') if op.eql?('not like')
+				next_value.gsub!(/not\s+in/,'not in') if op.eql?('not in')
+
 				if next_value.include?(op)
-					method_name = nil
-					value = nil
-					string_regex  = %r{(.*)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?(([\"\'])([\w+\s+\'?\"?\)?]+)(\6))} # => catches e.g. name="john doe's pub is for bums"
-					numeric_regex = %r{^(.*)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?([0-9]+\)?)$} # catches id = 5 or id = 5) <- grouped expressions
-					in_clause_regex = %r{(\w+)(--\[:space:\]--)?(?:in)(--\[:space:\]--)?(\()(.*)(\))} # catches id in (1,2,3,4)
+					preceding_parentheses = nil
+					method_name           = nil
+					operator              = nil
+					value                 = nil
+					trailing_parentheses  = nil
+
+					# => catches e.g. (name="john doe's pub is for bums")
+					string_regex = %r{([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?(([\"\'])([\w\s\%\\\_?\'?\"?\)?]+)(\7)([\s\)]*))}
+
+					# => catches id = 5 or id = 5) <- grouped expressions
+					numeric_regex = %r{^([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?([0-9]+)([\s\)]*)$}
+
+					# => catches id in (1,2,3,4)
+					in_clause_regex = %r{([\(\s]*)(\w+)(--\[:space:\]--)?(in|not\s*in)(--\[:space:\]--)?(\()(.*[^\)\s])(\))([\)\s]*)}
+
 					if string_regex.match(next_value) # Operand is a string value
 						match = string_regex.match(next_value)
-
-						# Extract method name to be called on file object
-						method_name = match[1]
-
-						# Extract the value the file method call return value
-						# will be compared to
-						value = match[7]
+						preceding_parentheses = match[1]
+						method_name = match[2]
+						operator = match[4]
+						value = match[8].to_s
+						trailing_parentheses = match[10].to_s
 
 						# Grab first and last char of expression
 						first_char = value[0]
@@ -116,69 +139,96 @@ module SQLParser
 								q = original_query
 								q.insert(index," <= RIGHT HERE ***")
 								msg = "Syntax Error: Mismatched quotes in query: #{q}"
-								abort(msg)
+								puts msg
+								return
 							end
 						end
 
 						# Validate operator
 						unless operator_valid?(op)
-							abort("Syntax Error: Invalid operator => #{op}")
+							puts "Syntax Error: Invalid operator => #{op}"
+							return
 						end
 
-						# Check for 'like' clause in value
-						# Checks for % in clause while ignoring escapted % => name like "%joe's delo\%%"
-						like_clause_regex = %r{(\w+)(--\[:space:\]--)?((?:like))(--\[:space:\]--)?(?:'((?:[^\\']|\\.)*)'|"((?:[^\\"]|\\.)*)")(\))?}
+						# CONVERT "LIKE" CLAUSE INTO A REGEX STRING +> name not like "%joe's deli_%" -> {"regex"=>"^(?!(.*)joe's deli.)$"}
+						# Check for 'like' clause in value and build regex to be used against object attributes
+						# Checks for % and _ in clause while ignoring escaped \% \_:
+						like_clause_regex = %r{([\(\s]*)(\w+)(--\[:space:\]--)?(\s*not\s*)?(--\[:space:\]--)?((?:like))(--\[:space:\]--)?(?:'((?:[^\\']|\\.)*)'|"((?:[^\\"]|\\.)*)")([\s\)]*)?}
 						if like_clause_regex.match(next_value)
-
 							match = like_clause_regex.match(next_value)
-							method_name = match[1]
 
-							regex_string = match[6].to_s
-							regex_string = '^' + regex_string
-							regex_string.gsub!(/(?<!\\)%/,'(.*)') # handles % sql wildcard character
-							regex_string.gsub!(/(?<!\\)_/,'(.*)') # handles _ sql wildcard character
+							preceding_parentheses = match[1].to_s
+							method_name = match[2]
+							negated = match[4]
+
+							str = match[9]
+							value = str.dup
+							str.gsub!(/(?<!\\)%/,'(.*)') # handles % sql wildcard character
+							str.gsub!(/(?<!\\)_/,'.') # handles _ sql wildcard character
+
+							regex_string = '^'
+							if negated
+								regex_string += "(?!#{str})"
+							else
+								regex_string += str
+							end
 							regex_string += '$'
 
-							op = { 'regex' => "#{regex_string}" }
-
-							value = match[7].to_s
+							regex = Regexp.new(regex_string, @case_sensitivity)
+							operator = { 'regex' => regex }
+							trailing_parentheses = match[10].to_s
 						end
 					elsif in_clause_regex.match(next_value)
 						# Extract data in query 'where id in (1,2,3)' => method_name = id | value = "1,2,3"
 						match = in_clause_regex.match(next_value)
-						method_name = match[1]
-						value = match[5]
-						op = 'in'
+						preceding_parentheses = match[1].to_s
+						method_name =  match[2]
+						operator = match[4]
+						value = match[7].to_s.split(',')
+						trailing_parentheses = match[9].to_s
 					elsif numeric_regex.match(next_value) # Operand is a numeric value
 						match = numeric_regex.match(next_value)
-
-						# Extract method name to be called on file object
-						method_name = match[1]
-
-						# Extract the value the file method call return value
-						# will be compared to
-						value = match[5]
-					else # Regex match fail => Most likely due to missing closing quote
+						preceding_parentheses = match[1].to_s
+						method_name = match[2]
+						operator = match[4]
+						value = match[6]
+						trailing_parentheses = match[7].to_s
+					else # Regex match fail => Most likely due to missing closing quote or bad operator
 						index = original_query.index(next_value)
-						#query = query.gsub('******',' ')
-						abort("Query parsing error. Possible missing quotes.\n
+
+						msg = "Query parsing error: "
+						if !operator.is_a?(Hash)
+							unless VALID_COMPARISON_OPERATORS.include?(operator)
+								msg += "invalid operator #{operator}"
+							end
+						end
+						puts("#{msg}\n
 							   CAPTURED => #{next_value.inspect}\n
 							   ORIGINAL QUERY => #{original_query}")
+							   return
 					end
 
 					# Replace SQL style operator with valid comparison operator
-					op = op.eql?("=") ? "==" : op
+					operator = operator.eql?("=") ? "==" : operator
 					method_name.gsub!(/--\[:space:\]--/,'')
-
+					exp_data = [
+						preceding_parentheses,
+						method_name,
+						operator,
+						value,
+						trailing_parentheses
+					]
 					# Store extracted expression for use in filter_files method call
-					expressions << [ method_name, op, value ]
+					expressions << exp_data
 					break
 				end
 			end
 		end
 		expressions
-    end
+	end
+	alias :parse :parse_query
 
 end
 
-SQLParser.parse_query(%q{where id="5" and name = "joe's pub" or name like "joe " or id in (1,2,3)})
+sql = SQLParser.new
+sql.parse_query(%q{where id="5" and name = "joe's pub" or name like "joe " or id in (1,2,3)})
