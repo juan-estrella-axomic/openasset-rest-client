@@ -184,7 +184,13 @@ class SQLParser
 						preceding_parentheses = match[1].to_s
 						method_name =  match[2]
 						operator = match[4]
-						value = match[7].to_s.split(',')
+						nested_quote_regex = %r{('|")(.*)(\1)}
+						value = match[7].to_s.split(',').map do |val|
+							if nested_quote_regex.match(val)
+								val = nested_quote_regex.match(val)[2]
+							end
+							val
+						end
 						trailing_parentheses = match[9].to_s
 					elsif numeric_regex.match(next_value) # Operand is a numeric value
 						match = numeric_regex.match(next_value)
@@ -227,8 +233,4 @@ class SQLParser
 		expressions
 	end
 	alias :parse :parse_query
-
 end
-
-sql = SQLParser.new
-sql.parse_query(%q{where id="5" and name = "joe's pub" or name like "joe " or id in (1,2,3)})
