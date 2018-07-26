@@ -18,8 +18,8 @@ class Files < Generic
     # @!parse attr_accessor :contains_video, :copyright_holder_id, :created, :description, :download_count, :duration
     attr_accessor :contains_video, :copyright_holder_id, :created, :description, :download_count, :duration
 
-    # @!parse attr_accessor :filename, :id, :md5_at_upload, :md5_now, :original_filename, :photographer_id, :project_id
-    attr_accessor :filename, :id, :md5_at_upload, :md5_now, :original_filename, :photographer_id, :project_id
+    # @!parse attr_accessor :filename, :id, :md5_at_upload, :md5_now, :original_filename, :photographer_id, :project_id, :alive
+    attr_accessor :filename, :id, :md5_at_upload, :md5_now, :original_filename, :photographer_id, :project_id, :alive
 
     # @!parse attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes, :albums
     attr_accessor :rank, :rotation_since_upload, :uploaded, :user_id, :keywords, :fields, :sizes, :albums
@@ -104,6 +104,7 @@ class Files < Generic
         @deleted = json_obj['deleted']
         @processing_failures = json_obj['processing_failures']
         @project_id = json_obj['project_id']
+        @alive = json_obj['alive']
         @rank = json_obj['rank']
         @recheck = json_obj['recheck']
         @replaced = json_obj['replaced']

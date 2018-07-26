@@ -9,7 +9,7 @@ class SecureString
         @decipher
         @key
         @iv
-        @encrypted = nil
+        @encrypted = false
         @value = str.to_s
     end
 
@@ -31,28 +31,26 @@ class SecureString
     end
 
     def encrypt
-        return @value if @encrypted
+        return @value if @encrypted.eql?(true)
         @cipher = OpenSSL::Cipher.new('DES-EDE3-CBC')
         @cipher.encrypt
         @key = @cipher.random_key
         @iv = @cipher.random_iv
         @cipher.key = @key
         @value = @cipher.update(@value) + @cipher.final
-        @value = @value.unpack('H*')[0].upcase
+        @value = @value.unpack('H*')[0]
         @encrypted = true
         @value
     end
 
     def decrypt
-        return @value if !@encrypted
+        return @value if @encrypted.eql?(false)
         @decipher = OpenSSL::Cipher.new('DES-EDE3-CBC')
         @decipher.decrypt
         @decipher.key = @key
         @decipher.iv = @iv
         @value = [@value].pack("H*")
-        @value = @decipher.update(@value) + @decipher.final
-        @encrypted = nil
-        @value
+        @decipher.update(@value) + @decipher.final
     end
 
 end
