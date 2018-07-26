@@ -10,6 +10,9 @@ require_relative 'MyLogger'
 require_relative 'Generic'
 require_relative 'Encoder'
 require_relative 'Error'
+require_relative 'Finder'
+require_relative 'Fetcher'
+require_relative 'SQLParser'
 
 require 'net/http'
 
@@ -85,12 +88,32 @@ module OpenAsset
         def initialize(client_url,un='',pw='')
 
             @authenticator = Authenticator.get_instance(client_url,un,pw)
+            @sql           = SQLParser.new
+            @fetcher       = Fetcher.new
+            @finder        = Finder.new
             @session       = @authenticator.get_session
             @uri           = @authenticator.uri
             @verbose       = false
             @incoming_encoding = 'utf-8' # => Assume utf-8 unless web server specifies otherwise
             @outgoing_encoding = 'utf-8'
 
+        end
+
+        private
+        def handle_get_request(uri,query_obj,with_nested_resources)
+            results = []
+            if query_obj.is_a?(String) # Assumed SQL statement
+                expressions = @sql.parse(query_obj) # Parse SQL
+                if expressions.nil?
+                    logger.error('SQL parsing error occured')
+                    return
+                end
+                objects = @fetcher.get_objects(uri) # Get all objects in batches
+                results = @finder.find_matches(expressions,objects) # Returns matches
+            else # Assumed RestOptions object
+                results = handle_get_request(uri)
+            end
+            results
         end
 
         public
@@ -154,7 +177,7 @@ module OpenAsset
         #          rest_client.get_access_levels(rest_options_object)
         def get_access_levels(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/AccessLevels")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_access_level :get_access_levels
 
@@ -174,7 +197,7 @@ module OpenAsset
         #          rest_client.get_albums(rest_options_object)
         def get_albums(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Albums")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_album :get_albums
 
@@ -248,7 +271,7 @@ module OpenAsset
         #          rest_client.get_alternate_stores(rest_options_object)
         def get_alternate_stores(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/AlternateStores")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_alternate_store :get_alternate_stores
 
@@ -268,7 +291,7 @@ module OpenAsset
         #          rest_client.get_aspect_ratios(rest_options_object)
         def get_aspect_ratios(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/AspectRatios")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_aspect_ratio :get_aspect_ratios
 
@@ -288,7 +311,7 @@ module OpenAsset
         #          rest_client.get_categories(rest_options_object)
         def get_categories(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Categories")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_category :get_categories
 
@@ -326,7 +349,7 @@ module OpenAsset
         #          rest_client.get_copyright_holders(rest_options_object)
         def get_copyright_holders(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/CopyrightHolders")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_copyright_holder :get_copyright_holders
 
@@ -382,7 +405,7 @@ module OpenAsset
         #          rest_client.get_copyright_policies(rest_options_object)
         def get_copyright_policies(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/CopyrightPolicies")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_copyright_policy :get_copyright_policies
 
@@ -456,7 +479,7 @@ module OpenAsset
         #          rest_client.get_data_integrations(rest_options_object)
         def get_data_integrations(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/DataIntegrations")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_data_integration :get_data_integrations
 
@@ -477,7 +500,7 @@ module OpenAsset
         #          rest_client.get_fields(rest_options_object)
         def get_fields(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Fields")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_field :get_fields
 
@@ -554,7 +577,7 @@ module OpenAsset
             id = Validator.validate_field_lookup_string_arg(field)
 
             uri = URI.parse(@uri + "/Fields" + "/#{id}" + "/FieldLookupStrings")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_field_lookup_string :get_field_lookup_strings
 
@@ -640,7 +663,7 @@ module OpenAsset
         #          rest_client.get_files(nil,true) => Gets 10 files including all nested fields and image sizes
         def get_files(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Files")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_file :get_files
 
@@ -808,7 +831,7 @@ module OpenAsset
         #          rest_client.get_groups(rest_options_object)
         def get_groups(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Groups")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_group :get_groups
 
@@ -882,7 +905,7 @@ module OpenAsset
         #          rest_client.get_keywords(rest_options_object)
         def get_keywords(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Keywords")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_keyword :get_keywords
 
@@ -956,7 +979,7 @@ module OpenAsset
         #          rest_client.get_keyword_categories(rest_options_object)
         def get_keyword_categories(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/KeywordCategories")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_keyword_category :get_keyword_categories
 
@@ -1030,7 +1053,7 @@ module OpenAsset
         #          rest_client.get_photographers(rest_options_object)
         def get_photographers(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Photographers")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_photographer :get_photographers
 
@@ -1086,7 +1109,7 @@ module OpenAsset
         #          rest_client.get_projects(rest_options_object)
         def get_projects(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Projects")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_project :get_projects
 
@@ -1161,7 +1184,7 @@ module OpenAsset
         #          rest_client.get_project_keywords(rest_options_object)
         def get_project_keywords(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/ProjectKeywords")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_project_keyword :get_project_keywords
 
@@ -1235,7 +1258,7 @@ module OpenAsset
         #          rest_client.get_project_keyword_categories(rest_options_object)
         def get_project_keyword_categories(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_project_keyword_category :get_project_keyword_categories
 
@@ -1309,7 +1332,7 @@ module OpenAsset
         #          rest_client.get_searches(rest_options_object)
         def get_searches(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Searches")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_search :get_searches
 
@@ -1365,7 +1388,7 @@ module OpenAsset
         #          rest_client.get_image_sizes(rest_options_object)
         def get_image_sizes(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Sizes")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_image_size :get_image_sizes
 
@@ -1439,7 +1462,7 @@ module OpenAsset
         #          rest_client.get_text_rewrites(rest_options_object)
         def get_text_rewrites(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/TextRewrites")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_text_rewrite :get_text_rewrites
 
@@ -1459,7 +1482,7 @@ module OpenAsset
         #          rest_client.get_users(rest_options_object)
         def get_users(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/Users")
-            get(uri,query_obj,with_nested_resources)
+            handle_get_request(uri)
         end
         alias :get_user :get_users
 

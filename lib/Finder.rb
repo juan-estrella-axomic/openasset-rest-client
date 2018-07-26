@@ -1,5 +1,3 @@
-require_relative 'SQLParser'
-
 class Finder
 
 	def initialize
@@ -57,9 +55,8 @@ class Finder
 		result
 	end
 
-	def find_objects(expressions,objects=[])
-		sql = SQLParser.new
-		expressions = sql.parse_query(expressions)
+	def find_matches(expressions,objects=[])
+
 		matches = []
 		boolean_operator_lookup = {
 			'and' => '&&',
@@ -113,6 +110,6 @@ class Finder
         end
         matches
 	end
-	alias :find_object :find_objects
+	alias :find_match :find_matches
 end
 

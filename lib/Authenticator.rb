@@ -43,6 +43,7 @@ class Authenticator
         @url = Validator.validate_and_process_url(url)
         @username = un.to_s
         @password = SecureString.new(pw.to_s)
+        @password.encrypt
         @uri = @url + @@API_CONST + @@VERSION_CONST
         @token_endpoint = @url + @@API_CONST + @@VERSION_CONST + @@SERVICE_CONST
         @token = {:id => nil, :value => nil}
