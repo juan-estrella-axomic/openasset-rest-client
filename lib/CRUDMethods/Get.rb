@@ -1,4 +1,6 @@
+require_relative '../SmartUpdater'
 module Get
+    include SmartUpdater
     # @!visibility private
     def get(uri,options_obj,with_nested_resources=false)
         resource = uri.to_s.split('/').last

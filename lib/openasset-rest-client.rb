@@ -49,6 +49,7 @@ module OpenAsset
         include SmartUpdater
         include FileUploader
         include FileReplacer
+        include Fetcher
 
         # Administrative Functions - FILES
         include FileAddKeywords
@@ -89,7 +90,6 @@ module OpenAsset
 
             @authenticator = Authenticator.get_instance(client_url,un,pw)
             @sql           = SQLParser.new
-            @fetcher       = Fetcher.new
             @finder        = Finder.new
             @session       = @authenticator.get_session
             @uri           = @authenticator.uri
@@ -104,11 +104,13 @@ module OpenAsset
             results = []
             if query_obj.is_a?(String) # Assumed SQL statement
                 expressions = @sql.parse(query_obj) # Parse SQL
+                p expressions
                 if expressions.nil?
                     logger.error('SQL parsing error occured')
                     return
                 end
-                objects = @fetcher.get_objects(uri) # Get all objects in batches
+                objects = get_objects(uri) # Get all objects in batches
+                p objects
                 results = @finder.find_matches(expressions,objects) # Returns matches
             else # Assumed RestOptions object
                 results = get(uri,query_obj,with_nested_resources)

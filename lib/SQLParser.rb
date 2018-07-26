@@ -112,7 +112,7 @@ class SQLParser
 					trailing_parentheses  = nil
 
 					# => catches e.g. (name="john doe's pub is for bums")
-					string_regex = %r{([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?(([\"\'])([\w\s\%\\\_?\'?\"?\)?]+)(\7)([\s\)]*))}
+					string_regex = %r{([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?(([\"\'])([\w\s\%\.\\\_?\'?\"?\)?]+)(\7)([\s\)]*))}
 
 					# => catches id = 5 or id = 5) <- grouped expressions
 					numeric_regex = %r{^([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?([0-9]+)([\s\)]*)$}
