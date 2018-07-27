@@ -1,8 +1,37 @@
+require_relative 'MyLogger'
 class SQLParser
+
+	include Logging
 
 	# ORDER IS IMPORTANT: putting '=' first will break
 	# string_regex and numeric_regex parsing of '!=' operator
-	VALID_COMPARISON_OPERATORS = [ '!=', '<', '>', '=', 'not like', 'like', 'not in', 'in' ]
+	VALID_COMPARISON_OPERATORS = [ 'between', '!=', '<=', '>=', '<', '>', '=', 'not like', 'like', 'not in', 'in' ]
+
+	# => catches id in (1,2,3,4)
+	@@in_clause_regex = %r{
+		([\(\s]*)(\w+)
+		(--\[:space:\]--)?(in|not\s*in)(--\[:space:\]--)?
+		(\()(.*[^\)\s])(\))([\)\s]*)
+	}x
+
+	# catches id between 9 and 17
+	@@between_clause_regex = %r{
+		([\(\s]*)(\w+)
+		(--\[:space:\]--|\ )*(between)(--\[:space:\]--|\ )*
+		("|')?(\w+)(\k<6>)?
+		(--\[:space:\]--|\ )*
+		(and)
+		(--\[:space:\]--|\ )*
+		("|')?(\w+)(\k<12>)?
+		([\)\s]*)
+	}x
+
+	@@quoted_number_regex = %r{
+		^([\s\(]*)(\w+)
+		(--\[:space:\]--)?(=)(--\[:space:\]--)?
+		(\"?\'?)(?:([0-9]+)(\6))
+		([\s\)]*)$
+	}x
 
 	attr_reader :case_sensitivity
 
@@ -20,7 +49,7 @@ class SQLParser
 	def case_sensitivity=(val)
 		val = val.to_s.strip.downcase
 		unless val.eql?('true') || val.eql?(false)
-			puts 'The case_sensitive= method only accepts true or false. Default is false'
+			logger.error( 'The case_sensitive= method only accepts true or false. Default is false')
 			return
 		end
 		@case_sensitivity = val.eql?('true') ? nil : Regexp::IGNORECASE
@@ -31,7 +60,7 @@ class SQLParser
 		# Trim query string
 		original_query.strip!
 		unless /^where/i.match(original_query)
-			puts "No where clause detected."
+			logger.error('No where clause detected.')
 			return
 		end
 
@@ -45,7 +74,7 @@ class SQLParser
 			else # ( ) )
 				msg += "unmatched close parenthesis in query => #{original_query}"
 			end
-			puts msg
+			logger.error(msg)
 			return
 		end
 
@@ -57,10 +86,33 @@ class SQLParser
 		query.gsub!(/^\s*where\s*/,'')
 		query.gsub!('<>','!=')
 
-		# Trim spaces between operators and operands
+		# Capture order which operators appear in query
+		ordered_operators = []
 		VALID_COMPARISON_OPERATORS.each do |op|
+			index = query.index(op)
+			next unless index
+			ordered_operators << [index,op]
+		end
+		ordered_operators.sort_by! { |index,operator| index }
+
+		# Trim spaces between operators and operands
+		ordered_operators.each do |i,op|
 			regex = Regexp.new("\\s+#{op}\\s+", Regexp::IGNORECASE)
-			query.gsub!(regex,"--[:space:]--#{op.downcase}--[:space:]--")
+			if op.eql?("between") && query.include?("between")
+				match = @@between_clause_regex.match(query)
+				start_paren = match[1]
+				method_name = match[2]
+				operator    = match[4].to_s.downcase
+				start_range = match[7]
+				end_range   = match[13]
+				end_paren   = match[15]
+				repl_str = "#{start_paren}#{method_name}" +
+						   "--[:space:]--#{operator}--[:space:]--" +
+						   "#{start_range}--[:space:]----[:BetweenANDoperator:]----[:space:]--#{end_range}#{end_paren}"
+				query.gsub!(@@between_clause_regex,repl_str)
+			else
+				query.gsub!(regex,"--[:space:]--#{op.downcase}--[:space:]--")
+			end
 		end
 
 		query_copy = query.gsub(/\s+and\s+/,'--[:ANDoperator:]--').gsub(/\s+or\s+/,'--[:ORoperator:]--')
@@ -70,8 +122,8 @@ class SQLParser
 		query_expressions.each.with_index do |exp,i|
 
 			next if exp == "--[:ANDoperator:]--" || exp == "--[:ORoperator:]--"
-			quoted_number_regex = %r{^([\s\(]*)(\w+)(--\[:space:\]--)?(=)(--\[:space:\]--)?(\"?\'?)(?:([0-9]+)(\6))([\s\)]*)$}
-			if quoted_number_regex.match(exp)
+
+			if @@quoted_number_regex.match(exp)
 				# Remove quotes from numeric operands
 				exp.gsub!(/("|')/,'')
 			end
@@ -80,8 +132,7 @@ class SQLParser
 				operator_found = true if exp.include?(op)
 			end
 			unless operator_found
-				#abort("Syntax Error: Missing comparison operator in expression: #{exp} -> ??? <- #{query_expressions[i+1]}")
-				puts "Syntax Error: Missing comparison operator in expression: #{exp} -> ??? <- #{query_expressions[i+1]}"
+				logger.error("Syntax Error: Missing comparison operator in expression: #{exp} -> ??? <- #{query_expressions[i+1]}")
 				return
 			end
 		end
@@ -100,27 +151,47 @@ class SQLParser
 				next
 			end
 
-			VALID_COMPARISON_OPERATORS.each do |op|
+			next_value.gsub!('--[:BetweenANDoperator:]--','and') if next_value.include?('--[:BetweenANDoperator:]--')
+
+			ordered_operators.each do |i,op|
+
 				next_value.gsub!(/not\s+like/,'not like') if op.eql?('not like')
 				next_value.gsub!(/not\s+in/,'not in') if op.eql?('not in')
 
+				# => catches e.g. (name="john doe's pub is for bums")
+				string_regex = %r{
+					([\s\(]*)(\w+)
+					(--\[:space:\]--)?(#{op})(--\[:space:\]--)?
+					(([\"\'])([\w\s\%\.\\\_?\'?\"?\)?]+)(\7)([\s\)]*))
+				}x
+
+				# => catches id = 5 or id = 5) <- grouped expressions
+				numeric_regex = %r{
+					^([\s\(]*)(\w+)
+					(--\[:space:\]--)?(#{op})(--\[:space:\]--)?
+					([0-9]+)([\s\)]*)$
+				}x
+
 				if next_value.include?(op)
+					p next_value
 					preceding_parentheses = nil
 					method_name           = nil
 					operator              = nil
 					value                 = nil
 					trailing_parentheses  = nil
 
-					# => catches e.g. (name="john doe's pub is for bums")
-					string_regex = %r{([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?(([\"\'])([\w\s\%\.\\\_?\'?\"?\)?]+)(\7)([\s\)]*))}
+					if @@between_clause_regex.match(next_value)
+						match = @@between_clause_regex.match(next_value)
+						p match
 
-					# => catches id = 5 or id = 5) <- grouped expressions
-					numeric_regex = %r{^([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?([0-9]+)([\s\)]*)$}
-
-					# => catches id in (1,2,3,4)
-					in_clause_regex = %r{([\(\s]*)(\w+)(--\[:space:\]--)?(in|not\s*in)(--\[:space:\]--)?(\()(.*[^\)\s])(\))([\)\s]*)}
-
-					if string_regex.match(next_value) # Operand is a string value
+						preceding_parentheses = match[1]
+						method_name = match[2]
+						operator = match[4]
+						val1 = match[7]
+						val2 = match[13]
+						value = [val1,val2]
+						trailing_parentheses = match[15]
+					elsif string_regex.match(next_value) # Operand is a string value
 						match = string_regex.match(next_value)
 						preceding_parentheses = match[1]
 						method_name = match[2]
@@ -139,30 +210,31 @@ class SQLParser
 								q = original_query
 								q.insert(index," <= RIGHT HERE ***")
 								msg = "Syntax Error: Mismatched quotes in query: #{q}"
-								puts msg
+								logger.error(msg)
 								return
 							end
 						end
 
 						# Validate operator
 						unless operator_valid?(op)
-							puts "Syntax Error: Invalid operator => #{op}"
+							logger.error("Syntax Error: Invalid operator => #{op}")
 							return
 						end
 
 						# CONVERT "LIKE" CLAUSE INTO A REGEX STRING +> name not like "%joe's deli_%" -> {"regex"=>"^(?!(.*)joe's deli.)$"}
 						# Check for 'like' clause in value and build regex to be used against object attributes
 						# Checks for % and _ in clause while ignoring escaped \% \_:
-						like_clause_regex = %r{([\(\s]*)(\w+)(--\[:space:\]--)?(\s*not\s*)?(--\[:space:\]--)?((?:like))(--\[:space:\]--)?(?:'((?:[^\\']|\\.)*)'|"((?:[^\\"]|\\.)*)")([\s\)]*)?}
+						like_clause_regex = %r{([\(\s]*)(\w+)(--\[:space:\]--)*(\s*not\s*)?(--\[:space:\]--)*((?:like))(--\[:space:\]--)*(?:'((?:[^\\']|\\.)*)'|"((?:[^\\"]|\\.)*)")([\s\)]*)}
 						if like_clause_regex.match(next_value)
 							match = like_clause_regex.match(next_value)
-
+							p match
 							preceding_parentheses = match[1].to_s
 							method_name = match[2]
 							negated = match[4]
 
-							str = match[9]
+							str = match[8]
 							value = str.dup
+
 							str.gsub!(/(?<!\\)%/,'(.*)') # handles % sql wildcard character
 							str.gsub!(/(?<!\\)_/,'.') # handles _ sql wildcard character
 
@@ -178,9 +250,9 @@ class SQLParser
 							operator = { 'regex' => regex }
 							trailing_parentheses = match[10].to_s
 						end
-					elsif in_clause_regex.match(next_value)
+					elsif @@in_clause_regex.match(next_value)
 						# Extract data in query 'where id in (1,2,3)' => method_name = id | value = "1,2,3"
-						match = in_clause_regex.match(next_value)
+						match = @@in_clause_regex.match(next_value)
 						preceding_parentheses = match[1].to_s
 						method_name =  match[2]
 						operator = match[4]
@@ -194,6 +266,7 @@ class SQLParser
 						trailing_parentheses = match[9].to_s
 					elsif numeric_regex.match(next_value) # Operand is a numeric value
 						match = numeric_regex.match(next_value)
+						p match
 						preceding_parentheses = match[1].to_s
 						method_name = match[2]
 						operator = match[4]
@@ -202,16 +275,17 @@ class SQLParser
 					else # Regex match fail => Most likely due to missing closing quote or bad operator
 						index = original_query.index(next_value)
 
-						msg = "Query parsing error: "
+						msg = "SQL parsing error: "
 						if !operator.is_a?(Hash)
 							unless VALID_COMPARISON_OPERATORS.include?(operator)
 								msg += "invalid operator #{operator}"
 							end
 						end
-						puts("#{msg}\n
-							   CAPTURED => #{next_value.inspect}\n
-							   ORIGINAL QUERY => #{original_query}")
-							   return
+						msg = "#{msg}\n" +
+							 "CAPTURED => #{next_value.inspect}\n" +
+							 "ORIGINAL QUERY => #{original_query}"
+						logger.error(msg)
+						return
 					end
 
 					# Replace SQL style operator with valid comparison operator
@@ -224,8 +298,10 @@ class SQLParser
 						value,
 						trailing_parentheses
 					]
+					#p exp_data
 					# Store extracted expression for use in filter_files method call
 					expressions << exp_data
+					p expressions
 					break
 				end
 			end

@@ -105,6 +105,7 @@ module CSVHelper
                 return
             end
         end
+        self
     end
 end
 
@@ -222,5 +223,6 @@ module DownloadHelper
             end
         end
         FileUtils.remove_dir(download_location)  if Dir["#{download_location}/*"].empty?
+        self
     end
 end

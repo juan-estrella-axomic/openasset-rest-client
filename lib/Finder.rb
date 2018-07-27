@@ -6,17 +6,29 @@ class Finder
 	def evaluate(*args)
 
 		return if args.empty?
-		operand1 = args[0]
-		operator = args[1]
-		operand2 = args[2]
-		result   = nil
 
-		unless operator.class.to_s == 'Regexp' || operand2.class.to_s == 'Array'
+		numeric_regex = %r{^\d+$}
+		float_regex   = %r{^\d+\.\d+$}
+		operand1      = args[0]
+		operator      = args[1]
+		operand2      = args[2]
+		result        = nil
+		msg           = nil
+
+
+		unless operator.class.to_s == 'Regexp'
 			if operand1.class != operand2.class
 				# Try to recover if possible.
-				numeric_regex = %r{^\d+$}
-				float_regex   = %r{^\d+\.\d+$}
-				if numeric_regex.match(operand1.to_s) &&
+				if operand2.is_a?(Array)
+					if numeric_regex.match(operand1.to_s)
+						operand2 = operand2.map(&:to_i)
+					elsif float_regex.match(operand1.to_s)
+						operand2 = operand2.map(&:to_f)
+					else
+						msg = "Unknown error comparing #{operand1.class} to #{operand2.class}" +
+								"\t#{operand1} <=> #{operand2}"
+					end
+				elsif numeric_regex.match(operand1.to_s) &&
 					numeric_regex.match(operand2.to_s)
 					# Both are numbers: Convert to integers for comparison
 					operand1 = operand1.to_i
@@ -27,22 +39,33 @@ class Finder
 					operand1 = operand1.to_f
 					operand2 = operand2.to_f
 				else
-					msg = "Type Error: Cannot compare Integer to String\n" +
+					msg = "Type Error: Cannot compare #{operand1.class} to #{operand2.class}\n" +
 							"\t#{operand1} <=> #{operand2}"
-					puts msg
-					#return
 				end
 			end
+		end
+
+		if msg
+			puts msg
+			return
 		end
 
 		if operator.eql?("!=")
 			result = operand1 != operand2 ? true : false
 		elsif operator.eql?("<")
 			result = operand1 < operand2 ? true : false
+		elsif operator.eql?("<=")
+			result = operand1 <= operand2 ? true : false
+		elsif operator.eql?(">=")
+			result = operand1 >= operand2 ? true : false
 		elsif operator.eql?(">")
 			result = operand1 > operand2 ? true : false
 		elsif operator.eql?("==")
 			result = operand1 == operand2 ? true : false
+		elsif operator.eql?("between")
+			val1 = operand2[0]
+			val2 = operand2[1]
+			result = (operand1 >= val1 && operand1 <= val2) ? true : false
 		elsif operator.eql?("in")
 			result = operand2.include?(operand1) ? true : false
 		elsif operator.eql?("not in")

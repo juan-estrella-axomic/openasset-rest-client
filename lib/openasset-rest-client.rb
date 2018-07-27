@@ -104,13 +104,11 @@ module OpenAsset
             results = []
             if query_obj.is_a?(String) # Assumed SQL statement
                 expressions = @sql.parse(query_obj) # Parse SQL
-                p expressions
                 if expressions.nil?
                     logger.error('SQL parsing error occured')
                     return
                 end
-                objects = get_objects(uri) # Get all objects in batches
-                p objects
+                objects = get_objects(uri) # Get all objects in batches - private method
                 results = @finder.find_matches(expressions,objects) # Returns matches
             else # Assumed RestOptions object
                 results = get(uri,query_obj,with_nested_resources)
@@ -177,7 +175,7 @@ module OpenAsset
         # @example
         #          rest_client.get_access_levels()
         #          rest_client.get_access_levels(rest_options_object)
-        def get_access_levels(query_obj=nil,with_nested_resources=false)
+        def get_access_levels(query_obj=nil,with_nested_resources=false,batch_size=size)
             uri = URI.parse(@uri + "/AccessLevels")
             handle_get_request(uri,query_obj,with_nested_resources)
         end

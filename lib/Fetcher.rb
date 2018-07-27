@@ -4,8 +4,9 @@ require_relative './CRUDMethods/Get'
 module Fetcher
     # fetches nouns
     private
-    def get_objects(uri,batch_size=250)
-        objects = []
+    def get_objects(uri)
+        objects    = []
+        batch_size = 500
         options = RestOptions.new.tap do |o|
             o.add_options('limit',0)
             o.add_options('displayFields','id')
