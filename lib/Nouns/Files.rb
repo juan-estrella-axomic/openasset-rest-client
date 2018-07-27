@@ -104,7 +104,7 @@ class Files < Generic
         @deleted = json_obj['deleted']
         @processing_failures = json_obj['processing_failures']
         @project_id = json_obj['project_id']
-        @alive = json_obj['alive']
+        @alive = json_obj['alive'] || 1 # For non axomic requests assume alive
         @rank = json_obj['rank']
         @recheck = json_obj['recheck']
         @replaced = json_obj['replaced']
