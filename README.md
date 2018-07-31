@@ -13,13 +13,14 @@
     
 ## Install the gem
 
-Download it the latest release and run the gem install command from the folder containing the downloaded gem:
+Download the latest release [here](https://github.com/axomic/openasset-rest-ruby/releases). Run the gem install command from the folder containing the downloaded gem:
 
     
     $ gem install openasset-rest-client-2.x.x.gem
 
 ## Usage
 
+[Public Facing Documentation](http://52.14.160.162/docs/index)
 http://52.14.160.162/docs/index
 
 
