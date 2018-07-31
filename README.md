@@ -20,7 +20,7 @@ Download it the latest release and run the gem install command from the folder c
 
 ## Usage
 
-http://52.14.160.162//docs/index
+http://52.14.160.162/docs/index
 
 
 ## License
