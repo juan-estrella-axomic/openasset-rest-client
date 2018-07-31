@@ -16,11 +16,11 @@
 Download it the latest release and run the gem install command from the folder containing the downloaded gem:
 
     
-    $ gem install openasset-rest-client-1.x.x.gem
+    $ gem install openasset-rest-client-2.x.x.gem
 
 ## Usage
 
-http://192.168.1.173/docs/index
+http://52.14.160.162//docs/index
 
 
 ## License
