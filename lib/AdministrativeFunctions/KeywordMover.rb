@@ -56,7 +56,6 @@ module KeywordMover
             if built_in
                 data = ''
                 field_name = field.name.downcase.gsub(' ','_')
-                p field_name
 
                 if mode == 'append'
                     data = object.instance_variable_get("@#{field_name}").to_s.strip
