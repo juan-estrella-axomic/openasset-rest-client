@@ -88,19 +88,20 @@ class SQLParser
         query.gsub!(/^\s*where\s*/,'')
         query.gsub!('<>','!=')
 
+
         # Capture order which operators appear in query
         ordered_operators = []
         VALID_COMPARISON_OPERATORS.each do |op|
             index = query.index(op)
             next unless index
-            ordered_operators << [index,op]
+            ordered_operators << [index, op]
         end
-        ordered_operators.sort_by! { |index,operator| index }
+        ordered_operators.sort_by! { |index, _operator| index }
 
         # Trim spaces between operators and operands
         ordered_operators.each do |i,op|
             regex = Regexp.new("\\s+#{op}\\s+", Regexp::IGNORECASE)
-            if op.eql?("between") && query.include?('between')
+            if op.eql?('between') && query.include?('between')
                 match = @@between_clause_regex.match(query)
                 start_paren = match[1]
                 method_name = match[2]
@@ -116,12 +117,12 @@ class SQLParser
                 query.gsub!(regex,"--[:space:]--#{op.downcase}--[:space:]--")
             end
         end
-
+        #abort query
         query_copy = query.gsub(/\s+and\s+/,'--[:ANDoperator:]--').gsub(/\s+or\s+/,'--[:ORoperator:]--')
         query_expressions = query_copy.split(/(--\[:ANDoperator:\]--|--\[:ORoperator:\]--)/)
 
         # Check for missing operators
-        query_expressions.each.with_index do |exp,i|
+        query_expressions.each.with_index do |exp, i|
 
             next if exp == '--[:ANDoperator:]--' || exp == '--[:ORoperator:]--'
 
@@ -155,24 +156,15 @@ class SQLParser
 
             next_value.gsub!('--[:BetweenANDoperator:]--','and') if next_value.include?('--[:BetweenANDoperator:]--')
 
-            ordered_operators.each do |i,op|
+            ordered_operators.each do |_, op|
 
                 next_value.gsub!(/not\s+like/,'not like') if op.eql?('not like')
                 next_value.gsub!(/not\s+in/,'not in') if op.eql?('not in')
-
+                # "name--[:space:]--not like--[:space:]--\"jim\""
                 # => catches e.g. (name="john doe's pub is for bums")
-                string_regex = %r{
-                    ([\s\(]*)(\w+)
-                    (--\[:space:\]--)?(#{op})(--\[:space:\]--)?
-                    (([\"\'])([\w\s\%\.\\\_?\'?\"?\)?]+)(\7)([\s\)]*))
-                }x
-
+                string_regex = %r{([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?(?:'((?:[^\\']|\\.)*)'|"((?:[^\\"]|\\.)*)")([\s\)]*)}
                 # => catches id = 5 or id = 5) <- grouped expressions
-                numeric_regex = %r{
-                    ^([\s\(]*)(\w+)
-                    (--\[:space:\]--)?(#{op})(--\[:space:\]--)?
-                    ([0-9]+)([\s\)]*)$
-                }x
+                numeric_regex = %r{^([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?([0-9]+)([\s\)]*)$}
 
                 if next_value.include?(op)
                     p next_value
@@ -190,7 +182,7 @@ class SQLParser
                         operator = match[4]
                         val1 = match[7]
                         val2 = match[13]
-                        value = [val1,val2]
+                        value = [val1, val2]
                         trailing_parentheses = match[15]
                     elsif string_regex.match(next_value) # Operand is a string value
                         match = string_regex.match(next_value)
@@ -198,8 +190,8 @@ class SQLParser
                         preceding_parentheses = match[1]
                         method_name = match[2]
                         operator = match[4]
-                        value = match[8].to_s
-                        trailing_parentheses = match[10].to_s
+                        value = match[6] || match[7]
+                        trailing_parentheses = match[8].to_s
 
                         # Grab first and last char of expression
                         first_char = value[0]
@@ -231,29 +223,25 @@ class SQLParser
                             (--\[:space:\]--)*((?:like))(--\[:space:\]--)*
                             (?:'((?:[^\\']|\\.)*)'|"((?:[^\\"]|\\.)*)")([\s\)]*)
                         }x
+
                         if like_clause_regex.match(next_value)
                             match = like_clause_regex.match(next_value)
                             p match
                             preceding_parentheses = match[1].to_s
                             method_name = match[2]
-                            negated = match[4]
+                            negated = match[4].to_s.downcase.include?('not')
 
-                            str = match[9]
+                            str = match[8] || match[9]
                             value = str.dup
 
                             str.gsub!(/(?<!\\)%/, '(.*)') # handles % sql wildcard character
                             str.gsub!(/(?<!\\)_/, '.') # handles _ sql wildcard character
 
-                            regex_string = '^'
-                            if negated
-                                regex_string += "(?!#{str})"
-                            else
-                                regex_string += str
-                            end
-                            regex_string += '$'
+                            regex_string = "^#{str}$"
 
                             regex = Regexp.new(regex_string, @case_sensitivity)
-                            operator = { 'regex' => regex }
+                            operator = { 'regex'            => regex,
+                                         'is_regex_negated' => negated }
                             trailing_parentheses = match[10].to_s
                         end
                     elsif @@in_clause_regex.match(next_value)
@@ -283,16 +271,17 @@ class SQLParser
                         index = original_query.index(next_value)
 
                         msg = 'SQL parsing error: '
-                        if !operator.is_a?(Hash)
+                        unless operator.is_a?(Hash) # Identifies LIKE clauses
                             unless VALID_COMPARISON_OPERATORS.include?(operator)
                                 msg += "invalid operator #{operator}"
                             end
                         end
+                        val = next_value.gsub('--[:space:]--', '')
                         msg = "#{msg}\n" +
-                             "CAPTURED => #{next_value.inspect}\n" +
+                             "PROBLEM EXPRESSION => #{val.inspect}\n" +
                              "ORIGINAL QUERY => #{original_query}"
                         logger.error(msg)
-                        return
+                        abort
                     end
 
                     # Replace SQL style operator with valid comparison operator

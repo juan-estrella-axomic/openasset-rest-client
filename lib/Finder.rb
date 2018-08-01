@@ -26,9 +26,6 @@ class Finder
                         operand2 = operand2.map(&:to_i)
                     elsif float_regex.match(operand1.to_s)
                         operand2 = operand2.map(&:to_f)
-                    else
-                        msg = "Unknown error comparing #{operand1.class} to #{operand2.class}" +
-                                "\t#{operand1} <=> #{operand2}"
                     end
                 elsif numeric_regex.match(operand1.to_s) &&
                     numeric_regex.match(operand2.to_s)
@@ -72,8 +69,11 @@ class Finder
             result = operand2.include?(operand1) ? true : false
         elsif operator.eql?("not in")
             result = !operand2.include?(operand1) ? true : false
-        elsif operator.is_a?(Regexp)
-            result = operator.match(operand1) ? true : false
+        elsif operator.is_a?(Hash)
+            regex      = operator['regex']
+            is_negated = operator['is_regex_negated']
+            result     = regex.match(operand1) ? true : false
+            result = is_negated ? !result : result
         else
             logger.fatal('UNKNOWN ERROR IN EVALUATOR.')
             abort
@@ -111,12 +111,7 @@ class Finder
                 trailing_parentheses = exp[4]
                 # Capture method call return value
                 obj_attr_data = object.send(method_name.to_sym)
-                # Extract regex str and evaluate against object data
-                if comparison_operator.is_a?(Hash)
-                    comparison_operator = comparison_operator['regex']
-                    obj_attr_data = object.send(method_name.to_sym).to_s
-                    value = value.to_s
-                end
+
                 if comparison_operator == 'in' || comparison_operator == 'not in'
                     obj_attr_data = object.send(method_name.to_sym).to_s
                 end
@@ -128,6 +123,7 @@ class Finder
             end
             # Convert independent expressions to one string => e.g "(true && false) || true"
             completed_expression = completed_expression.join(' ')
+            #p completed_expression
             # Grab object if it meets search criteria
             # SECURITY: This is what a completed_expression
             # would look like BEFORE being passed to eval: "(true && false) || true" => true
