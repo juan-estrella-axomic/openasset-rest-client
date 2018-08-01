@@ -102,8 +102,9 @@ module OpenAsset
         private
         def handle_get_request(uri,query_obj,with_nested_resources)
             results = []
+            end_point = uri.request_uri.split(/\//).last
             if query_obj.is_a?(String) # Assumed SQL statement
-                expressions = @sql.parse(query_obj) # Parse SQL
+                expressions = @sql.parse(query_obj,end_point) # Parse SQL
                 if expressions.nil?
                     logger.error('SQL parsing error occured')
                     return
