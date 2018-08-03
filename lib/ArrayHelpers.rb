@@ -27,7 +27,7 @@ module CSVHelper
         name = client.to_s || 'Client_Name'
         object_variables = nil
         noun = nil
-        #check if the collection is emplty
+        # check if the collection is emplty
         if self.empty?
             msg = "Oops. There are no items in the collection. " +
                   "No use in creating spreadsheet."
@@ -35,18 +35,19 @@ module CSVHelper
             return
         end
 
-        #processs the objects to extract the headers and rows for csv report
-        #get the instance variables of the first object we will use it to
-        #build the headers of the csv file and to retieve the values of the object
+        # processs the objects to extract the headers and rows for csv report
+        # get the instance variables of the first object we will use it to
+        # build the headers of the csv file and to retieve the values of the object
 
-        #Notes -> instance variables must be initialized to at least nil
-        #in order for the instance_variables method to work
+        # Notes -> instance variables must be initialized to at least nil
+        # in order for the instance_variables method to work
         if Validator::NOUNS.include?(self.first.class.to_s) #its a NOUN
             noun = true
             object_variables = self.first.instance_variables #returns an array
         end
 
-        #Create csv file using the clients subdomain name and insert the headers
+        # Create csv file using the clients subdomain name and insert the headers
+        name = name.gsub(/(http:\/\/|https:\/\/)/i,'')
         filename = name + '_CSV_Export_' + Time.new.strftime("%Y%m%d%H%M%S") + '.csv'
 
         CSV.open(filename, "w") do |csv|

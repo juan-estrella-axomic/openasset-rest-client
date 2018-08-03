@@ -176,7 +176,7 @@ module OpenAsset
         # @example
         #          rest_client.get_access_levels()
         #          rest_client.get_access_levels(rest_options_object)
-        def get_access_levels(query_obj=nil,with_nested_resources=false,batch_size=size)
+        def get_access_levels(query_obj=nil,with_nested_resources=false)
             uri = URI.parse(@uri + "/AccessLevels")
             handle_get_request(uri,query_obj,with_nested_resources)
         end
