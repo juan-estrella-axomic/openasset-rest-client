@@ -32,7 +32,7 @@ class SecureString
 
     def encrypt
         puts "YOOOOOOOOO"
-        return if @value.empty?
+        return if @value.to_s.empty?
         return @value if @encrypted.eql?(true)
         @cipher = OpenSSL::Cipher.new('DES-EDE3-CBC')
         @cipher.encrypt
