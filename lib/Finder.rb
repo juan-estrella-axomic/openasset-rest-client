@@ -38,8 +38,8 @@ class Finder
                     operand1 = operand1.to_f
                     operand2 = operand2.to_f
                 else
-                    msg = "Type Error: Cannot compare #{operand1.class} to #{operand2.class}\n" +
-                            "\t#{operand1} <=> #{operand2}"
+                    msg = "Type Error: Cannot compare #{operand1.class} " \
+                          "to #{operand2.class}\n\t#{operand1} <=> #{operand2}"
                 end
             end
         end
@@ -88,22 +88,19 @@ class Finder
             'and' => '&&',
             'or'  => '||'
         }
-
+        logical_operators  = %w[and or]
+        sql_list_operators = %w[in not\ in]
         objects.each do |object|
             completed_expression = []
             expressions.each do |exp|
-                if exp == 'and' || exp == 'or'
+                # Lookup operators => and or
+                if logical_operators.include?(exp)
                     completed_expression << boolean_operator_lookup[exp]
                     next
                 end
                 preceding_parentheses = exp[0]
                 # Capture method to be called on object
                 method_name = exp[1]
-                # Validate method name
-                unless object.respond_to?(method_name.to_sym)
-                    puts "Invalid column name #{method_name.inspect}"
-                    return
-                end
                 # Self explanatory
                 comparison_operator = exp[2]
                 # Capture value to be compared against method call's return value
@@ -111,9 +108,9 @@ class Finder
                 trailing_parentheses = exp[4]
                 # Capture method call return value
                 obj_attr_data = object.send(method_name.to_sym)
-
-                if comparison_operator == 'in' || comparison_operator == 'not in'
-                    obj_attr_data = object.send(method_name.to_sym).to_s
+                # Addresses comparison mismatch between Strings and Integers
+                if sql_list_operators.include?(comparison_operator)
+                    obj_attr_data = obj_attr_data.to_s
                 end
                 # Evaluate expression
                 result = evaluate(obj_attr_data,comparison_operator,value)
@@ -123,7 +120,7 @@ class Finder
             end
             # Convert independent expressions to one string => e.g "(true && false) || true"
             completed_expression = completed_expression.join(' ')
-            #p completed_expression
+            # p completed_expression
             # Grab object if it meets search criteria
             # SECURITY: This is what a completed_expression
             # would look like BEFORE being passed to eval: "(true && false) || true" => true
@@ -132,6 +129,6 @@ class Finder
         end
         matches
     end
-    alias :find_match :find_matches
+    alias find_match find_matches
 end
 
