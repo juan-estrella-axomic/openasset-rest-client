@@ -12,7 +12,7 @@ class Projects < Generic
     attr_accessor :alive, :code, :code_alias_1, :code_alias_2, :id, :name, :hero_image_id
 
     # @!parse attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields, :albums
-    attr_accessor :name_alias_1, :name_alias_2, :project_keywords, :fields, :albums
+    attr_accessor :name_alias_1, :name_alias_2, :projectKeywords, :fields, :albums
 
     # @!parse attr_reader :location
     attr_reader :location
