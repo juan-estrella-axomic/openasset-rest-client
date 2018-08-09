@@ -30,6 +30,7 @@ class Authenticator
     include Logging
 
     AXOMIC = 'axomic'
+    REQUIRED_OA_VERSION = '10.2.22'
 
     #@@DOMAIN_CONST = 'https://se1.openasset.com'
     @@API_CONST = '/REST'
@@ -44,6 +45,7 @@ class Authenticator
         @username = un.to_s
         @password = SecureString.new(pw.to_s)
         @password.encrypt unless pw.to_s.empty?
+        @openasset_version = 'Unknown'
         @uri = @url + @@API_CONST + @@VERSION_CONST
         @token_endpoint = @url + @@API_CONST + @@VERSION_CONST + @@SERVICE_CONST
         @token = {:id => nil, :value => nil}
@@ -190,7 +192,7 @@ class Authenticator
         digest = OpenSSL::Digest.new('sha1')
         hmac_string = OpenSSL::HMAC.digest(digest, @token[:value], string_to_sign).to_s
         @signature = Base64.encode64(hmac_string).chomp
-        sleep (1) #DateTime.now.httpdate uses seconds as its smallest counter unit.
+        sleep(1) #DateTime.now.httpdate uses seconds as its smallest counter unit.
                   #Prevents Auth error when making successive request using
                   #the signature
     end
@@ -265,10 +267,16 @@ class Authenticator
         if response.kind_of? Net::HTTPSuccess
             msg = nil
             @session_key = response['X-SessionKey']
+            @openasset_version = response['x-openasset-version']
             if is_axomic_user?
-                msg = "Success! You are logged in as AXOMIC."
+                msg = 'Success! You are logged in as AXOMIC.'
             else
-                msg = "Valid Token detected...Acquiring session."
+                msg = 'Valid Token detected...Acquiring session.'
+                if @openasset_version < REQUIRED_OA_VERSION
+                    msg = "WARNING: Older version of OA detected! => (#{@openasset_version})\n" +
+                          "Some token authentication features may not work properly.\n" +
+                          "Please upgrade client to #{REQUIRED_OA_VERSION} or higher."
+                end
                 store_session_data(@session_key, @token[:value], @token[:id])
             end
             logger.info(msg)
@@ -427,8 +435,13 @@ class Authenticator
     end
 
     public
+
     def self.get_instance(url,un,pw)
         self.new(url,un,pw)
+    end
+
+    def get_oa_version
+        @openasset_version
     end
 
     def get_session

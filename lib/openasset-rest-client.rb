@@ -73,8 +73,8 @@ module OpenAsset
 
 
 
-        # @!parse attr_reader :session, :uri
-        attr_reader :session, :uri
+        # @!parse attr_reader :session, :uri, :gem_version, :oa_version
+        attr_reader :session, :uri, :gem_version, :oa_version
 
         # @!parse attr_accessor :verbose, :outgoing_encoding
         attr_accessor :verbose, :outgoing_encoding
@@ -93,6 +93,8 @@ module OpenAsset
             @finder        = Finder.new
             @session       = @authenticator.get_session
             @uri           = @authenticator.uri
+            @oa_version    = @authenticator.get_oa_version
+            @gem_version   = Openasset::VERSION#  Not to be confused with OA codebase version
             @verbose       = false
             @incoming_encoding = 'utf-8' # => Assume utf-8 unless web server specifies otherwise
             @outgoing_encoding = 'utf-8'
