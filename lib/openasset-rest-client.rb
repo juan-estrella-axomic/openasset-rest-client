@@ -94,7 +94,7 @@ module OpenAsset
             @session       = @authenticator.get_session
             @uri           = @authenticator.uri
             @oa_version    = @authenticator.get_oa_version
-            @gem_version   = Openasset::VERSION#  Not to be confused with OA codebase version
+            @gem_version   = Openasset::VERSION  # Not to be confused with OA codebase version
             @verbose       = false
             @incoming_encoding = 'utf-8' # => Assume utf-8 unless web server specifies otherwise
             @outgoing_encoding = 'utf-8'

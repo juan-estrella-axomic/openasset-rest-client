@@ -78,7 +78,6 @@ class Authenticator
 
         if token_validation_failed
             puts "TOKEN VALIDATION ERROR: Please log in again to recover.\n"
-            token_validation_failed = false
         end
 
         while u == '' || p == ''
@@ -109,11 +108,11 @@ class Authenticator
 
     def config_set_up
         #Make sure the the config directory is created
-        unless Dir.exists?(File.join(File.dirname(__FILE__),"configuration"))
+        unless Dir.exist?(File.join(File.dirname(__FILE__),"configuration"))
             FileUtils.mkdir_p(File.join(File.dirname(__FILE__),"configuration"))
         end
         #Make sure the the config file is created withing the configuration directory
-        unless File.exists?(File.join(File.dirname(__FILE__),"configuration","config.yml"))
+        unless File.exist?(File.join(File.dirname(__FILE__),"configuration","config.yml"))
             File.new(File.join(File.dirname(__FILE__),"configuration","config.yml"), File::CREAT)
         end
     end
@@ -132,7 +131,7 @@ class Authenticator
                 request.body = token_creation_data
                 http.request(request)
             end
-        rescue Exception => e
+        rescue StandardError => e
             if attempts.eql?(1)
                 wait_and_try_again()
                 attempts += 1
@@ -214,7 +213,7 @@ class Authenticator
                 request['X-Date'] = @http_date
                 http.request(request)
             end
-        rescue Exception => e
+        rescue StandardError => e
             if attempts.eql?(1)
                 wait_and_try_again()
                 attempts += 1
@@ -249,7 +248,7 @@ class Authenticator
                 request.basic_auth(@username,@password.decrypt)
                 http.request(request)
             end
-        rescue Exception => e
+        rescue StandardError => e
             if attempts.eql?(1)
                 wait_and_try_again()
                 attempts += 1
@@ -342,7 +341,7 @@ class Authenticator
                 request.add_field('X-SessionKey',@session_key)
                 http.request(request)
             end
-        rescue Exception => e
+        rescue StandardError => e
             if attempts.eql?(1)
                 wait_and_try_again()
                 attempts += 1
@@ -423,7 +422,7 @@ class Authenticator
                 @session_key   = Security::decrypt(enc_session_key)
                 @token[:value] = Security::decrypt(enc_token)
                 @token[:id]    = token_id
-            rescue Exception
+            rescue StandardError
                 msg = "Unable to retrieve stored session data."
                 logger.warn(msg.yellow)
             end
