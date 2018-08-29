@@ -13,7 +13,7 @@ module KeywordMover
         object_type = objects.first.class.to_s.chop # Projects => Project | Files => File
 
         # Allows dynamic access to nested keywords for both files and projects
-        keyword_accessor = (objects.first.is_a?(Projects) ? '@project_' : '@') + 'keywords'
+        keyword_accessor = (objects.first.is_a?(Projects) ? '@projectKeywords' : '@keywords')
 
         # Allows access to project or file names attributes dynamically
         object_name = (objects.first.is_a?(Projects) ? '@name' : '@filename')
