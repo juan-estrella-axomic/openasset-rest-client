@@ -9,13 +9,15 @@ module Encoder
         unprocessed_json = json_body # <= Actual JSON object - (NOT A JSON String)
         enc_json_str     = nil
 
+        str = unprocessed_json.to_json
+        enc_in = str.encoding.to_s || enc_in
         
         begin
-            enc_json_str = unprocessed_json.to_json.encode(enc_out, 
-                                                           enc_in, 
-                                                           invalid: :replace, 
-                                                           undef: :replace, 
-                                                           replace: '?')
+            enc_json_str = str.encode(enc_out, 
+                                     enc_in, 
+                                     invalid: :replace, 
+                                     undef: :replace, 
+                                     replace: '?')
         rescue JSON::ParserError => json_err
             unprocessed_json.each do |key,val|
                 if unprocessed_json[key].is_a?(Array) ## It's a nested field
