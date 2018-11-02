@@ -45,7 +45,7 @@ module AssignHeroImages
         file_lookup.each do |proj_id,file_array|
             # Sort files for current project
             next if file_array.empty?
-            hero_image = file_array.sort_by("#{str}").first
+            hero_image = file_array.sort_by { |f| f.send("#{str}") }.first
             project = project_lookup[proj_id]
             project.hero_image_id = hero_image.id
         end
