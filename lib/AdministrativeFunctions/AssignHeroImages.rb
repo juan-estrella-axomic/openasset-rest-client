@@ -17,7 +17,7 @@ module AssignHeroImages
         logger.info('Retrieving projects.')
         projects = get_projects(op)
         project_ids = projects.map(&:id).uniq
-        project_lookup = projects.each_with_object({}) { |proj,hash| hash[proj.id] = proj }
+        project_lookup = projects.each_with_object({}) { |proj,hash| hash[proj.id.to_s] = proj }
 
         op.clear
         op.add_option('limit',0)
@@ -50,7 +50,7 @@ module AssignHeroImages
             project.hero_image_id = hero_image.id
         end
 
-        count,remainder = projects_to_update.divmod(batch_size)
+        count,remainder = projects_to_update.length.divmod(batch_size)
         count += 1 if remainder > 0
 
         projects_to_update.each_slice(batch_size).with_index do |batch,i|
