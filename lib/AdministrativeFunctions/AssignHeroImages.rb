@@ -13,6 +13,7 @@ module AssignHeroImages
         op.add_option('limit',0)
         op.add_option('withHeroImage',1)
         op.add_option('displayFields','id,hero_image_id')
+        op.add_option('hero_image_id',0)
 
         logger.info('Retrieving projects.')
         projects = get_projects(op)
@@ -44,7 +45,9 @@ module AssignHeroImages
         projects_to_update = []
         file_lookup.each do |proj_id,file_array|
             # Sort files for current project
-            next if file_array.empty?
+            if file_array.empty?
+                #abort("Oops array empty")
+            end
             hero_image = file_array.sort_by { |f| f.send("#{str}") }.first
             project = project_lookup[proj_id.to_s]
             project.hero_image_id = hero_image.id
