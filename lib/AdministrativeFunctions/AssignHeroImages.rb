@@ -13,11 +13,10 @@ module AssignHeroImages
         op.add_option('limit',0)
         op.add_option('withHeroImage',1)
         op.add_option('displayFields','id,hero_image_id')
-        op.add_option('hero_image_id',0)
 
         logger.info('Retrieving projects.')
         projects = get_projects(op)
-        project_ids = projects.map(&:id).uniq
+        project_ids = projects.map(&:id)
         project_lookup = projects.each_with_object({}) { |proj,hash| hash[proj.id.to_s] = proj }
 
         op.clear
@@ -28,7 +27,7 @@ module AssignHeroImages
         logger.info('Retrieving files.')
         files = get_files(op)
         file_lookup = {}
-        project_ids.each { |id| file_lookup[id.to_s] = [] }
+        files.each { |f| file_lookup[f.project_id.to_s] ||= [] }
 
         files.each do |f|
             # Verify file doesn't belong to a deleted project
@@ -39,6 +38,7 @@ module AssignHeroImages
                 logger.error(msg)
                 next
             end
+
             file_lookup[f.project_id.to_s] << f
         end
 
@@ -46,7 +46,10 @@ module AssignHeroImages
         file_lookup.each do |proj_id,file_array|
             # Sort files for current project
             if file_array.empty?
-                #abort("Oops array empty")
+                p proj_id
+                p file_array
+                p file_lookup
+                abort("Oops array empty")
             end
             hero_image = file_array.sort_by { |f| f.send("#{str}") }.first
             project = project_lookup[proj_id.to_s]
