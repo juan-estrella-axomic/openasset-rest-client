@@ -16,8 +16,8 @@ module AssignHeroImages
 
         logger.info('Retrieving projects.')
         projects = get_projects(op)
-        project_ids = projects.map(&:id)
-        project_lookup = projects.each_with_object({}) { |proj,hash| hash[proj.id.to_s] = proj }
+        project_ids = projects.map { |p| p.id.to_s }
+        project_file_lookup = projects.each_with_object({}) { |proj,hash| hash[proj.id.to_s] = [] }
 
         op.clear
         op.add_option('limit',0)
@@ -27,23 +27,23 @@ module AssignHeroImages
         logger.info('Retrieving files.')
         files = get_files(op)
         file_lookup = {}
-        files.each { |f| file_lookup[f.project_id.to_s] ||= [] }
+        files.each { |f| project_file_lookup[f.project_id.to_s] << f }
 
-        files.each do |f|
-            # Verify file doesn't belong to a deleted project
-            project_found = project_lookup[f.project_id.to_s]
-            unless project_found
-                msg = "File id #{f.id} is in a deleted project "
-                msg += "with id #{f.project_id}. Skipping."
-                logger.error(msg)
-                next
-            end
+        # files.each do |f|
+        #     # Verify file doesn't belong to a deleted project
+        #     project_found = project_lookup[f.project_id.to_s]
+        #     unless project_found
+        #         msg = "File id #{f.id} is in a deleted project "
+        #         msg += "with id #{f.project_id}. Skipping."
+        #         logger.error(msg)
+        #         next
+        #     end
 
-            file_lookup[f.project_id.to_s] << f
-        end
+        #     file_lookup[f.project_id.to_s] << f
+        # end
 
         projects_to_update = []
-        file_lookup.each do |proj_id,file_array|
+        project_file_lookup.each do |proj_id,file_array|
             # Sort files for current project
             if file_array.empty?
                 p proj_id
