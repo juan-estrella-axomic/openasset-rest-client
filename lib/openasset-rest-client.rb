@@ -67,6 +67,7 @@ module OpenAsset
         include ProjectAddFieldData
         include ProjectMoveFieldDataToKeywords
         include ProjectMoveKeywordsToField
+        include AssignHeroImages
 
         # Administrative Functions - Users/Groups
         include AddUsersToGroups
@@ -1854,6 +1855,10 @@ module OpenAsset
                                                       insert_mode,
                                                       batch_size)
 
+        end
+
+        def assign_hero_images(field='rank',batch_size=250)
+            __assign_hero_images(field,batch_size)
         end
 
     end
