@@ -27,7 +27,10 @@ module AssignHeroImages
         logger.info('Retrieving files.')
         files = get_files(op)
         file_lookup = {}
-        files.each { |f| project_file_lookup[f.project_id.to_s] << f }
+        files.each do |f|
+            abort("project id #{f.project_id} not found!") unless project_file_lookup[f.project_id]
+            project_file_lookup[f.project_id.to_s] << f
+        end
 
         # files.each do |f|
         #     # Verify file doesn't belong to a deleted project
