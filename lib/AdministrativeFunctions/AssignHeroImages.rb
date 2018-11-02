@@ -46,17 +46,18 @@ module AssignHeroImages
             # Sort files for current project
             next if file_array.empty?
             hero_image = file_array.sort_by { |f| f.send("#{str}") }.first
-            project = project_lookup[proj_id]
+            project = project_lookup[proj_id.to_s]
             project.hero_image_id = hero_image.id
+            projects_to_update << project
         end
 
         count,remainder = projects_to_update.length.divmod(batch_size)
         count += 1 if remainder > 0
 
-        projects_to_update.each_slice(batch_size).with_index do |batch,i|
+        projects_to_update.each_slice(batch_size).with_index(1) do |batch,i|
             logger.info("Updating batch #{i} of #{count}")
             res = update_projects(batch)
-            logger.info(res)
+            logger.info(res.message)
         end
 
         logger.info("Hero image assignment complete.")
