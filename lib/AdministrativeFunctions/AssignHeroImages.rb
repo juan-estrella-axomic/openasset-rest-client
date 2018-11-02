@@ -16,7 +16,7 @@ module AssignHeroImages
 
         logger.info('Retrieving projects.')
         projects = get_projects(op)
-        project_ids = projects.map(:id).uniq
+        project_ids = projects.map(&:id).uniq
         project_lookup = projects.each_with_object({}) { |proj,hash| hash[proj.id] = proj }
 
         op.clear
