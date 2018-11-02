@@ -1,3 +1,3 @@
 module Openasset
-  VERSION = "2.0.4-Dev"
+  VERSION = "2.0.4"
 end
