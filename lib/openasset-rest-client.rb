@@ -1857,8 +1857,16 @@ module OpenAsset
 
         end
 
-        def assign_hero_images(field='rank',batch_size=250)
-            __assign_hero_images(field,batch_size)
+        # Assign hero images to projects.
+        #
+        # @param options [Hash -> attribute,overwrite,order,value,batch_size] (optional)
+        # @return [nil] nil.
+        #
+        # @example
+        #          options = {'attribute' => 'rank, 'order' => 'asc', overwrite' => true, 'value' => 1, 'batch_size' => 250}
+        #          rest_client.assign_hero_images(options)
+        def assign_hero_images(options={})
+            __assign_hero_images(options)
         end
 
     end
