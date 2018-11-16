@@ -3,13 +3,15 @@ require_relative 'ObjectGenerator'
 
 module FileUploader
 
-	def __upload_file(file=nil, category=nil, project=nil, generate_objects=false,read_timeout=600) 
+    def __upload_file(file,category,project,generate_objects,read_timeout,low_priority_processing)
+        
+        query   = low_priority_processing ? '?lowPriority=1' : ''
         timeout = read_timeout.to_i.abs
         timeout = timeout > 0 ? timeout : 120 # 120 sec is the default
         tries   = 1
         response = nil
        
-        unless File.exists?(file.to_s)
+        unless File.exist?(file.to_s)
             msg = "The file #{file.inspect} does not exist...Bailing out."
             logger.error(msg)
             return false
@@ -31,30 +33,22 @@ module FileUploader
             return false
         end
 
-        category_id = nil
-        project_id  = nil
+        category_id = category.is_a?(Categories) ? category.id : category
+        project_id  = if project.is_a?(Projects)
+                        project.id
+                      elsif project.nil?
+                        ''
+                      else
+                        project
+                      end
 
-        if category.is_a?(Categories)
-            category_id = category.id
-        else
-            category_id = category
-        end
-
-        if project.is_a?(Projects)
-            project_id = project.id
-        elsif project.nil?
-            project_id = ''
-        else
-            project_id = project
-        end
-
-        uri = URI.parse(@uri + "/Files")
-        boundary = (0...50).map { (65 + rand(26)).chr }.join #genererate a random str thats 50 char long
-        body = Array.new
+        uri = URI.parse(@uri + '/Files' + query)
+        boundary = (0...50).map { rand(65..90).chr }.join #genererate a random str thats 50 char long
+        body = []
 
         msg = "Uploading File: => {\"original_filename\":\"#{File.basename(file)}\",\"category_id\":\"#{category_id}\",\"project_id\":\"#{project_id}\"}"
         logger.info(msg.white)
-        
+
         # upload waits up to 15 sec to complete before timing out
         loop do
             begin
@@ -71,7 +65,7 @@ module FileUploader
 
                     raw_filename = File.basename(file)
                     encoding = raw_filename.encoding.to_s
-                    
+
                     begin
                         filename = raw_filename.force_encoding(encoding).encode(@outgoing_encoding, # Default UTF-8 
                                                                                 encoding, 
@@ -95,9 +89,9 @@ module FileUploader
                     body << "\r\n------WebKitFormBoundary#{boundary}--"
                     request.body = body.join
                     http.request(request)
-                end 
-            rescue Exception => e 
-                
+                end
+            rescue StandardError => e
+
                 logger.warn("Initial Connection failed. Retrying in 20 seconds.") if attempts.eql?(1)
                 msg = e.message
                 if attempts.eql?(1)
@@ -120,8 +114,9 @@ module FileUploader
             if response.body.include?('<title>OpenAsset - Something went wrong!</title>') && response.code != '403' 
                 response.body = {
                     'error_message' => 'Possible Gateway timeout: NGINX Error - OpenAsset - Something went wrong!',
-                    'http_status_code' => "#{response.code}" }.to_json
-                if tries < 3 
+                    'http_status_code' => response.code.to_s
+                }.to_json
+                if tries < 3
                     tries += 1
                     logger.error("Apache fell behind and NGINX is returning it's infamous error. Waiting 30 seconds before trying again.")
                     sleep(30)
@@ -132,11 +127,11 @@ module FileUploader
             end
 
             response = Validator.process_http_response(response,@verbose,'Files','POST')
-            break   
+            break
         end
 
         if generate_objects
-            
+
             data = Files.new
             data.id = 'n/a'
             data.filename = File.basename(file)

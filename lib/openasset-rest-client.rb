@@ -696,8 +696,18 @@ module OpenAsset
         #          rest_client.upload_file('/path/to/file', category_obj, nil, true)
         #          rest_client.upload_file('/path/to/file','2', nil, true)
         #          rest_client.upload_file('/path/to/file', 2, nil, true)
-        def upload_file(file=nil, category=nil, project=nil, generate_objects=false,read_timeout=600)
-            __upload_file(file, category, project, generate_objects,read_timeout)
+        def upload_file(file=nil,
+                        category=nil,
+                        project=nil,
+                        generate_objects=false,
+                        read_timeout=600,
+                        low_priority_processing=false)
+            __upload_file(file,
+                          category,
+                          project,
+                          generate_objects,
+                          read_timeout,
+                          low_priority_processing)
         end
 
         # Replace a file in OpenAsset.
