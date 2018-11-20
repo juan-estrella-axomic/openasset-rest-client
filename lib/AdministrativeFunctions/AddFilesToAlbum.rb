@@ -1,80 +1,59 @@
 module AddFilesToAlbum
 
-	def __add_files_to_album(albums='',files='')
+    def __add_files_to_album(albums,files)
 
-            if albums.empty? || albums.nil?
-                logger.error("Albums (argument 1) cannot be empty.")
-                return false
-            end
+        expected_albums_args = %w[ String Integer Albums ]
+        expected_files_args  = %w[ String Integer Files ]
 
-            if files.empty? || files.nil?
-                logger.error("Files (argument 2) cannot be empty.")
-                return false
-            end
+        albums = albums.is_a?(Array) ? albums : [albums]
+        files = files.is_a?(Array) ? files : [files]
 
-            # Get album objects
-            if albums.is_a?(Albums)
-                albums = [albums]
-            elsif albums.is_a?(String) || albums.is_a?(Integer)
-                ids = albums.to_s.split(/,/).reject { |v| v.strip.empty? || v.to_i.eql?(0) }
-                op = RestOptions.new
-                op.add_option('id',ids)
-                albums = get_albums(op)
-                op.clear
-            elsif albums.is_a?(Array)
-                if albums.first.is_a?(String) || albums.first.is_a?(Integer)
-                    op = RestOptions.new
-                    op.add_option('id',albums)
-                    albums = get_albums(op)
-                    op.clear
-                    if albums.empty?
-                        logger.error("Albums with id(s) => #{albums.join(',')} not found.")
-                        return false
-                    end
-                end
-            else
-                logger.error("Expected Albums object(s), string id(s), array of id(s) for first argument. " +
-                             "Instead Got => #{albums.to_s.inspect}.")
-                return false
-            end
-
-            logger.info("Retrieved album(s).")
-
-            # Get File objects
-            if files.is_a?(Files)
-                files = [files]
-            elsif files.is_a?(String) || files.is_a?(Integer)
-                ids = files.to_s.split(/,/).reject { |v| v.strip.empty? || v.to_i.eql?(0) }
-                op = RestOptions.new
-                op.add_option('id',ids)
-                files = get_files(op)
-                op.clear
-            elsif files.is_a?(Array)
-                if files.first.is_a?(String) || files.first.is_a?(Integer)
-                    op = RestOptions.new
-                    op.add_option('id',files)
-                    files = get_albums(op)
-                    op.clear
-                    if files.empty?
-                        logger.error("Files with id(s) => #{files.join(',')} not found.")
-                        return false
-                    end
-                end
-            else
-                logger.error("Expected Files object(s), string id(s), array of id(s) for second argument. " +
-                             "Instead Got => #{files.to_s.inspect}.")
-                return false
-            end
-
-            logger.info("Retrieved album(s).")
-
-            # Loop through albums and add files
-            logger.info("Adding files to album.")
-            albums.each do |album|
-                uri = URI.parse(@uri + "/Albums" + "/#{album.id}" + "/Files")
-                res = post(uri,files,false)
-                return false unless res.kind_of?(Net::HTTPSuccess)
-            end
-            return true
+        unless expected_albums_args.include?(albums.first)
+            logger.error("Expected #{expected_albums_args.inspect} for "\
+                         "(argument 1) in #{__callee__} "\
+                         "Instead got #{albums.first.inspect}")
+            return false
         end
+
+        unless expected_files_args.include?(files.first)
+            logger.error("Expected #{expected_files_args.inspect} for "\
+                         "(argument 2) in #{__callee__} "\
+                         "Instead got #{files.first.inspect}")
+            return false
+        end
+
+        op = RestOptions.new
+
+        unless albums.first.is_a?(Albums)
+            op.add_option('limit', 0)
+            op.add_option('id', albums)
+            albums = get_albums(op)
+            op.clear
+            if albums.empty?
+                logger.error("Albums with id(s) => #{albums.join(',')} not found.")
+                return false
+            end
+            logger.info("Retrieved album(s).")
+        end
+
+        unless files.first.is_a?(Files)
+            op.add_option('limit', 0)
+            op.add_option('id', files)
+            files = get_files(op)
+            op.clear
+            if files.empty?
+                logger.error("Files with id(s) => #{files.join(',')} not found.")
+                return false
+            end
+            logger.info('Retrieved files(s).')
+        end
+        # Loop through albums and add files
+        logger.info('Adding file(s) to album(s).')
+        albums.each do |album|
+            uri = URI.parse(@uri + "/Albums/#{album.id}/Files")
+            res = post(uri, files, false)
+            return false unless res.kind_of?(Net::HTTPSuccess)
+        end
+        true
+    end
 end
