@@ -1,6 +1,6 @@
 module JsonBuilder
     def json
-        json_obj = Hash.new
+        json_obj = {}
         self.instance_variables.each do |var|
             var = var.to_s.gsub(':','')
             value = self.instance_variable_get(var)
