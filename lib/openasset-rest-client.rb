@@ -1505,7 +1505,7 @@ module OpenAsset
         # @param data [Single Users Object, Array of Users Objects] (Required)
         # @param generate_objects [Boolean] (Optional)
         #        Caution: Hurts performance -> Only use if performing further edits after object creation
-        # @return [JSON object] HTTP response JSON object. Returns ImageSizes objects array if generate_objects flag is set
+        # @return [JSON object] HTTP response JSON object. Returns Users objects array if generate_objects flag is set
         #
         # @example
         #          rest_client.create_users(users_obj)
@@ -1523,7 +1523,7 @@ module OpenAsset
         # @param data [Single Users Object, Array of Users Objects] (Required)
         # @param generate_objects [Boolean] (Optional)
         #        Caution: Hurts performance -> Only use if performing further edits after object creation
-        # @return [JSON object] HTTP response JSON object. Returns ImageSizes objects array if generate_objects flag is set
+        # @return [JSON object] HTTP response JSON object. Returns Users objects array if generate_objects flag is set
         #
         # @example
         #          rest_client.update_users(users_obj)
@@ -1553,6 +1553,80 @@ module OpenAsset
             delete(uri,data)
         end
         alias :delete_user :delete_users
+
+        #############
+        #           #
+        # Employees #
+        #           #
+        #############
+
+        # Retrieve Employees.
+        #
+        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @return [Array] Array of Employee objects.
+        #
+        # @example
+        #          rest_client.get_employees()
+        #          rest_client.get_employees(rest_options_object)
+        def get_employees(query_obj=nil,with_nested_resources=false)
+            uri = URI.parse(@uri + "/Employees")
+            handle_get_request(uri,query_obj,with_nested_resources)
+        end
+        alias :get_employee :get_employees
+
+        # Create employees.
+        #
+        # @param data [Single employees Object, Array of employees Objects] (Required)
+        # @param generate_objects [Boolean] (Optional)
+        #        Caution: Hurts performance -> Only use if performing further edits after object creation
+        # @return [JSON object] HTTP response JSON object. Returns employees objects array if generate_objects flag is set
+        #
+        # @example
+        #          rest_client.create_employees(employees_obj)
+        #          rest_client.create_employees(employees_obj,true)
+        #          rest_client.create_employees(employees_obj_array)
+        #          rest_client.create_employees(employees_obj_array,true)
+        def create_employees(data=nil,generate_objects=false)
+            uri = URI.parse(@uri + "/Employees")
+            post(uri,data,generate_objects)
+        end
+        alias :create_employee :create_employees
+
+        # Update Employees.
+        #
+        # @param data [Single Users Object, Array of Employees Objects] (Required)
+        # @param generate_objects [Boolean] (Optional)
+        #        Caution: Hurts performance -> Only use if performing further edits after object creation
+        # @return [JSON object] HTTP response JSON object. Returns Employees objects array if generate_objects flag is set
+        #
+        # @example
+        #          rest_client.update_employees(employees_obj)
+        #          rest_client.update_employees(employees_obj,true)
+        #          rest_client.update_employees(employees_obj_array)
+        #          rest_client.update_employees(employees_obj_array,true)
+        def update_employees(data=nil,generate_objects=false)
+            uri = URI.parse(@uri + "/Employees")
+            put(uri,data,generate_objects)
+        end
+        alias :update_employee :update_employees
+
+        # Delete Employees.
+        #
+        # @param data [Single Employees Object, Array of Employees Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.delete_employees(employees_obj)
+        #          rest_client.delete_employees(employees_obj_array)
+        #          rest_client.delete_employees([1,2,3])
+        #          rest_client.delete_employees(['1','2','3'])
+        #          rest_client.delete_employees(1)
+        #          rest_client.delete_employees('1')
+        def delete_employees(data=nil)
+            uri = URI.parse(@uri + "/Employees")
+            delete(uri,data)
+        end
+        alias :delete_employee :delete_employees
 
         ############################
         #                          #
