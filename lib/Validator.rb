@@ -14,6 +14,7 @@ class Validator
                 Categories
                 CopyrightHolders
                 CopyrightPolicies
+                Employees
                 FieldLookupStrings
                 Fields
                 Files
@@ -29,7 +30,7 @@ class Validator
                 Sizes
                 TextRewrites
                 Users
-              ]
+            ].freeze
 
     # Multi-line regex to match latitude and longitude
     # values that fall within the correct range:
