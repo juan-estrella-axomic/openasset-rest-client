@@ -5,7 +5,6 @@ require 'json'
 require_relative 'MyLogger'
 
 class Validator
-    include Logging
     # NOTE:
     # Calls to an object's super class is for custom objects like Employees.
     # This prevents us from having to expand the list when future
@@ -57,7 +56,7 @@ class Validator
             options = options ? ", #{options}, " : ' '
             msg = "Argument Validation Error: Expected no argument#{options}or a Hash to create #{val} object." +
                   "\nInstead got a(n) #{arg.class} with contents => #{arg.inspect}"
-            logger.error(msg)
+            Logging.logger.error(msg)
             abort
         end
         if arg.is_a?(Hash)
@@ -70,14 +69,14 @@ class Validator
     def self.process_http_response(response,verbose=nil,resource='',http_method='')
         if response.kind_of? Net::HTTPSuccess
             msg = "Success: HTTP => #{response.code} #{response.message}"
-            logger.info(msg.green)
+            Logging.logger.info(msg.green)
         elsif response.kind_of? Net::HTTPRedirection
             location = response['location']
             msg      = "Unexpected Redirect to #{location}"
-            logger.error(msg.yellow)
+            Logging.logger.error(msg.yellow)
         elsif response.kind_of? Net::HTTPUnauthorized
             msg = "Error: #{response.message}: Invalid Credentials."
-            logger.error(msg)
+            Logging.logger.error(msg)
         elsif response.kind_of? Net::HTTPServerError
 
             code = "Code: #{response.code}"
@@ -95,8 +94,8 @@ class Validator
             else
                 response.body = {'error_message' => "#{response.message.to_s.gsub(/[<>]+/,'')}",'http_status_code' => response.code.to_s}.to_json
             end
-            logger.error(code)
-            logger.error(msg)
+            Logging.logger.error(code)
+            Logging.logger.error(msg)
         else
             if response.body.include?('<title>OpenAsset - Something went wrong!</title>') &&
                !http_method.upcase.eql?('GET')
@@ -104,7 +103,7 @@ class Validator
             elsif response.code.eql?('403') && http_method.upcase.eql?('GET') &&
                response.body.include?('<title>OpenAsset - Something went wrong!</title>')
                     msg = "Don't let the error fool you. The image size specified is no longer available in S3. Go see the Wizard."
-                    logger.error(msg)
+                    Logging.logger.error(msg)
             end
         end
         response
@@ -127,7 +126,7 @@ class Validator
                   "to Hash (e.g) field.json\n\t3. A hash just containing an id (e.g) {'id' => 1}\n\t" +
                   "4. A string or an Integer for the id\n\t5. An array of Integers of Numeric Strings" +
                   "\n\tInstead got => #{field.inspect}"
-            logger.error(msg)
+            Logging.logger.error(msg)
             abort
         end
         id
@@ -137,7 +136,7 @@ class Validator
         #Perform all the checks for the url
         unless uri.is_a?(String)
             msg = "Expected a String for first argument => \"uri\": Instead Got #{uri.class}"
-            logger.error(msg)
+            Logging.logger.error(msg)
             abort
         end
 
@@ -161,14 +160,14 @@ class Validator
                    /http:\/\/192\.168\.\d{1,3}\.\d{1,3}/ =~ uri                      # Class C IP range
 
                 msg = "Only private IP ranges allowed. Public IPs will trigger an SSL certificate error."
-                logger.error(msg)
+                Logging.logger.error(msg)
                 abort
             end
             uri
         else
             msg = "Invalid url! Expected http(s)://<subdomain>.openasset.com" +
                   "\nInstead got => #{uri.inspect}"
-            logger.error(msg)
+            Logging.logger.error(msg)
             abort
         end
 
@@ -179,7 +178,7 @@ class Validator
 
         if data.nil?
             msg = "Error: No body provided."
-            logger.error(msg)
+            Logging.logger.error(msg)
             return false
         end
 
@@ -198,12 +197,12 @@ class Validator
             json_object = data.json # This means we have a noun object
         elsif data.is_a?(Array) && data.empty?
             msg = 'Oops. Array is empty so there is nothing to send.'
-            logger.error(msg)
+            Logging.logger.error(msg)
             return false
         else
             msg = "Argument Error: Expected either\n1. A NOUN object\n2. An Array of NOUN objects\n3. A Hash\n4. An Array of Hashes\n" +
                   "Instead got a #{data.class}."
-            logger.error(msg)
+            Logging.logger.error(msg)
             return false
         end
         json_object
@@ -222,7 +221,7 @@ class Validator
                 json_object['id'] = data.to_s
             else
                 msg = "Expected an Integer or Numberic string for id in delete request body. Instead got #{data.inspect}"
-                logger.error(msg)
+                Logging.logger.error(msg)
                 return false
             end
         elsif data.is_a?(Array) && !data.empty?
@@ -235,14 +234,14 @@ class Validator
                 json_object = data.map do |id_value|
                     if id_value.to_i.zero?
                         msg = "Invalid id value of #{id_value.inspect}. Skipping it."
-                        logger.warn(msg.yellow)
+                        Logging.logger.warn(msg.yellow)
                     else
                         {'id' => id_value.to_s} # Convert each id into json object and return array of JSON objects
                     end
                 end
             else
                 msg = "Expected Array of id Strings or Integers but instead got => #{data.first.class}"
-                logger.error(msg)
+                Logging.logger.error(msg)
                 return false
             end
         elsif NOUNS.include?(data.class.name) ||
@@ -250,13 +249,13 @@ class Validator
             json_object = data.json # Convert Noun to JSON object (NOT JSON string. We do that right befor sending the request)
         elsif data.is_a?(Array) && data.empty?
             msg = 'Oops. Array is empty so there is nothing to send.'
-            logger.error(msg)
+            Logging.logger.error(msg)
             return false
         else
             msg = "Argument Error: Expected either\n\t1. A NOUN object\n\t2. An Array of NOUN objects" +
                                   "\n\t3. A Hash\n\t4. An Array of Hashes\n\t5. An Array of id strings or integers\n\t" +
                                   "Instead got a => #{data.class}."
-            logger.error(msg)
+            Logging.logger.error(msg)
             return false
         end
         json_object
@@ -278,7 +277,7 @@ class Validator
                 unless ACCEPTED_KEYS.include?(key.to_s)
                     msg = "Invalid key #{key.inspect}. Acceptable hash keys"\
                           " are #{ACCEPTED_KEYS.inpect}."
-                    logger.error(msg)
+                    Logging.logger.error(msg)
                     return coordinate_pair
                 end
             end
@@ -294,7 +293,7 @@ class Validator
 
         # Make sure the coordinates are within valid ranges
         unless coordinates_valid?(coordinate_pair.join(','))
-            logger.warn("Invalid coordinates detected => #{coordinate_pair}")
+            Logging.logger.warn("Invalid coordinates detected => #{coordinate_pair}")
         end
         coordinate_pair
     end
