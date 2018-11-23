@@ -2,20 +2,11 @@
 module CustomObjectBuilder
     private
     def __populate_object_fields(options)
-        options.each do |key, value|
-
-            method_name = key.to_s
-            value ||= key # When options is the rows of a grid
-
-            case value.class.to_s
+        options.each do |method_name, value|
+            case value.class.name
             when 'Array'
-                # Process each element in json recursively
-                tmp = []
-                value.each do |element|
-                    # NestedGenericObject class contains a recursive constructor
-                    tmp << GridRow.new(element)
-                end
-                send("#{method_name}=", tmp)
+                rows = value.map { |item| GridRow.new(item) }
+                send("#{method_name}=", rows)
             when 'Hash'
                 send("#{method_name}=", Grid.new(value))
             else
