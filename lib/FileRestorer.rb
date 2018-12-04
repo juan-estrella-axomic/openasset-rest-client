@@ -6,9 +6,9 @@ require_relative 'MyLogger'
 module FileRestorer
 
     def restore_deleted_files(query_string='')
-        
+
 		synopsis = <<-EOT
-Usage Example: 
+Usage Example:
 	rest_client.restore_deleted_files('where (deleted_user_id = 17 or deleted_user_id = 9) and (deleted > 20180809000000 and filename like "%bummy joe%")')
 
 EOT
@@ -50,7 +50,7 @@ EOT
             matches = FileFinder.find_files(expressions,files)
             files_to_be_restored.concat(matches)
         end
-        
+
         files_to_be_restored.each do |file|
             file.alive = 1
         end
@@ -63,5 +63,5 @@ EOT
         end
         Logging.logger.info("Total Files Restored => #{file_ids.length}")
     end
-    
+
 end

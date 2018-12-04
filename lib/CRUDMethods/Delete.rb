@@ -3,7 +3,7 @@ module Delete
     def delete(uri,data)
 
         resource  = uri.to_s.split('/').last
-        
+
         json_body = Validator.validate_and_process_delete_body(data)
 
         unless json_body
@@ -27,14 +27,14 @@ module Delete
 
                 # Logic found in Encoder.rb
                 request.body = encode_json_to_utf8(json_body,@outgoing_encoding,@incoming_encoding)
-            
+
                 http.request(request)
             end
-        rescue Exception => e 
+        rescue Exception => e
             if attempts < 3
                 wait_and_try_again()
                 attempts += 1
-                retry                
+                retry
             end
             logger.error("Connection failed. The server is not responding. - #{e}")
             exit(-1)
@@ -42,7 +42,7 @@ module Delete
 
         unless @session == response['X-SessionKey']
             @session = response['X-SessionKey']
-        end        
+        end
 
         response = Validator.process_http_response(response,@verbose,resource,'DELETE')
 

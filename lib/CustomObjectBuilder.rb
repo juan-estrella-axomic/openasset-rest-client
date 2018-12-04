@@ -1,6 +1,10 @@
 
 module CustomObjectBuilder
-    private
+    # Converts arbitrarily nested json into custom object.
+    #
+    # @param options [Hash] JSON object
+    # @return [CustomObject] the json object converted into Custom object.
+        private
     def __populate_object_fields(options)
         options.each do |method_name, value|
             case value

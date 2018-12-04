@@ -9,7 +9,7 @@ module Post
         if uri.to_s.split('/').last.to_i == 0 #its a non numeric string meaning its a resource endpoint
             resource = uri.to_s.split('/').last
         else
-            resource = uri.to_s.split('/')[-2] #the request is using a REST shortcut so we need to grab 
+            resource = uri.to_s.split('/')[-2] #the request is using a REST shortcut so we need to grab
         end                                       #second to last string of the url as the endpoint
 
         name = (resource == 'Files') ? '@filename' : '@name'
@@ -37,14 +37,14 @@ module Post
 
                 # Logic found in Encoder.rb
                 request.body = encode_json_to_utf8(json_body,@outgoing_encoding,@incoming_encoding)
-                
+
                 http.request(request)
             end
         rescue Exception => e
             if attempts < 3
                 wait_and_try_again()
                 attempts += 1
-                retry                
+                retry
             end
             logger.error("Connection failed. The server is not responding. - #{e}")
             exit(-1)
@@ -53,10 +53,10 @@ module Post
         unless @session == response['X-SessionKey']
             @session = response['X-SessionKey']
         end
-        
-        
+
+
         response = Validator.process_http_response(response,@verbose,resource,'POST')
-       
+
         # Check each objects for errors during update
         res = process_errors(data,response,resource,'Create')
 
@@ -68,5 +68,5 @@ module Post
             # Raw JSON object
             return response
         end
-    end	
+    end
 end
