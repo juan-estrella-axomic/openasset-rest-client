@@ -20,7 +20,7 @@ Download the latest release [here](https://github.com/axomic/openasset-rest-ruby
 
 ## Usage
 
-Click here for [Documentation](http://52.14.160.162/docs/index)
+Click here for [Documentation](http://ec2-3-16-54-204.us-east-2.compute.amazonaws.com/docs/OpenAsset/RestClient)
 
 
 ## License
