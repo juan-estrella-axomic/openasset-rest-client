@@ -104,7 +104,7 @@ module OpenAsset
 
         private
         def handle_get_request(uri,query_obj,with_nested_resources)
-            results = []
+            results = nil
             end_point = uri.request_uri.split(/\//).last
             if query_obj.is_a?(String) # Assumed SQL statement
                 expressions = @sql.parse(query_obj,end_point) # Parse SQL
@@ -117,7 +117,7 @@ module OpenAsset
             else # Assumed RestOptions object
                 results = get(uri,query_obj,with_nested_resources)
             end
-            results
+            results ||= []
         end
 
         public
@@ -1956,4 +1956,3 @@ module OpenAsset
     end
 
 end
-
