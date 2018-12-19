@@ -19,9 +19,9 @@ module SmartUpdater
 
             # This code executes if the web server hangs or takes too long
             # to respond after the first update is performed => Possible cause can be too large a batch size
-            if attempts == 4
+            if attempts == 5
                 Validator.process_http_response(res,@verbose,scope.capitalize,'HEAD')
-                msg = "Max Number of attempts (3) reached!\nThe web server may have taken too long to respond." +
+                msg = "Max Number of attempts (#{attempts}) reached!\nThe web server may have taken too long to respond." +
                       " Try adjusting the batch size."
                 logger.error(msg)
                 abort
@@ -62,14 +62,21 @@ module SmartUpdater
     end
 
     # @!visibility private
-    def wait_and_try_again
-        logger.warn("Initial Connection failed. Retrying in 15 seconds.")
-        15.times do |num|
-            printf("\rRetrying in %-2.0d",(15-num))
-            sleep(1)
+    def wait_and_try_again(max=1) # Can be expanded from default
+        max_attempts = max
+        interval     = 15 #seconds
+        attempts     = [*1..max_attempts]
+
+        attempts.each do |val|
+            interval = interval * 2 unless val.eql?(1)
+            logger.warn("Initial Connection failed. Retrying in #{interval} seconds.")
+            interval.times do |num|
+                printf("\rRetrying in %-2.0d",(interval-num))
+                sleep(1)
+            end
+            printf("\rRetrying NOW        \n")
+            logger.warn("Re-attempting request. Please wait.")
         end
-        printf("\rRetrying NOW        \n")
-        logger.warn("Re-attempting request. Please wait.")
     end
 
 end
