@@ -66,7 +66,7 @@ module SmartUpdater
         wait_time  = options[:interval] || 15 #seconds
         attempts   = options[:attempts] || 1
 
-        unless attempt.eql?(1)
+        unless attempts.eql?(1)
            # double the wait time on subsequent attempts
            attempts.times { wait_time *= 2 }
         end
