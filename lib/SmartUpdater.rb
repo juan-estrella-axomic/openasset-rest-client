@@ -62,21 +62,22 @@ module SmartUpdater
     end
 
     # @!visibility private
-    def wait_and_try_again(max=1) # Can be expanded from default
-        max_attempts = max
-        interval     = 15 #seconds
-        attempts     = [*1..max_attempts]
+    def wait_and_try_again(options = {}) # Can be expanded from default
+        wait_time  = options[:interval] || 15 #seconds
+        attempts   = options[:attempts] || 1
 
-        attempts.each do |val|
-            interval = interval * 2 unless val.eql?(1)
-            logger.warn("Initial Connection failed. Retrying in #{interval} seconds.")
-            interval.times do |num|
-                printf("\rRetrying in %-2.0d",(interval-num))
-                sleep(1)
-            end
-            printf("\rRetrying NOW        \n")
-            logger.warn("Re-attempting request. Please wait.")
+        unless attempt.eql?(1)
+           # double the wait time on subsequent attempts
+           attempts.times { wait_time *= 2 }
         end
+
+        logger.warn("Initial Connection failed. Retrying in #{wait_time} seconds.")
+        wait_time.times do |elapsed|
+            printf("\rRetrying in %-2.0d",(wait_time - elapsed))
+            sleep(1)
+        end
+        printf("\rRetrying NOW        \n")
+        logger.warn("Re-attempting request. Please wait.")
     end
 
 end

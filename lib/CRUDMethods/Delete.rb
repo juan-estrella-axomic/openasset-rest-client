@@ -1,3 +1,4 @@
+require_relative './Constants.rb'
 module Delete
 	# @!visibility private
     def delete(uri,data)
@@ -31,8 +32,8 @@ module Delete
                 http.request(request)
             end
         rescue Exception => e
-            if attempts < 3
-                wait_and_try_again()
+            if attempts < MAX_REQUEST_RETRIES
+                wait_and_try_again({:attempts => attempts})
                 attempts += 1
                 retry
             end

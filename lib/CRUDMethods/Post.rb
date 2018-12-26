@@ -1,3 +1,5 @@
+require_relative './Constants.rb'
+
 module Post
     # @!visibility private
     def post(uri,data,generate_objects=false)
@@ -41,8 +43,8 @@ module Post
                 http.request(request)
             end
         rescue Exception => e
-            if attempts < 3
-                wait_and_try_again()
+            if attempts < MAX_REQUEST_RETRIES
+                wait_and_try_again({:attempts => attempts})
                 attempts += 1
                 retry
             end
