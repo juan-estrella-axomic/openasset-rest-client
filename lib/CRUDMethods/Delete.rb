@@ -1,4 +1,5 @@
-require_relative './Constants.rb'
+require_relative '../Constants.rb'
+
 module Delete
 	# @!visibility private
     def delete(uri,data)
@@ -38,7 +39,8 @@ module Delete
                 retry
             end
             logger.error("Connection failed. The server is not responding. - #{e}")
-            exit(-1)
+            Thread.exit
+            #exit(-1)
         end
 
         unless @session == response['X-SessionKey']

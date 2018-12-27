@@ -158,7 +158,8 @@ module ProjectAddFieldData
                 unless current_project.instance_variable_defined?('@'+field_name)
                     warn "ERROR: The specified attirbute \"#{field_name}\" does not" +
                          " exist in the Project. Exiting."
-                    exit(-1)
+                    Thread.exit
+                    #exit(-1)
                 end
                 #update the project
                 current_project.instance_variable_set('@'+field_name, value)

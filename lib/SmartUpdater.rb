@@ -24,7 +24,8 @@ module SmartUpdater
                 msg = "Max Number of attempts (#{attempts}) reached!\nThe web server may have taken too long to respond." +
                       " Try adjusting the batch size."
                 logger.error(msg)
-                abort
+                Thread.exit
+                #abort
             end
 
             if server_test_passed
@@ -36,7 +37,8 @@ module SmartUpdater
                 else
                     msg = "Invalid update scope. Expected Files or Projects in payload. Instead got => #{scope}"
                     logger.error(msg)
-                    abort
+                    Thread.exit
+                    #abort
                 end
 
                 if res.kind_of? Net::HTTPSuccess
@@ -49,7 +51,8 @@ module SmartUpdater
                     break
                 else
                     Validator.process_http_response(res,@verbose,scope.capitalize,'PUT')
-                    abort
+                    Thread.exit
+                    #abort
                 end
             else
                 time_lapse = 5 * attempts

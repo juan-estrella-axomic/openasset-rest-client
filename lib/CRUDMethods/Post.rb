@@ -1,4 +1,4 @@
-require_relative './Constants.rb'
+require_relative '../Constants.rb'
 
 module Post
     # @!visibility private
@@ -49,7 +49,8 @@ module Post
                 retry
             end
             logger.error("Connection failed. The server is not responding. - #{e}")
-            exit(-1)
+            Thread.exit
+            #exit(-1)
         end
 
         unless @session == response['X-SessionKey']

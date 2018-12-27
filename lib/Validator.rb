@@ -57,7 +57,8 @@ class Validator
             msg = "Argument Validation Error: Expected no argument#{options}or a Hash to create #{val} object." +
                   "\nInstead got a(n) #{arg.class} with contents => #{arg.inspect}"
             Logging.logger.error(msg)
-            abort
+            Thread.exit
+            #abort
         end
         if arg.is_a?(Hash)
             # Convert all keys to strings in case user passes symbols as keys so values can be extracted
@@ -127,7 +128,8 @@ class Validator
                   "4. A string or an Integer for the id\n\t5. An array of Integers of Numeric Strings" +
                   "\n\tInstead got => #{field.inspect}"
             Logging.logger.error(msg)
-            abort
+            Thread.exit
+            #abort
         end
         id
     end
@@ -137,7 +139,8 @@ class Validator
         unless uri.is_a?(String)
             msg = "Expected a String for first argument => \"uri\": Instead Got #{uri.class}"
             Logging.logger.error(msg)
-            abort
+            Thread.exit
+            #abort
         end
 
         uri_with_protocol = Regexp.new('(^https:\/\/|http:\/\/)[\w-]+\.[\w-]+\.(com)$', true)
@@ -161,14 +164,16 @@ class Validator
 
                 msg = "Only private IP ranges allowed. Public IPs will trigger an SSL certificate error."
                 Logging.logger.error(msg)
-                abort
+                Thread.exit
+                #abort
             end
             uri
         else
             msg = "Invalid url! Expected http(s)://<subdomain>.openasset.com" +
                   "\nInstead got => #{uri.inspect}"
             Logging.logger.error(msg)
-            abort
+            Thread.exit
+            #abort
         end
 
     end

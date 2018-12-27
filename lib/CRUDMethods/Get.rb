@@ -1,5 +1,5 @@
 require_relative '../SmartUpdater'
-require_relative './Constants.rb'
+require_relative '../Constants.rb'
 
 module Get
     include SmartUpdater
@@ -91,10 +91,13 @@ module Get
                                     arr.push(value)                 # Insert the URI.decoded value
                                     value = arr.join(',')           # Convert the Array back to a string
                                     post_parameters[key] = value    # Add it to the post parameters HASH
-                                rescue Exception => e
+                                rescue JSON::ParserError => e
                                     logger.error(e.message)
                                     logger.error("Value causing the error => #{existing_data.inspect}")
-                                    abort
+                                    Thread.exit
+                                rescue StandardError => e
+                                    logger.error("Error => #{e.message}")
+                                    Thread.exit
                                 end
                             else
                                 post_parameters[key] = existing_data + ',' + value  # For non array list format => ?id=1,2,3
@@ -127,7 +130,8 @@ module Get
                 retry
             end
             logger.error("Connection failed. The server is not responding. - #{e}")
-            exit(-1)
+            Thread.exit
+            #exit(-1)
         end
 
         unless @session == response['X-SessionKey'] # Upate session if needed

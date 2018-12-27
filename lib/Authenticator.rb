@@ -19,6 +19,8 @@ require_relative 'Validator'
 require_relative 'Security'
 require_relative 'SecureString'
 require_relative 'MyLogger'
+require_relative 'Constants'
+require_relative 'SmartUpdater'
 
 
 #use this class to generate a token
@@ -28,6 +30,7 @@ require_relative 'MyLogger'
 class Authenticator
 
     include Logging
+    include SmartUpdater
 
     AXOMIC = 'axomic'
     REQUIRED_OA_VERSION = '10.2.22'
@@ -53,16 +56,6 @@ class Authenticator
         @http_date = nil
         @user_agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0'
         @signature = ''
-    end
-
-    def wait_and_try_again
-        logger.warn("Initial Connection failed. Retrying in 15 seconds.")
-        15.times do |num|
-            printf("\rRetrying in %-2.0d",(15-num))
-            sleep(1)
-        end
-        printf("\rRetrying NOW        \n")
-        logger.warn("Re-attempting request. Please wait.")
     end
 
     def get_credentials(attempts=0,token_validation_failed=false)
@@ -117,7 +110,7 @@ class Authenticator
         end
     end
 
-    def create_token(attempts=0,token_validation_failed=false) #Runs FIRST
+    def create_token(attempts=nil,token_validation_failed=false) #Runs FIRST
         #puts "In create token"
         get_credentials(attempts,token_validation_failed)
         uri = URI.parse(@token_endpoint)
@@ -125,20 +118,27 @@ class Authenticator
 
         begin
             attempts ||= 1
-            response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Post.new(uri.request_uri,{'Content-Type' => 'application/json','User-Agent' => @user_agent})
-                request.basic_auth(@username,@password.decrypt)
-                request.body = token_creation_data
-                http.request(request)
+            MAX_REQUEST_RETRIES.times do # Handles 502 and 503
+                response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+                    request = Net::HTTP::Post.new(uri.request_uri,{'Content-Type' => 'application/json','User-Agent' => @user_agent})
+                    request.basic_auth(@username,@password.decrypt)
+                    request.body = token_creation_data
+                    http.request(request)
+                end
+                break if response.kind_of? Net::HTTPSuccess ||
+                    !RECOVERABLE_NET_HTTP_EXCEPTIONS.include?(response.class)
+                wait_and_try_again({:attempts => attempts})
+                attempts += 1
             end
         rescue StandardError => e
-            if attempts.eql?(1)
-                wait_and_try_again()
+            if attempts < MAX_REQUEST_RETRIES
+                wait_and_try_again({:attempts => attempts})
                 attempts += 1
                 retry
             end
             logger.error("Connection failed. The server is not responding. <create_token> - #{e}")
-            exit(-1)
+            Thread.exit
+            #exit(-1)
         end
 
         if response.kind_of? Net::HTTPSuccess
@@ -147,13 +147,15 @@ class Authenticator
                 @token[:value] = JSON.parse(response.body)['token'].to_s
             rescue JSON::ParserError => e
                 logger.error("JSON Parser Error: #{e.message}")
-                exit(-1)
+                Thread.exit
+                #exit(-1)
             end
             # It's an On-Prem Codebase! No token was returned even though the authentication was successful!
             if @token[:id].to_s.empty? || @token[:value].to_s.empty?
                 msg = 'It looks like you are using an outdated On-premise codebase. OpenAsset Cloud codebase 10.3.12 or higher required.'
                 logger.error(msg.yellow)
-                exit(-1)
+                Thread.exit
+                #exit(-1)
             end
             msg = 'Token created successfully!'
             logger.info(msg)
@@ -176,11 +178,13 @@ class Authenticator
         elsif response.kind_of? Net::HTTPServerError
             msg = "Error: #{response.message}: try again later."
             logger.error(msg)
-            abort
+            Thread.exit
+            #abort
         else
             msg = "Error: #{response.message}"
-            logger.error(msg)
-            abort
+            logger.error(msg
+            Thread.exit
+            #abort
         end
         return true
     end
@@ -197,34 +201,38 @@ class Authenticator
     end
 
     def token_valid?
-
         key_id =  @token[:id]
         uri = URI.parse(@url + @@API_CONST + @@VERSION_CONST + '/Headers') #'https://se1.openasset.com/REST/1/Headers'
 
         create_signature()
 
         token_auth_string = "OAT #{key_id}:#{@signature}"
-        response = nil
+        success = false
+
         begin
             attempts ||= 1
-            response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
-                request = Net::HTTP::Get.new(uri.request_uri,{'User-Agent' => @user_agent})
-                request['Authorization'] = token_auth_string #By using the signature, you indirectly check if token is valid
-                request['X-Date'] = @http_date
-                http.request(request)
+            MAX_REQUEST_RETRIES.times do # Mitigates 502 and 503 errors
+                response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+                    request = Net::HTTP::Get.new(uri.request_uri,{'User-Agent' => @user_agent})
+                    request['Authorization'] = token_auth_string #By using the signature, you indirectly check if token is valid
+                    request['X-Date'] = @http_date
+                    http.request(request)
+                end
+                success = process_authentication_response(response,{:attempts => attempts})
+                break if success
+                attempts += 1
             end
-        rescue StandardError => e
-            if attempts.eql?(1)
-                wait_and_try_again()
+        rescue StandardError => e # Handles connection exceptions
+            if attempts < MAX_REQUEST_RETRIES
+                wait_and_try_again({:attempts => attempts})
                 attempts += 1
                 retry
             end
             logger.error("Connection failed. The server is not responding. - #{e}")
-            exit(-1)
+            Thread.exit
+            #exit(-1)
         end
-
-       process_authentication_response(response)
-
+        success
     end
 
     def validate_token #for code readability
@@ -255,13 +263,14 @@ class Authenticator
                 retry
             end
             logger.error("Connection failed. The server is not responding. - #{e}")
-            exit(-1)
+            Thread.exit
+            #exit(-1)
         end
 
         process_authentication_response(response)
     end
 
-    def process_authentication_response(response)
+    def process_authentication_response(response,options = {})
         success = false
         if response.kind_of? Net::HTTPSuccess
             msg = nil
@@ -299,14 +308,15 @@ class Authenticator
             else
                 success = false
             end
-        elsif response.kind_of? Net::HTTPServerError
-            msg = "Error: #{response.message}: try again later."
-            logger.error(msg)
-            abort
+        elsif RECOVERABLE_NET_HTTP_EXCEPTIONS.include?(response.class) #response.kind_of? Net::HTTPServerError
+            wait_and_try_again(options)
+            success = false
+            #abort
         else
-            msg = "Error: #{response.message}"
+            msg = "Unrecoverable Error: #{response.message}"
             logger.error(msg)
-            abort
+            Thread.exit
+            #abort
         end
         success
     end
@@ -326,7 +336,8 @@ class Authenticator
             else
                 msg = "Unknown Error: Authentication setup failure."
                 logger.error(msg)
-                abort
+                Thread.exit
+                #abort
             end
         end
     end
@@ -342,13 +353,14 @@ class Authenticator
                 http.request(request)
             end
         rescue StandardError => e
-            if attempts.eql?(1)
-                wait_and_try_again()
+            if attempts < MAX_REQUEST_RETRIES
+                wait_and_try_again({:attempts => attempts})
                 attempts += 1
                 retry
             end
             logger.error("Connection failed. The server is not responding <session_valid?>. - #{e}")
-            exit(-1)
+            Thread.exit
+            #exit(-1)
         end
         #puts "In session_valid? - after req"
         case response
@@ -376,7 +388,8 @@ class Authenticator
         if conf.nil?
             msg = "Looks like the configuration file has been altered or become corrupted. Aborting."
             logger.error(msg)
-            abort
+            Thread.exit
+            #abort
         end
 
         if conf[url].nil?
