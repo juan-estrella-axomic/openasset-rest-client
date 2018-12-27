@@ -52,6 +52,10 @@ class Projects < Generic
         @name_alias_1 = json_obj['name_alias_1']
         @name_alias_2 = json_obj['name_alias_2']
         @data_integration_id = json_obj['data_integration_id']
+        @public_image_count = json_obj['public_image_count']
+        @unapproved_image_count = json_obj['unapproved_image_count']
+        @dead_image_count = json_obj['dead_image_count']
+        @private_image_count = json_obj['private_image_count']
         @location = nil
         @projectKeywords = []
         @fields = []
