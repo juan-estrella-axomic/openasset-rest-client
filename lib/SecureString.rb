@@ -5,8 +5,8 @@ class SecureString
     attr_reader :value
 
     def initialize(str='')
-        @cipher
-        @decipher
+        @cipher   = OpenSSL::Cipher.new('DES-EDE3-CBC')
+        @decipher = OpenSSL::Cipher.new('DES-EDE3-CBC')
         @key
         @iv
         @encrypted = false
@@ -33,7 +33,6 @@ class SecureString
     def encrypt
         return if @value.to_s.empty?
         return @value if @encrypted.eql?(true)
-        @cipher = OpenSSL::Cipher.new('DES-EDE3-CBC')
         @cipher.encrypt
         @key = @cipher.random_key
         @iv = @cipher.random_iv
@@ -46,12 +45,13 @@ class SecureString
 
     def decrypt
         return @value if @encrypted.eql?(false)
-        @decipher = OpenSSL::Cipher.new('DES-EDE3-CBC')
         @decipher.decrypt
         @decipher.key = @key
         @decipher.iv = @iv
         @value = [@value].pack("H*")
-        @decipher.update(@value) + @decipher.final
+        @value = @decipher.update(@value) + @decipher.final
+        @encrypted = false
+        @value
     end
 
 end
