@@ -65,7 +65,7 @@ class RestOptions
         operator = '='
         COMPARISON_OPERATORS.each do |op|
             regex = /^#{op}/
-            match_data = regex.match(field_value)
+            match_data = regex.match(field_value.to_s)
             if match_data
                 operator += match_data[0]
                 field_value = match_data.post_match

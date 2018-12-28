@@ -122,28 +122,36 @@ module ProjectAddFieldData
         elsif current_field.field_display_type == "date"
             #make sure we get the right date format
             #Accepts mm-dd-yyyy, mm-dd-yy, mm/dd/yyyy, mm/dd/yy
-            date_regex = Regexp::new('((\d{2}-\d{2}-(\d{4}|\d{2}))|(\d{2}\/\d{2}\/(\d{4}|\d{2})))')
-            unless (value =~ date_regex) == 0
-                msg = "Invalid date format. Expected => \"mm-dd-yyyy\" | \"mm-dd-yy\" | \"mm/dd/yyyy\" | \"mm/dd/yy\""
-                logger.error(msg)
+            date_regex = Regexp::new('^((\d{2}-\d{2}-(\d{4}|\d{2}))|(\d{2}\/\d{2}\/(\d{4}|\d{2})))$')
+            ymd_date = Regexp::new('^((\d{4}-\d{2}-\d{2})|(\d{4}\/\d{2}\/\d{2}))$')
+            raw_date =Regexp::new('^\d{14}$')
+            unless date_regex.match(value)|| ymd_date.match(value) || raw_date.match(value)
+                warn 'ERROR: Invalid date format. Expected one of the following => "mm-dd-yyyy" | ' \
+                        '"mm-dd-yy" | "mm/dd/yyyy" | "mm/dd/yy" | "yyyy-mm-dd" | "yyyy/mm/dd" | ' \
+                        'YYYYMMDDxxxxxx'
                 return
             end
 
             value.gsub!('/','-')
             date_arr = value.split('-') #convert date string to array for easy manipulation
+            suffix = '000000'
 
-            if date_arr.last.length == 2  #convert mm-dd-yy to mm-dd-yyyy format
-                four_digit_year = '20' + date_arr.last
-
-                date_arr[-1] = four_digit_year
+            if ymd_date.match(value)
+                value = value.gsub('-','') + suffix
+            elsif date_regex.match(value)
+                if date_arr.last.length == 2  #convert mm-dd-yy to mm-dd-yyyy format
+                    four_digit_year = '20' + date_arr.last
+                    date_arr[-1] = four_digit_year
+                end
+                #convert date to 14 digit unix time stamp
+                value = date_arr[-1] + date_arr[-3] + date_arr[-2] + suffix
             end
-            #convert date to 14 digit unix time stamp
-            value = date_arr[-1] + date_arr[-3] + date_arr[-2] + '000000'
+
+            value = '19700101000100' if value.eql?('19700101000000') # REST API doesn't accept base epoch time
 
             #Apply the date to our current Files resource
             data = {:id => current_field.id, :values => [value.to_s]}
             res = put(projects_endpoint,data,false) #Make the update
-
 
         elsif NORMAL_FIELD_TYPES.include?(current_field.field_display_type) #For regular fields
             #some fields are built into Projects so they can't be inserted into
