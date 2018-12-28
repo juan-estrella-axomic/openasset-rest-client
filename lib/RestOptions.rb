@@ -2,6 +2,7 @@ require 'erb'
 require 'colorize'
 
 require_relative 'MyLogger'
+require_relative 'Constants'
 
 class RestOptions
 
@@ -60,15 +61,43 @@ class RestOptions
     #         options.add_option('name','jim') => ?name=jim
     #          options.add_option('limit','100') => ?name=jim&limit=100
     def add_option(field_name,field_value)
+        # check for  comparison operators
+        operator = '='
+        COMPARISON_OPERATORS.each do |op|
+            regex = /^#{op}/
+            match_data = regex.match(field_value)
+            if match_data
+                operator += match_data[0]
+                field_value = match_data.post_match
+                break
+            end
+        end
         field = clean(field_name)
         value = clean(field_value)
         if field && value && @options.empty?
-            @options += '?' + field + '=' + ERB::Util.url_encode(value)
+            @options += '?' + field + operator + ERB::Util.url_encode(value)
         elsif field && value && !@options.empty?
-            @options += '&' + field + '=' + ERB::Util.url_encode(value)
+            @options += '&' + field + operator + ERB::Util.url_encode(value)
         end
     end
     alias :add_options :add_option
+
+    # Add search critieria to http query string
+    #
+    # @param field_name [string] Query field name (Required)
+    # @param field_value [string] Query field value (Required)
+    # @return [nil]
+    #
+    # @example
+    #         options.add_raw_option('id=>=12') => '?id=>=12'
+    def add_raw_option(value)
+        if field && value && @options.empty?
+            @options += '?' + value
+        elsif field && value && !@options.empty?
+            @options += '&' + value
+        end
+    end
+    alias :add_raw_options :add_raw_option
 
     # Remove search critieria to http query string
     #

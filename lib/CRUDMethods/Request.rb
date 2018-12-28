@@ -5,7 +5,7 @@ require_relative '../Validator.rb'
 module Request
 
     def send_request(options = {})
-        request_type = options[:type].to_s.upcase
+        request_type = options[:request_type].to_s.upcase
         uri          = options[:uri]
         rest_options = options[:rest_options]
         data         = options[:data]
@@ -20,11 +20,11 @@ module Request
         when 'POST'
             request = Net::HTTP::Post.new(uri.request_uri)
         when 'PUT'
-            request = Net::HTTP::Post.new(uri.request_uri)
+            request = Net::HTTP::Put.new(uri.request_uri)
         when 'DELETE'
-            request = Net::HTTP::Post.new(uri.request_uri)
+            request = Net::HTTP::Delete.new(uri.request_uri)
         else
-            Logging.logger.error("Invalid request type #{type.inspect}")
+            Logging.logger.error("Invalid request type #{request_type.inspect}")
             return
         end
 
@@ -57,9 +57,11 @@ module Request
         end
 
         # Send the request and return the response
+        retries = (@retry_limit || MAX_REQUEST_RETRIES).to_i
+        retries += 1 if retries.to_i.zero?
         begin
             attempts ||= 1
-            MAX_REQUEST_RETRIES.times do # Handle 502 and 503 errors
+            retries.times do # Handle 502 and 503 errors
                 response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
                     session = @session ? @session : @authenticator.get_session()
                     request.add_field('X-SessionKey',session)
@@ -81,6 +83,7 @@ module Request
         end
         response
     end
+
     ###########
     # HELPERS #
     ###########

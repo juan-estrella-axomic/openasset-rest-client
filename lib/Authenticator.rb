@@ -114,6 +114,7 @@ class Authenticator
         #puts "In create token"
         get_credentials(attempts,token_validation_failed)
         uri = URI.parse(@token_endpoint)
+        response = nil
         token_creation_data = '{"name" : "rest-client-ruby"}'
 
         begin
@@ -182,7 +183,7 @@ class Authenticator
             #abort
         else
             msg = "Error: #{response.message}"
-            logger.error(msg
+            logger.error(msg)
             Thread.exit
             #abort
         end

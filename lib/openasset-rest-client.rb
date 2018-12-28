@@ -78,7 +78,7 @@ module OpenAsset
         attr_reader :session, :uri, :gem_version, :oa_version
 
         # @!parse attr_accessor :verbose, :outgoing_encoding
-        attr_accessor :verbose, :outgoing_encoding
+        attr_accessor :verbose, :outgoing_encoding, :retry_limit
 
         # Create new instance of the OpenAsset rest client
         #
@@ -96,6 +96,7 @@ module OpenAsset
             @uri           = @authenticator.uri
             @oa_version    = @authenticator.get_oa_version
             @gem_version   = Openasset::VERSION  # Not to be confused with OA codebase version
+            @retry_limit   = nil
             @verbose       = false
             @incoming_encoding = 'utf-8' # => Assume utf-8 unless web server specifies otherwise
             @outgoing_encoding = 'utf-8'

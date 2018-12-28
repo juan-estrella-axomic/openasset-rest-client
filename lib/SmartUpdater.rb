@@ -76,7 +76,7 @@ module SmartUpdater
 
         logger.warn("Initial Connection failed. Retrying in #{wait_time} seconds.")
         wait_time.times do |elapsed|
-            printf("\rRetrying in %-2.0d",(wait_time - elapsed))
+            printf("\rRetrying in %-2.0d          ",(wait_time - elapsed))
             sleep(1)
         end
         printf("\rRetrying NOW        \n")
