@@ -13,6 +13,7 @@ require_relative 'Error'
 require_relative 'Finder'
 require_relative 'Fetcher'
 require_relative 'SQLParser'
+require_relative 'Constants'
 
 require 'net/http'
 
@@ -78,7 +79,7 @@ module OpenAsset
         attr_reader :session, :uri, :gem_version, :oa_version
 
         # @!parse attr_accessor :verbose, :outgoing_encoding
-        attr_accessor :verbose, :outgoing_encoding, :retry_limit
+        attr_accessor :verbose, :outgoing_encoding
 
         # Create new instance of the OpenAsset rest client
         #
@@ -89,14 +90,14 @@ module OpenAsset
         #         rest_client = OpenAsset::RestClient.new('se1.openasset.com')
         def initialize(client_url,un='',pw='')
 
-            @authenticator = Authenticator.get_instance(client_url,un,pw)
+            @retry_limit   = nil || MAX_REQUEST_RETRIES
+            @authenticator = Authenticator.get_instance(client_url,un,pw,@retry_limit)
             @sql           = SQLParser.new
             @finder        = Finder.new
             @session       = @authenticator.get_session
             @uri           = @authenticator.uri
             @oa_version    = @authenticator.get_oa_version
             @gem_version   = Openasset::VERSION  # Not to be confused with OA codebase version
-            @retry_limit   = nil
             @verbose       = false
             @incoming_encoding = 'utf-8' # => Assume utf-8 unless web server specifies otherwise
             @outgoing_encoding = 'utf-8'
@@ -157,6 +158,35 @@ module OpenAsset
         def renew_session
             kill_session
             get_session
+        end
+
+        #####################
+        #                   #
+        #   Error Handling  #
+        #                   #
+        #####################
+
+        # Sets limit of request retries
+        #
+        # @return [request_limit] Return the retry limit
+        #
+        # @example
+        #           rest_client.retry_limit = 2  => 2
+        def retry_limit=(val)
+            val = val.to_i
+            val += 1 if val.zero? # obfuscates retry mechanism offset
+            @retry_limit = val
+        end
+
+        # Returns limit of request retries
+        #
+        # @return [request_limit] Return the retry limit
+        #
+        # @example
+        #           rest_client.retry_limit  => 2
+        def retry_limit
+            val = @retry_limit.to_i
+            val.zero? ? val : (val - 1) # obfuscates retry mechanism offset
         end
 
         ####################################################

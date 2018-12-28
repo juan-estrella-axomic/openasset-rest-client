@@ -43,7 +43,7 @@ class Authenticator
     attr_reader :uri
 
     private
-    def initialize(url,un,pw)
+    def initialize(url,un,pw,retry_limit)
         @url = Validator.validate_and_process_url(url)
         @username = un.to_s
         @password = SecureString.new(pw.to_s)
@@ -119,7 +119,7 @@ class Authenticator
 
         begin
             attempts ||= 1
-            MAX_REQUEST_RETRIES.times do # Handles 502 and 503
+            retry_limit.times do # Handles 502 and 503
                 response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
                     request = Net::HTTP::Post.new(uri.request_uri,{'Content-Type' => 'application/json','User-Agent' => @user_agent})
                     request.basic_auth(@username,@password.decrypt)
@@ -212,7 +212,7 @@ class Authenticator
 
         begin
             attempts ||= 1
-            MAX_REQUEST_RETRIES.times do # Mitigates 502 and 503 errors
+            @retry_limit.times do # Mitigates 502 and 503 errors
                 response = Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
                     request = Net::HTTP::Get.new(uri.request_uri,{'User-Agent' => @user_agent})
                     request['Authorization'] = token_auth_string #By using the signature, you indirectly check if token is valid

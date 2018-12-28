@@ -57,11 +57,9 @@ module Request
         end
 
         # Send the request and return the response
-        retries = (@retry_limit || MAX_REQUEST_RETRIES).to_i
-        retries += 1 if retries.to_i.zero?
         begin
             attempts ||= 1
-            retries.times do # Handle 502 and 503 errors
+            @retry_limit.times do # Handle 502 and 503 errors
                 response = Net::HTTP.start(uri.host, uri.port, :read_timeout => 300, :use_ssl => uri.scheme == 'https') do |http|
                     session = @session ? @session : @authenticator.get_session()
                     request.add_field('X-SessionKey',session)
@@ -73,7 +71,7 @@ module Request
                 attempts += 1
             end
         rescue StandardError => e # Handle connection errors
-            if attempts < MAX_REQUEST_RETRIES
+            if attempts < @retry_limit
                 wait_and_try_again({:attempts => attempts})
                 attempts += 1
                 retry
