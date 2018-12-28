@@ -91,9 +91,9 @@ class RestOptions
     # @example
     #         options.add_raw_option('id=>=12') => '?id=>=12'
     def add_raw_option(value)
-        if field && value && @options.empty?
+        if @options.empty?
             @options += '?' + value
-        elsif field && value && !@options.empty?
+        else
             @options += '&' + value
         end
     end
