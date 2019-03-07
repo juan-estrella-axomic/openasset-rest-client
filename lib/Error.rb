@@ -7,4 +7,9 @@ class Error
         @status_code   = code || 'Not set'
         @message       = msg || 'Not set'     
     end
+
+    def id
+	@resource_id
+    end
+    
 end
