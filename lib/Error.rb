@@ -10,6 +10,5 @@ class Error
 
     def id
 	@resource_id
-    end
-    
+    end 
 end
