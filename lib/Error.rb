@@ -1,5 +1,5 @@
 class Error
-    attr_accessor :id, :resource_name, :resource_type, :status_code, :message
+    attr_accessor :resource_id, :resource_name, :resource_type, :status_code, :message
     def initialize(id=nil, name=nil, type=nil, code=nil, msg=nil)
         @resource_id   = id || 'Not set'
         @resource_name = name || 'Not set'
