@@ -1,6 +1,7 @@
 require_relative '../Constants.rb'
 require_relative '../MyLogger.rb'
 require_relative '../Validator.rb'
+require_relative './CustomMethods/Merge.rb'
 
 module Request
 
@@ -23,13 +24,15 @@ module Request
             request = Net::HTTP::Put.new(uri.request_uri)
         when 'DELETE'
             request = Net::HTTP::Delete.new(uri.request_uri)
+        when 'MERGE'
+            request = Custom::HTTPMethod::Merge.new(uri.request_uri)
         else
             Logging.logger.error("Invalid request type #{request_type.inspect}")
             return
         end
 
         # Prep body data
-        if request_type.eql?('POST') || request_type.eql?('PUT')
+        if request_type.eql?('POST') || request_type.eql?('PUT') || request_type.eql?('MERGE')
             json_body = Validator.validate_and_process_request_data(data)
         elsif request_type.eql?('DELETE')
             json_body = Validator.validate_and_process_delete_body(data)
