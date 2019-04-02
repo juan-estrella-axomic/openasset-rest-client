@@ -111,7 +111,7 @@ class Authenticator
         end
     end
 
-    def create_token(attempts=nil,token_validation_failed=false) #Runs FIRST
+    def create_token(attempts=0,token_validation_failed=false) #Runs FIRST
         #puts "In create token"
         get_credentials(attempts,token_validation_failed)
         uri = URI.parse(@token_endpoint)
@@ -127,9 +127,13 @@ class Authenticator
                     request.body = token_creation_data
                     http.request(request)
                 end
-                break if response.kind_of? Net::HTTPSuccess ||
-                    !RECOVERABLE_NET_HTTP_EXCEPTIONS.include?(response.class)
-                wait_and_try_again({:attempts => attempts})
+                # break if response.kind_of? Net::HTTPSuccess ||
+                #     !RECOVERABLE_NET_HTTP_EXCEPTIONS.include?(response.class)
+                if RECOVERABLE_NET_HTTP_EXCEPTIONS.include?(response.class)
+                    wait_and_try_again({:attempts => attempts})
+                else
+                    break
+                end
                 attempts += 1
             end
         rescue StandardError => e
@@ -324,7 +328,6 @@ class Authenticator
     end
 
     def setup_authentication
-        #puts "In setup authentication"
         if is_axomic_user?
             get_axomic_session()
         else
@@ -339,7 +342,6 @@ class Authenticator
                 msg = "Unknown Error: Authentication setup failure."
                 logger.error(msg)
                 Thread.exit
-                #abort
             end
         end
     end
