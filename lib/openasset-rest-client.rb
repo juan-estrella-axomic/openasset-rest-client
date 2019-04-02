@@ -39,6 +39,7 @@ module OpenAsset
         include Post
         include Put
         include Delete
+        include Merge
 
         # Helper Methods
         include Encoder
@@ -246,7 +247,7 @@ module OpenAsset
         # @example
         #          rest_client.create_albums(albums_obj)
         #          rest_client.create_albums(albums_obj_array)
-        #            rest_client.create_albums(albums_obj,true)
+        #          rest_client.create_albums(albums_obj,true)
         #          rest_client.create_albums(albums_obj_array,true)
         def create_albums(data=nil,generate_objects=false)
             uri = URI.parse(@uri + '/Albums')
@@ -289,6 +290,20 @@ module OpenAsset
             delete(uri,data)
         end
         alias :delete_album :delete_albums
+
+        # Merge Albums
+        #
+        # @param target [ Albums object, id ](Required)
+        # @param source [ Array of Albums objects or ids ](Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.merge_copyright_policies(copyright_policies_obj,copyright_policies_obj_array)
+        #          rest_client.merge_copyright_policies('1',['1','2','3'])
+        def merge_albums(target,source)
+            uri = URI.parse(@uri + "/Albums")
+            merge(uri,target,source)
+        end
 
         ####################
         #                  #
@@ -424,6 +439,20 @@ module OpenAsset
         end
         alias :update_copyright_holder :update_copyright_holders
 
+        # Merge CopyrightHolders
+        #
+        # @param target [ CopyrightHolders object, id ](Required)
+        # @param source [ Array of CopyrightHolders objects or ids ](Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.merge_copyright_holders(copyright_holders_obj,copyright_holders_obj_array)
+        #          rest_client.merge_copyright_holders('1',['1','2','3'])
+        def merge_copyright_holders(target,source)
+            uri = URI.parse(@uri + "/CopyrightHolders")
+            merge(uri,target,source)
+        end
+
         ######################
         #                    #
         # COPYRIGHT POLICIES #
@@ -497,6 +526,20 @@ module OpenAsset
             delete(uri,data)
         end
         alias :delete_copyright_policy :delete_copyright_policies
+
+        # Merge CopyrightPolicies
+        #
+        # @param target [ CopyrightPolicies object, id ](Required)
+        # @param source [ Array of CopyrightPolicies objects or ids ](Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.merge_copyright_policies(copyright_policies_obj,copyright_policies_obj_array)
+        #          rest_client.merge_copyright_policies('1',['1','2','3'])
+        def merge_copyright_policies(target,source)
+            uri = URI.parse(@uri + "/CopyrightPolicies")
+            merge(uri,target,source)
+        end
 
         #####################
         #                   #
@@ -1008,6 +1051,20 @@ module OpenAsset
         end
         alias :delete_keyword :delete_keywords
 
+        # Merge Keywords.
+        #
+        # @param target [ Keywords Object, id ](Required)
+        # @param source [ Array of Keywords objects or ids ](Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.merge_keywords(keywords_obj,keywords_obj_array)
+        #          rest_client.merge_keywords('1',['1','2','3'])
+        def merge_keywords(target,source)
+            uri = URI.parse(@uri + "/Keywords")
+            merge(uri,target,source)
+        end
+
         ######################
         #                    #
         # KEYWORD CATEGORIES #
@@ -1082,6 +1139,20 @@ module OpenAsset
         end
         alias :delete_keyword_category :delete_keyword_categories
 
+        # Merge Keyword Categories.
+        #
+        # @param target [ Keyword Categories Object, id ](Required)
+        # @param source [ Array of Keyword Categories objects or ids ](Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.merge_keyword_categories(keywords_categories_obj,keyword_categories_obj_array)
+        #          rest_client.merge_keyword_categories('1',['1','2','3'])
+        def merge_keyword_categories(target,source)
+            uri = URI.parse(@uri + "/KeywordCategories")
+            merge(uri,target,source)
+        end
+
         #################
         #               #
         # PHOTOGRAPHERS #
@@ -1137,6 +1208,20 @@ module OpenAsset
             put(uri,data,generate_objects)
         end
         alias :update_photographer :update_photographers
+
+        # Merge Photographers
+        #
+        # @param target [ Photographers Object, id ](Required)
+        # @param source [ Array of Photgraphers objects or ids ](Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.merge_photographers(photgraphers_obj,photographers_obj_array)
+        #          rest_client.merge_photographers('1',['1','2','3'])
+        def merge_photographers(target,source)
+            uri = URI.parse(@uri + "/Photographers")
+            merge(uri,target,source)
+        end
 
         ############
         #          #
@@ -1287,6 +1372,20 @@ module OpenAsset
         end
         alias :delete_project_keyword :delete_project_keywords
 
+        # Merge Project Keywords
+        #
+        # @param target [ Project Keywords Object, id ](Required)
+        # @param source [ Array of Project Keywords objects or ids ](Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.merge_project_keywords(project_keywords_obj,project_keywords_obj_array)
+        #          rest_client.merge_project_keywords('1',['1','2','3'])
+        def merge_project_keywords(target,source)
+            uri = URI.parse(@uri + "/ProjectKeywords")
+            merge(uri,target,source)
+        end
+
         ##############################
         #                            #
         # PROJECT KEYWORD CATEGORIES #
@@ -1360,6 +1459,196 @@ module OpenAsset
             delete(uri,data)
         end
         alias :delete_project_keyword_category :delete_project_keyword_categories
+
+        # Merge Project Keyword Categories
+        #
+        # @param target [ Project Keyword Categories Object, id ](Required)
+        # @param source [ Array of Project Keyword Categories objects or ids ](Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.merge_project_keyword_categories(project_keywords_obj,project_keywords_obj_array)
+        #          rest_client.merge_project_keyword_categories('1',['1','2','3'])
+        def merge_project_keyword_categories(target,source)
+            uri = URI.parse(@uri + "/ProjectKeywordCategories")
+            merge(uri,target,source)
+        end
+
+        #####################
+        #                   #
+        # Employee Keywords #
+        #                   #
+        #####################
+
+        # Retrieve Employee keywords.
+        #
+        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @return [Array] Array of EmployeeKeywords objects.
+        #
+        # @example
+        #          rest_client.get_employee_keywords()
+        #          rest_client.get_employee_keywords(rest_options_object)
+        def get_employee_keywords(query_obj=nil,with_nested_resources=false)
+            uri = URI.parse(@uri + "/EmployeeKeywords")
+            handle_get_request(uri,query_obj,with_nested_resources)
+        end
+        alias :get_employee_keyword :get_employee_keywords
+
+        # Create Employee Keywords.
+        #
+        # @param data [Single EmployeeKeywords Object, Array of EmployeeKeywords Objects] (Required)
+        # @param generate_objects [Boolean] (Optional)
+        #        Caution: Hurts performance -> Only use if performing further edits after object creation
+        # @return [JSON object] HTTP response JSON object. Returns EmployeeKeywords objects array if generate_objects flag is set
+        #
+        # @example
+        #          rest_client.create_employee_keywords(employee_keywords_obj)
+        #          rest_client.create_employee_keywords(employee_keywords_obj,true)
+        #          rest_client.create_employee_keywords(employee_keywords_obj_array)
+        #          rest_client.create_employee_keywords(employee_keywords_obj_array,true)
+        def create_employee_keywords(data=nil,generate_objects=false)
+            uri = URI.parse(@uri + "/EmployeeKeywords")
+            post(uri,data,generate_objects)
+        end
+        alias :create_employee_keyword :create_employee_keywords
+
+        # Modify Employee Keywords.
+        #
+        # @param data [Single EmployeeKeywords Object, Array of EmployeeKeywords Objects] (Required)
+        # @param generate_objects [Boolean] (Optional)
+        #        Caution: Hurts performance -> Only use if performing further edits after updating object
+        # @return [JSON object] HTTP response JSON object. Returns EmployeeKeywords objects array if generate_objects flag is set
+        #
+        # @example
+        #          rest_client.update_employee_keywords(employee_keywords_obj)
+        #          rest_client.update_employee_keywords(employee_keywords_obj,true)
+        #          rest_client.update_employee_keywords(employee_keywords_obj_array)
+        #          rest_client.update_employee_keywords(employee_keywords_obj_array,true)
+        def update_employee_keywords(data=nil,generate_objects=false)
+            uri = URI.parse(@uri + "/EmployeeKeywords")
+            put(uri,data,generate_objects)
+        end
+        alias :update_employee_keyword :update_employee_keywords
+
+        # Delete Employee Keywords.
+        #
+        # @param data [Single EmployeeKeywords Object, Array of EmployeeKeywords Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.delete_employee_keywords(employee_keywords_obj)
+        #          rest_client.delete_employee_keywords(employee_keywords_obj_array)
+        #          rest_client.delete_employee_keywords([1,2,3])
+        #          rest_client.delete_employee_keywords(['1','2','3'])
+        #          rest_client.delete_employee_keywords(1)
+        #          rest_client.delete_employee_keywords('1')
+        def delete_employee_keywords(data=nil)
+            uri = URI.parse(@uri + "/EmployeeKeywords")
+            delete(uri,data)
+        end
+        alias :delete_employee_keyword :delete_employee_keywords
+
+        # Merge Employee Keywords
+        #
+        # @param target [ Employee Keywords Object, id ](Required)
+        # @param source [ Array of Employee Keywords objects or ids ](Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.merge_employee_keywords(employee_keywords_obj,employee_keywords_obj_array)
+        #          rest_client.merge_employee_keywords('1',['1','2','3'])
+        def merge_employee_keywords(target,source)
+            uri = URI.parse(@uri + "/EmployeeKeywords")
+            merge(uri,target,source)
+        end
+
+        ###############################
+        #                             #
+        # EMPLOYEE KEYWORD CATEGORIES #
+        #                             #
+        ###############################
+
+        # Retrieve employee keyword categories.
+        #
+        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @return [Array] Array of EmployeeKeywordCategories objects.
+        #
+        # @example
+        #          rest_client.get_employee_keyword_categories()
+        #          rest_client.get_employee_keyword_categories(rest_options_object)
+        def get_employee_keyword_categories(query_obj=nil,with_nested_resources=false)
+            uri = URI.parse(@uri + "/EmployeeKeywordCategories")
+            handle_get_request(uri,query_obj,with_nested_resources)
+        end
+        alias :get_employee_keyword_category :get_employee_keyword_categories
+
+        # Create employee keyword categories.
+        #
+        # @param data [Single EmployeeKeywordCategories Object, Array of EmployeeKeywordCategories Objects] (Required)
+        # @param generate_objects [Boolean] (Optional)
+        #        Caution: Hurts performance -> Only use if performing further edits after object creation
+        # @return [JSON object] HTTP response JSON object. Returns EmployeeKeywordCategories objects array if generate_objects flag is set
+        #
+        # @example
+        #          rest_client.create_employee_keyword_categories(employee_keyword_categories_obj)
+        #          rest_client.create_employee_keyword_categories(employee_keyword_categories_obj,true)
+        #          rest_client.create_employee_keyword_categories(employee_keyword_categories_obj_array)
+        #          rest_client.create_employee_keyword_categories(employee_keyword_categories_obj_array,true)
+        def create_employee_keyword_categories(data=nil,generate_objects=false)
+            uri = URI.parse(@uri + "/EmployeeKeywordCategories")
+            post(uri,data,generate_objects)
+        end
+        alias :create_employee_keyword_category :create_employee_keyword_categories
+
+        # Modify employee keyword categories.
+        #
+        # @param data [Single EmployeeKeywordCategories Object, Array of EmployeeKeywordCategories Objects] (Required)
+        # @param generate_objects [Boolean] (Optional)
+        #        Caution: Hurts performance -> Only use if performing further edits after updating object
+        # @return [JSON object] HTTP response JSON object. Returns EmployeeKeywordCategories objects array if generate_objects flag is set
+        #
+        # @example
+        #          rest_client.update_employee_keyword_categories(employee_keyword_categories_obj)
+        #          rest_client.update_employee_keyword_categories(employee_keyword_categories_obj,true)
+        #          rest_client.update_employee_keyword_categories(employee_keyword_categories_obj_array)
+        #          rest_client.update_employee_keyword_categories(employee_keyword_categories_obj_array,true)
+        def update_employee_keyword_categories(data=nil,generate_objects=false)
+            uri = URI.parse(@uri + "/EmployeeKeywordCategories")
+            put(uri,data,generate_objects)
+        end
+        alias :update_employee_keyword_category :update_employee_keyword_categories
+
+        # Delete Employee Keyword Categories.
+        #
+        # @param data [Single EmployeeKeywordCategories Object, Array of EmployeeKeywordCategories Objects, Integer, Integer Array, Numeric String, Numeric String Array] (Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.delete_employee_keyword_categories(employee_keyword_categories_obj)
+        #          rest_client.delete_employee_keyword_categories(employee_keyword_categories_obj_array)
+        #          rest_client.delete_employee_keyword_categories([1,2,3])
+        #          rest_client.delete_employee_keyword_categories(['1','2','3'])
+        #          rest_client.delete_employee_keyword_categories(1)
+        #          rest_client.delete_employee_keyword_categories('1')
+        def delete_employee_keyword_categories(data=nil)
+            uri = URI.parse(@uri + "/EmployeeKeywordCategories")
+            delete(uri,data)
+        end
+        alias :delete_employee_keyword_category :delete_employee_keyword_categories
+
+        # Merge Employee Keyword Categories
+        #
+        # @param target [ Employee Keyword Categories Object, id ](Required)
+        # @param source [ Array of Employee Keyword Categories objects or ids ](Required)
+        # @return [JSON object] HTTP response JSON object.
+        #
+        # @example
+        #          rest_client.merge_employee_keyword_categories(employee_keywords_obj,employee_keywords_obj_array)
+        #          rest_client.merge_employee_keyword_categories('1',['1','2','3'])
+        def merge_employee_keyword_categories(target,source)
+            uri = URI.parse(@uri + "/EmployeeKeywordCategories")
+            merge(uri,target,source)
+        end
 
         ############
         #          #
