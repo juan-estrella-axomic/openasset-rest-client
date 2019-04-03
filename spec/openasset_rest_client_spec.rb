@@ -277,7 +277,8 @@ RSpec.describe RestClient do
         describe '#upload_files' do
             it 'uploads a file' do
                 #file_path = './resources/rspec_bird.jpg'
-                file_path = File.expand_path('spec/resources/rspec_bird.jpg')
+                file_path = File.expand_path('./resources/rspec_bird.jpg')
+                fail "File: #{file_path} not found" unless File.exist?(file_path)
                 category  = 2 # Reference
                 expect(@client.upload_file(file_path,category).code).to eq '201'
             end
@@ -303,31 +304,38 @@ RSpec.describe RestClient do
             end
         end
         describe '#replace_file' do
+            let(:query_obj) { RestOptions.new }
             it 'replaces a file' do
-                @query.clear
-                @query.add_option('original_filename','rspec_bird.jpg')
-                @query.add_option('textMatching','exact')
-                existing_img = @client.get_files(@query).first
-                replacement_img = File.expand_path('spec/resources/rspec_flowers.jpg')
+                query = query_obj
+                query.add_option('original_filename','rspec_bird.jpg')
+                query.add_option('textMatching','exact')
+                existing_img = @client.get_files(query).first
+                replacement_img = File.expand_path('./resources/rspec_flowers.jpg')
+                fail "File: #{replacement_img} not found" unless File.exist?(replacement_img)
                 expect(@client.replace_file(existing_img,replacement_img).code).to eq '200'
             end
         end
         describe '#update_files' do
+            let(:query_obj) { RestOptions.new }
             it 'modifies a file' do
-                @query.clear
-                @query.add_option('original_filename','rspec_flowers.jpg')
-                @query.add_option('textMatching','exact')
-                file = @client.get_files(@query).first
+                query = query_obj
+                query.add_option('original_filename','rspec_flowers.jpg')
+                query.add_option('textMatching','exact')
+                file = @client.get_files(query).first
+                fail 'File retrieval error' unless file.is_a?(Files)
+                file.created = nil # API returns value of "0" but wont reaccept it.
                 file.caption = 'RSpecTest'
                 expect(@client.update_files(file).code).to eq '200'
             end
         end
         describe '#delete_files' do
+            let(:query_obj) { RestOptions.new }
             it 'deletes a file' do
-                @query.clear
-                @query.add_option('original_filename','rspec_flowers.jpg')
-                @query.add_option('textMatching','exact')
-                file = @client.get_files(@query).first
+                query = query_obj
+                query.add_option('original_filename','rspec_flowers.jpg')
+                query.add_option('textMatching','exact')
+                file = @client.get_files(query).first
+                fail 'File retrieval error' unless file
                 expect(@client.delete_files(file).empty?).to be true
             end
         end
@@ -566,75 +574,67 @@ RSpec.describe RestClient do
     ############
     context 'when dealing with projects' do
         context 'with location' do
-            before(:all) do
-                @project = Projects.new('RSpecTest','1000.123')
-            end
-            describe '#create_projects' do
+            describe 'client' do
+                before(:all) do
+                    @project = Projects.new('RSpecTest222','1000.12444')
+                    @query = RestOptions.new
+                end
                 it 'creates a project' do
                     @project.set_location('40.7128 N , 74.0060 W')
                     @project = @client.create_projects(@project,true).first
                     expect(@project.is_a?(Projects)).to be true
                 end
-            end
-            describe '#get_projects' do
                 it 'retrieves a project' do
                     object = @client.get_projects.first
                     expect(object.is_a?(Projects)).to be true
                 end
-            end
-            describe '#update_projects' do
                 it 'modifies a project' do
-                    @query.clear
-                    @query.add_option('name','RSpecTest')
-                    project = @client.get_projects(@query).first
-                    project.name = 'RSpecTest-Updated'
-                    expect(@client.update_projects(project).code).to eq '200'
+                    @query.add_option('name','RSpecTest222')
+                    @project = @client.get_projects(@query).first
+                    @project.name = 'RSpecTest-Updated'
+                    expect(@client.update_projects(@project).code).to eq '200'
+
                 end
-            end
-            describe '#delete_projects' do
                 it 'deletes a project' do
                     @query.clear
                     @query.add_option('name','RSpecTest-Updated')
-                    @query.add_option('textMatching','exact')
-                    project = @client.get_projects(@query).first
-                    expect(@client.delete_projects(project).empty?).to eq true
+                    @project = @client.get_projects(@query).first
+                    expect(@client.delete_projects(@project).empty?).to be true
                 end
             end
         end
 
         context 'with nested resources' do
-            project = nil
-            before(:all) do
-                album_name = Helpers.generate_unique_name()
-                @album   = Albums.new(album_name)
-                @album   = @client.create_albums(@album,true).first
+            describe 'client' do
+                before(:all) do
+                    @project = Projects.new('RSpecTest','1234.56')
+                    album_name = Helpers.generate_unique_name()
+                    @album   = Albums.new(album_name)
+                    @album   = @client.create_albums(@album,true).first
 
-                project_keyword_name = Helpers.generate_unique_name()
-                project_keyword_category_id = '13'
-                @project_keyword = ProjectKeywords.new(project_keyword_name,
-                                                       project_keyword_category_id)
-                @project_keyword = @client.create_project_keywords(@project_keyword,true).first
+                    project_keyword_name = Helpers.generate_unique_name()
+                    project_keyword_category_id = '13'
+                    @project_keyword = ProjectKeywords.new(project_keyword_name,
+                                                           project_keyword_category_id)
+                    @project_keyword = @client.create_project_keywords(@project_keyword,true).first
 
-                field_name = Helpers.generate_unique_name()
-                @field = Fields.new(field_name,'project','singleLine')
-                @field = @client.create_fields(@field,true).first
-            end
-            describe '#create_projects' do
+                    field_name = Helpers.generate_unique_name()
+                    @field = Fields.new(field_name,'project','singleLine')
+                    @field = @client.create_fields(@field,true).first
+                end
                 it 'creates a project' do
-                    project = Projects.new('RSpecTest','1234.56')
-                    project = @client.create_projects(project,true).first
-                    expect(project.is_a?(Projects)).to be true
+                    @project = @client.create_projects(@project,true).first
+                    expect(@project.is_a?(Projects)).to be true
                 end
-            end
-            describe '#updates_projects' do
                 it 'updates a project' do
-                    project.project_keywords << NestedProjectKeywordItems.new(@project_keyword.id)
-                    project.fields << NestedFieldItems.new(@field.id,['RSpect Test Sample Data'])
-                    project.albums << NestedAlbumItems.new(@album.id)
-                    expect(@client.update_projects(project).code).to eq '200'
+                    @project.project_keywords = []
+                    @project.fields = []
+                    @project.albums = []
+                    @project.project_keywords << NestedProjectKeywordItems.new(@project_keyword.id)
+                    @project.fields << NestedFieldItems.new(@field.id,['RSpect Test Sample Data'])
+                    @project.albums << NestedAlbumItems.new(@album.id)
+                    expect(@project.project_keywords.empty?).to be false
                 end
-            end
-            describe '#get_projects' do
                 it 'retrieves a project' do
                     @query.clear
                     @query.add_option('name','RSpecTest')
@@ -645,17 +645,20 @@ RSpec.describe RestClient do
                     @project = @client.get_projects(@query).first
                 end
                 it 'has a field' do
-                    expect(project.fields.first.id).to eq @field.id
+                    expect(@project.fields.first.id).to eq @field.id
                 end
                 it 'has a project keyword' do
-                    expect(project.project_keywords.first.id).to eq @project_keyword.id
+                    expect(@project.project_keywords.first.id).to eq @project_keyword.id
                 end
                 it 'has an album' do
-                    expect(project.albums.first.id).to eq @album.id
+                    expect(@project.albums.first.id).to eq @album.id
                 end
-            end
-            after(:all) do
-                @client.delete_projects(project)
+                after(:all) do
+                    @query.clear
+                    @query.add_option('name','RSpecTest')
+                    @project = @client.get_projects(@query).first
+                    @client.delete_projects(@project) if @project.is_a?(Projects)
+                end
             end
         end
     end
@@ -750,8 +753,8 @@ RSpec.describe RestClient do
     #################
     context 'when dealing with text rewrites' do
         describe '#get_text_rewrites' do
-            xit 'retrieves a text rewrite' do
-                expect(@client.get_text_rewrites.first.is_a?(TextRewrites)).to be true
+            it 'retrieves a text rewrite' do
+                expect(@client.get_text_rewrites.empty?).to be true
             end
         end
     end
