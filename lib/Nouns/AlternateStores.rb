@@ -15,7 +15,7 @@ class AlternateStores
     # @example
     #         alternate_store = AlternateStores.new
     def initialize(data=nil)
-        json_obj = Validator::validate_argument(data,'AlternateStores')
+        json_obj = Validator.validate_argument(data,'AlternateStores')
         @id = json_obj['id']
         @name = json_obj['name']
         @storage_name = json_obj['storage_name']

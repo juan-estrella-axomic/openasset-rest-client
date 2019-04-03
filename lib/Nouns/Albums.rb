@@ -28,7 +28,7 @@ class Albums < Generic
     # @example
     #         album = Albums.new
     def initialize(data=nil)
-        json_obj = Validator::validate_argument(data,'Albums') unless data.is_a?(String)
+        json_obj = Validator.validate_argument(data,'Albums') unless data.is_a?(String)
         json_obj = {"name" => data}                            if data.is_a?(String)
         @all_users_can_modify = json_obj['all_users_can_modify']
         @can_modify = json_obj['can_modify']

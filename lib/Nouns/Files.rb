@@ -80,7 +80,7 @@ class Files < Generic
                      "\n\tInstead got #{args.inspect} => Creating empty Files object."
             end
         else
-            json_obj = Validator::validate_argument(args.first,'Files')
+            json_obj = Validator.validate_argument(args.first,'Files')
         end
 
         @access_level = json_obj['access_level']

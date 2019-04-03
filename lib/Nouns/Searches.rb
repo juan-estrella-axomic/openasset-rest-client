@@ -40,7 +40,7 @@ class Searches
                 json_obj = {}
             end
         else
-            json_obj = Validator::validate_argument(args.first,'Searches')
+            json_obj = Validator.validate_argument(args.first,'Searches')
         end
 
         @all_users_can_modify = json_obj['all_users_can_modify']

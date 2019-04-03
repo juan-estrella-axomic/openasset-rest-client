@@ -29,7 +29,7 @@ class Keywords
                 json_obj = {"keyword_category_id" => args[0].to_s, "name" => args[1].to_s}
             end
         else
-            json_obj = Validator::validate_argument(args.first,'Keywords')
+            json_obj = Validator.validate_argument(args.first,'Keywords')
         end
 
         @id = json_obj['id']

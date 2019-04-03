@@ -26,7 +26,7 @@ class Photographers
             end
         else
             #Grab the agrument and set up the json object
-            json_obj = Validator::validate_argument(args.first,'Photographers')
+            json_obj = Validator.validate_argument(args.first,'Photographers')
         end
 
         @id = json_obj['id']

@@ -13,7 +13,7 @@ class DataIntegrations
     #          obj = DataIntegrations.new => Empty obj
     #          obj = DataIntegrations.new(:address => "http://example.vision.com/Vision/VisionWS.asmx", :name => "Test", :display_order => "1")
     def initialize(value=nil)
-        json_obj = Validator::validate_argument(value,'DataIntegrations')
+        json_obj = Validator.validate_argument(value,'DataIntegrations')
 
         @address       = json_obj['address']
         @alive         = json_obj['alive']

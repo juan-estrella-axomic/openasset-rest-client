@@ -25,7 +25,7 @@ class ProjectKeywords
                 json_obj = {"name" => args[0].to_s, "project_keyword_category_id" => args[1].to_s}
             end
         else
-            json_obj = Validator::validate_argument(args.first,'ProjectKeywords')
+            json_obj = Validator.validate_argument(args.first,'ProjectKeywords')
         end
 
         @id = json_obj['id']

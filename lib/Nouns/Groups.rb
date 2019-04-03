@@ -24,7 +24,7 @@ class Groups
         if args.first.is_a?(String) # Assume two string args were passed
             json_obj['name'] = args.first
         else                        # Assume a Hash or nil was passed
-            json_obj = Validator::validate_argument(args.first,'Groups')
+            json_obj = Validator.validate_argument(args.first,'Groups')
         end
 
         @hidden = json_obj['hidden']
