@@ -68,9 +68,11 @@ module Request
                     request.add_field('X-SessionKey',session)
                     http.request(request)
                 end
-                break if response.kind_of? Net::HTTPSuccess ||
-                        !RECOVERABLE_NET_HTTP_EXCEPTIONS.include?(response.class)
-                wait_and_try_again({:attempts => attempts})
+                if RECOVERABLE_NET_HTTP_EXCEPTIONS.include?(response.class)
+                    wait_and_try_again({:attempts => attempts})
+                else
+                    break
+                end
                 attempts += 1
             end
         rescue StandardError => e # Handle connection errors
