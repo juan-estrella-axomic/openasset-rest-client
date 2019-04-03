@@ -40,9 +40,8 @@ module Request
 
         # Don't make request with an empty body
         if !request_type.eql?('GET') && !json_body
-            msg = "No data in json_body being sent for #{request_type} request."
-            logger.error(msg)
-            return false
+            msg = "No data in json body for #{request_type} request."
+            return Net::HTTPResponse.new(1.0, 400, msg)
         end
 
         # Handle 2048 character limit with GET requests
