@@ -70,3 +70,4 @@ module Get
         end
         return generate_objects_from_json_response_body(json_body, resource)
     end
+end
