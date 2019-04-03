@@ -17,6 +17,8 @@ class Validator
         Categories
         CopyrightHolders
         CopyrightPolicies
+        EmployeeKeywords
+        EmployeeKeywordCategories
         CustomObject
         FieldLookupStrings
         Fields
