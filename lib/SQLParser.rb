@@ -1,7 +1,6 @@
 require_relative 'MyLogger'
 class SQLParser
     include Logging
-
     # ORDER IS IMPORTANT: putting '=' first will break
     # string_regex and numeric_regex parsing of '!=' operator
     VALID_COMPARISON_OPERATORS = [
@@ -88,12 +87,14 @@ class SQLParser
         query.gsub!(/^\s*where\s*/,'')
         query.gsub!('<>','!=')
 
-
+        query_copy = query
         # Capture order which operators appear in query
         ordered_operators = []
+        str = query.dup
         VALID_COMPARISON_OPERATORS.each do |op|
-            index = query.index(op)
+            index = str.index(op)
             next unless index
+            str.gsub!(op,'~') # replace the operator so having one >= doesn't show as having >= > =
             ordered_operators << [index, op]
         end
         ordered_operators.sort_by! { |index, _operator| index }
@@ -117,7 +118,7 @@ class SQLParser
                 query.gsub!(regex,"--[:space:]--#{op.downcase}--[:space:]--")
             end
         end
-        #abort query
+
         query_copy = query.gsub(/\s+and\s+/,'--[:ANDoperator:]--').gsub(/\s+or\s+/,'--[:ORoperator:]--')
         query_expressions = query_copy.split(/(--\[:ANDoperator:\]--|--\[:ORoperator:\]--)/)
 
@@ -141,7 +142,6 @@ class SQLParser
         end
 
         criteria = query_expressions
-        exp_data = []
 
         # Parse query: Build array of expressions
         while next_value = criteria.shift
@@ -161,13 +161,19 @@ class SQLParser
                 next_value.gsub!(/not\s+like/,'not like') if op.eql?('not like')
                 next_value.gsub!(/not\s+in/,'not in') if op.eql?('not in')
                 # "name--[:space:]--not like--[:space:]--\"jim\""
+
                 # => catches e.g. (name="john doe's pub is for bums")
                 string_regex = %r{([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?(?:'((?:[^\\']|\\.)*)'|"((?:[^\\"]|\\.)*)")([\s\)]*)}
                 # => catches id = 5 or id = 5) <- grouped expressions
                 numeric_regex = %r{^([\s\(]*)(\w+)(--\[:space:\]--)?(#{op})(--\[:space:\]--)?([0-9]+)([\s\)]*)$}
 
                 if next_value.include?(op)
-                    p next_value
+
+                    # Handle edge case when "in" keyword exists in the column name
+                    # Hacky as hell but it works.
+                    operator_regex = %r{--\[:space:\]--#{op}--\[:space:\]--}
+                    next if op.eql?('in') && !next_value.match(operator_regex)
+
                     preceding_parentheses = nil
                     method_name           = nil
                     operator              = nil
@@ -176,7 +182,6 @@ class SQLParser
 
                     if @@between_clause_regex.match(next_value)
                         match = @@between_clause_regex.match(next_value)
-                        p match
                         preceding_parentheses = match[1]
                         method_name = match[2]
                         operator = match[4]
@@ -186,7 +191,6 @@ class SQLParser
                         trailing_parentheses = match[15]
                     elsif string_regex.match(next_value) # Operand is a string value
                         match = string_regex.match(next_value)
-                        p match
                         preceding_parentheses = match[1]
                         method_name = match[2]
                         operator = match[4]
@@ -226,7 +230,6 @@ class SQLParser
 
                         if like_clause_regex.match(next_value)
                             match = like_clause_regex.match(next_value)
-                            p match
                             preceding_parentheses = match[1].to_s
                             method_name = match[2]
                             negated = match[4].to_s.downcase.include?('not')
@@ -247,7 +250,6 @@ class SQLParser
                     elsif @@in_clause_regex.match(next_value)
                         # Extract data in query 'where id in (1,2,3)' => method_name = id | value = "1,2,3"
                         match = @@in_clause_regex.match(next_value)
-                        p match
                         preceding_parentheses = match[1].to_s
                         method_name = match[2]
                         operator = match[4]
@@ -261,11 +263,10 @@ class SQLParser
                         trailing_parentheses = match[9].to_s
                     elsif numeric_regex.match(next_value) # Operand is a numeric value
                         match = numeric_regex.match(next_value)
-                        p match
                         preceding_parentheses = match[1].to_s
                         method_name = match[2]
                         operator = match[4]
-                        value = match[6]
+                        value = match[6].to_i
                         trailing_parentheses = match[7].to_s
                     else # Regex match fail => Most likely due to missing closing quote or bad operator
                         index = original_query.index(next_value)
@@ -279,16 +280,17 @@ class SQLParser
                         val = next_value.gsub('--[:space:]--', '')
                         msg = "#{msg}\n" +
                              "PROBLEM EXPRESSION => #{val.inspect}\n" +
-                             "ORIGINAL QUERY => #{original_query}"
+                             "PROBLEM OPERATOR => #{operator.inspect}\n" +
+                             "ORIGINAL QUERY => #{original_query}\n"
                         logger.error(msg)
-                        abort
+                        return
                     end
 
                     # Replace SQL style operator with valid comparison operator
                     operator = operator.eql?("=") ? "==" : operator
                     method_name.gsub!(/--\[:space:\]--/,'')
 
-                    # Validate column name
+                    # # Validate column name
                     referenced_class = Object.const_get(end_point) #
                     unless referenced_class.new.respond_to?(method_name)
                         referenced_class = end_point.eql?('Files') ? 'Image' : end_point
@@ -303,11 +305,15 @@ class SQLParser
                         value,
                         trailing_parentheses
                     ]
-                    # p exp_data
+
                     # Store extracted expression for use in filter_files method call
                     expressions << exp_data
-                    p expressions
-                    break
+
+                    # final check for missing operators
+                    if ['and','or'].include?(expressions.first.to_s.downcase)
+                        logger.error("Syntax Error in query => #{original_query.inspect}")
+                        return
+                    end
                 end
             end
         end
