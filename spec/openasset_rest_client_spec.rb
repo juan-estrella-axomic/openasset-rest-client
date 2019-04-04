@@ -277,10 +277,12 @@ RSpec.describe RestClient do
         describe '#upload_files' do
             it 'uploads a file' do
                 #file_path = './resources/rspec_bird.jpg'
-                file_path = File.expand_path('./resources/rspec_bird.jpg')
-                fail "File: #{file_path} not found" unless File.exist?(file_path)
+                file_path = File.expand_path('spec/resources/rspec_bird.jpg')
+                unless File.exist?(file_path)
+                    fail "File: #{file_path} not found"
+                end
                 category  = 2 # Reference
-                expect(@client.upload_file(file_path,category).code).to eq '201'
+                expect(@client.upload_file(file_path,category).code).to eq('201').or eq('409')
             end
         end
         context 'retrieves a file with nested resources' do
@@ -310,8 +312,10 @@ RSpec.describe RestClient do
                 query.add_option('original_filename','rspec_bird.jpg')
                 query.add_option('textMatching','exact')
                 existing_img = @client.get_files(query).first
-                replacement_img = File.expand_path('./resources/rspec_flowers.jpg')
-                fail "File: #{replacement_img} not found" unless File.exist?(replacement_img)
+                replacement_img = File.expand_path('spec/resources/rspec_flowers.jpg')
+                unless File.exist?(replacement_img)
+                    fail "File: #{replacement_img} not found"
+                end
                 expect(@client.replace_file(existing_img,replacement_img).code).to eq '200'
             end
         end

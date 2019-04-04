@@ -34,7 +34,7 @@ RSpec.describe Groups do
         end
         it 'gets/sets users with :users' do
             subject.users << NestedUserItems.new('33')
-            expect(subject.users.first.id).to eq '33'
+            expect(subject.users.first.id).to eq 33
         end
     end
     it_behaves_like 'a json builder'
