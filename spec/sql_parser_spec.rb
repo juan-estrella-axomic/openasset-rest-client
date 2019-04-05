@@ -1,4 +1,5 @@
 require_relative '../lib/SQLParser.rb'
+require_relative '../lib/Nouns/Files.rb'
 
 describe SQLParser do
     describe 'parse' do
