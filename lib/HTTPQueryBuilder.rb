@@ -31,12 +31,14 @@ class HTTPQueryBuilder
             search_data = exp.shift
             # create search expression used by api => "=>=917"
             search_criteria = translate_search_data_format(operator,search_data)
+            search_term = field + '=' + search_criteria
             # Add search term to query string
-            @options.add_option(field,search_criteria) # "?/& id=>=917"
+            @options.add_raw_option(search_term) # "?/& id=>=917"
         end
         # Set text precision
         precision = @precise_search ? 'exact' : 'contains'
         @options.add_option('textMatching',precision)
+        @options.add_option('limit',0)
         @options
     end
 
@@ -44,7 +46,7 @@ class HTTPQueryBuilder
 
     def translate_search_data_format(operator,search_data)
         negation_prefix     = ''
-        comparison_operator = '='
+        comparison_operator = ''
         data                = ''
         if operator.is_a?(Hash) # It's a "like" or "not like" sql statement
             negation_prefix = ''
@@ -53,7 +55,7 @@ class HTTPQueryBuilder
         elsif operator.eql?('between') # It's a range  =9-17
             data = search_data.join('-')
         else # It's a regular old comparison operator
-            op = operator
+            comparison_operator = operator.eql?('=') ? '' : operator
         end
         return negation_prefix + comparison_operator + data
     end
