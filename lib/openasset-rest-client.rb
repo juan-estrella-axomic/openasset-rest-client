@@ -121,6 +121,7 @@ module OpenAsset
                     # Filter results on the server - Faster but less granular when
                     # using "like" and "not like" clause
                     options = @query_builder.build_query(expressions)
+                    p options
                     results = get(uri,options,with_nested_resources)
                 else
                     # Filter results on the client - Slower but more granular.

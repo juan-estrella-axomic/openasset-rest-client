@@ -6,7 +6,7 @@ class HTTPQueryBuilder
     include Logging
 
     def initialize
-        @options = RestOptions.new
+        @op = RestOptions.new
         @precise_search = true
     end
 
@@ -33,13 +33,13 @@ class HTTPQueryBuilder
             search_criteria = translate_search_data_format(operator,search_data)
             search_term = field + '=' + search_criteria
             # Add search term to query string
-            @options.add_raw_option(search_term) # "?/& id=>=917"
+            @op.add_raw_option(search_term) # "?/& id=>=917"
         end
         # Set text precision
         precision = @precise_search ? 'exact' : 'contains'
-        @options.add_option('textMatching',precision)
-        @options.add_option('limit',0)
-        @options
+        #@op.add_option('textMatching',precision)
+        @op.add_option('limit',0)
+        @op
     end
 
     private
@@ -53,7 +53,9 @@ class HTTPQueryBuilder
             negation_prefix = '!' if operator['is_regex_negated']
             @precise_search = false if search_data.include?('%')
         elsif operator.eql?('between') # It's a range  =9-17
-            data = search_data.join('-')
+            start_value = search_data.first
+            end_value   = search_data.last
+            data = [*start_value..end_value].join(',')
         else # It's a regular old comparison operator
             comparison_operator = operator.eql?('=') ? '' : operator
         end
