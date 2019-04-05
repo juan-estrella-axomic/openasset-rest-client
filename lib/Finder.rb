@@ -62,8 +62,20 @@ class Finder
         elsif operator.eql?("==")
             result = operand1 == operand2 ? true : false
         elsif operator.eql?("between")
-            val1 = operand2[0]
-            val2 = operand2[1]
+            val1 = operand2[0].to_s
+            val2 = operand2[1].to_s
+            regex = %r{^\d+(?:\.\d+)?$} # checks numeric values
+            v1_is_num = !!val1.match(regex)
+            v2_is_num = !!val2.match(regex)
+            mismatch = v1_is_num ^ v2_is_num
+            if mismatch
+                logger.error("Can't compare #{val1} to #{val2}")
+                return
+            end
+            if v1_is_num
+                val1 = val1.to_f
+                val2 = val2.to_f
+            end
             result = (operand1 >= val1 && operand1 <= val2) ? true : false
         elsif operator.eql?("in")
             result = operand2.include?(operand1) ? true : false
@@ -127,8 +139,9 @@ class Finder
             result = eval(completed_expression)
             matches << object if result == true
         end
+        p '---------------',matches
+        abort
         matches
     end
     alias find_match find_matches
 end
-
