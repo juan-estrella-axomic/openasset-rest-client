@@ -139,8 +139,6 @@ class Finder
             result = eval(completed_expression)
             matches << object if result == true
         end
-        p '---------------',matches
-        abort
         matches
     end
     alias find_match find_matches
