@@ -7,7 +7,7 @@ class HTTPQueryBuilder
 
     def initialize
         @op = RestOptions.new
-        @precise_search = true
+        @precise_search
     end
 
     def build_query(expressions)
@@ -25,19 +25,21 @@ class HTTPQueryBuilder
             exp.pop
             # grab field
             field = exp.shift
-            # grab operator
+            # grab the comparison operator
             operator = exp.shift
             # grab search data
             search_data = exp.shift
             # create search expression used by api => "=>=917"
             search_criteria = translate_search_data_format(operator,search_data)
-            search_term = field + '=' + search_criteria
+            search_term = field + search_criteria
             # Add search term to query string
             @op.add_raw_option(search_term) # "?/& id=>=917"
         end
-        # Set text precision
-        precision = @precise_search ? 'exact' : 'contains'
-        #@op.add_option('textMatching',precision)
+        # Set text search precision if a Boolean value is set
+        unless @precise_search.nil?
+            precision = @precise_search ? 'exact' : 'contains'
+            @op.add_option('textMatching',precision)
+        end
         @op.add_option('limit',0)
         @op
     end
@@ -46,19 +48,23 @@ class HTTPQueryBuilder
 
     def translate_search_data_format(operator,search_data)
         negation_prefix     = ''
-        comparison_operator = ''
-        data                = ''
+        comparison_operator = '='
+        data                = search_data
         if operator.is_a?(Hash) # It's a "like" or "not like" sql statement
             negation_prefix = ''
             negation_prefix = '!' if operator['is_regex_negated']
-            @precise_search = false if search_data.include?('%')
+            @precise_search = search_data.include?('%') ? false : true # context for setting texMatching parameter value
+            search_data.to_s.gsub!('%','') # Remove % since it's not an actual part of the value we are searching
         elsif operator.eql?('between') # It's a range  =9-17
             start_value = search_data.first
             end_value   = search_data.last
-            data = [*start_value..end_value].join(',')
-        else # It's a regular old comparison operator
-            comparison_operator = operator.eql?('=') ? '' : operator
+            search_data = start_value + '-' + end_value
+            #data = [*start_value..end_value].join(',')
+        else# It's a regular old comparison operator
+            # '=' is converted to '==' in the SQL parser
+            # This prevents field===value from being set in query string
+            comparison_operator += operator unless operator.eql?('==')
         end
-        return negation_prefix + comparison_operator + data
+        return comparison_operator + negation_prefix + search_data.to_s
     end
 end
