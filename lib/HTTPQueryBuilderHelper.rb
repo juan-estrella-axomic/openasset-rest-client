@@ -12,6 +12,7 @@ class HTTPQueryBuilderHelper
 
     def build_query(expressions)
         return unless expressions.is_a?(Array)
+        @op.clear # Ensure we start with an empty string
         # Strip out parethesis since they are not used in http query strings
         while exp = expressions.shift
             # skip "and since everything is anded together for api calls
