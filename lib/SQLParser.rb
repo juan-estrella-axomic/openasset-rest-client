@@ -51,8 +51,8 @@ class SQLParser
 
     def case_sensitivity=(val)
         val = val.to_s.strip.downcase
-        unless val.eql?('true') || val.eql?(false)
-            logger.error( 'The case_sensitive= method only accepts true or false. Default is false')
+        unless val.eql?('true') || val.eql?('false')
+            logger.error('Case sensitivity can only be set to true or false.')
             return
         end
         @case_sensitivity = val.eql?('true') ? nil : Regexp::IGNORECASE
@@ -76,8 +76,7 @@ class SQLParser
             else # ( ) )
                 msg += "unmatched close parenthesis in query => #{original_query}"
             end
-            logger.error(msg)
-            return
+            abort(msg)
         end
 
         expressions = []
