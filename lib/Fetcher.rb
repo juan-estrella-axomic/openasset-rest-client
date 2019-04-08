@@ -17,7 +17,7 @@ module Fetcher
         iterations          += 1 if remainder > 0
 
         ids.each_slice(batch_size).with_index(1) do |subset,i|
-            logger.info("Retrieving batch #{i+1} of #{iterations}")
+            logger.info("Retrieving batch #{i} of #{iterations}")
             options.clear
             start_value = subset.first.to_s
             end_value   = subset.last.to_s
