@@ -14,7 +14,7 @@ require_relative 'Finder'
 require_relative 'Fetcher'
 require_relative 'SQLParser'
 require_relative 'Constants'
-require_relative 'HTTPQueryBuilder'
+require_relative 'HTTPQueryBuilderHelper'
 
 require 'net/http'
 
@@ -96,7 +96,7 @@ module OpenAsset
             @authenticator = Authenticator.get_instance(client_url,un,pw,@retry_limit)
             @sql           = SQLParser.new
             @finder        = Finder.new
-            @query_builder = HTTPQueryBuilder.new
+            @query_builder = HTTPQueryBuilderHelper.new
             @session       = @authenticator.get_session
             @uri           = @authenticator.uri
             @oa_version    = @authenticator.get_oa_version
