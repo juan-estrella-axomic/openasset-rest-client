@@ -242,7 +242,7 @@ module OpenAsset
 
         # Retrieves Albums.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of Albums objects.
@@ -334,7 +334,7 @@ module OpenAsset
 
         # Retrieves Alternate Stores.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of AlternateStores objects.
@@ -358,7 +358,7 @@ module OpenAsset
 
         # Retrieves Aspect Ratios.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of AspectRatios objects.
@@ -382,7 +382,7 @@ module OpenAsset
 
         # Retrieves system Categories (not keyword categories).
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of Categories objects.
@@ -424,7 +424,7 @@ module OpenAsset
 
         # Retrieves CopyrightHolders.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of CopyrightHolders objects.
@@ -498,7 +498,7 @@ module OpenAsset
 
         # Retrieves CopyrightPolicies.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of CopyrightPolicies objects.
@@ -590,7 +590,7 @@ module OpenAsset
 
         # Retrieves DataIntegrations.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of DataIntegrations objects.
@@ -615,7 +615,7 @@ module OpenAsset
 
         # Retrieves Fields.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of Fields objects.
@@ -784,7 +784,7 @@ module OpenAsset
 
         # Retrieves Files objects with ALL nested resources - including their nested image sizes - from OpenAsset.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of Files objects.
@@ -968,7 +968,7 @@ module OpenAsset
 
         # Retrieves Groups.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [JSON object] Group objects array.
@@ -1046,7 +1046,7 @@ module OpenAsset
 
         # Retrieves file keywords.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Keywords objects.
@@ -1138,7 +1138,7 @@ module OpenAsset
 
         # Retrieve file keyword categories.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of KeywordCategories objects.
@@ -1230,7 +1230,7 @@ module OpenAsset
 
         # Retrieve photographers.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Photographers objects.
@@ -1304,7 +1304,7 @@ module OpenAsset
 
         # Retrieve projects
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Projects objects.
@@ -1383,7 +1383,7 @@ module OpenAsset
 
         # Retrieve project keywords.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of ProjectKeywords objects.
@@ -1475,7 +1475,7 @@ module OpenAsset
 
         # Retrieve project keyword categories.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of ProjectKeywordCategories objects.
@@ -1567,7 +1567,7 @@ module OpenAsset
 
         # Retrieve Employee keywords.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of EmployeeKeywords objects.
@@ -1659,7 +1659,7 @@ module OpenAsset
 
         # Retrieve employee keyword categories.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of EmployeeKeywordCategories objects.
@@ -1751,7 +1751,7 @@ module OpenAsset
 
         # Retrieve searches.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Searches objects.
@@ -1811,7 +1811,7 @@ module OpenAsset
 
         # Retrieve sizes.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Sizes objects.
@@ -1889,7 +1889,7 @@ module OpenAsset
 
         # Retrieve Text Rewrites.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of TextRewrites objects.
@@ -1913,7 +1913,7 @@ module OpenAsset
 
         # Retrieve Users.
         #
-       # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+       # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Users objects.
@@ -1991,7 +1991,7 @@ module OpenAsset
 
         # Retrieve Employees.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param query_obj [RestOptions Object, String] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Employee objects.
