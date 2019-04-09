@@ -10,9 +10,10 @@ module Merge
     # @!visibility private
     def merge(uri,target,source)
 
-        target = target.first if target.is_a?(Array)
-        target = target.id if target.respond_to?(:id)
-        source = [data] unless data.is_a?(Array)
+        resource = uri.to_s.split('/').last
+        target   = target.first if target.is_a?(Array)
+        target   = target.id if target.respond_to?(:id)
+        source   = [data] unless data.is_a?(Array)
 
         unless target.to_i > 0
             logger.error("Invalid merge target id: (#{target}) - Aborting request")
