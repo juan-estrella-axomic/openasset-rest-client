@@ -4,12 +4,13 @@
 require_relative '../JsonBuilder'
 class EmployeeKeywords
     include JsonBuilder
-    # @!parse attr_accessor 'name', 'employee_keyword_category_id', 'employee_count', 'id'
+    # @!parse attr_accessor :name, :employee_keyword_category_id, :employee_count, :id
     attr_accessor 'name', 'employee_keyword_category_id', 'employee_count', 'id'
 
     # Creates a EmployeeKeywords object
     #
-    # @param data [Hash, nil] Takes a JSON object/Hash or no argument
+    # @param name [Hash, String, nil] Takes a JSON object/Hash or no argument
+    # @param employee_keyword_category_id [String, Integer, nil]
     # @return [EmployeeKeywords object]
     #
     # @example

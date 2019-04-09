@@ -15,7 +15,7 @@ class Sizes
 
     # Creates a Sizes object
     #
-    # @param args [ Hash or nil] Default => nil
+    # @param data [ Hash or nil] Default => nil
     # @return [Sizes object]
     #
     # @example

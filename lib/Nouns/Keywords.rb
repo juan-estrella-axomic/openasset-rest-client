@@ -6,7 +6,6 @@ class Keywords
     # Creates a Keywords object
     #
     # @param args [Hash, Integer, String, nil] Takes a Hash, Integer, String, or no argument
-    # @param args [Integer, String, nil] Takes a Hash, Integer, String, or no argument
     # @return [NestedAlbumItems object]
     #
     # @example
