@@ -50,12 +50,6 @@ module Get
         }
         response = send_request(options)
 
-        content_type = response['content-type'] # Identify character encoding
-
-        unless content_type.to_s.eql?('')
-            @incoming_encoding = content_type.split(/=/).last # application/json;charset=windows-1252 => windows-1252
-        end
-
         Validator.process_http_response(response,@verbose,resource,'GET')
 
         return unless response.kind_of?(Net::HTTPSuccess)
