@@ -50,7 +50,6 @@ class Finder
         end
 
         if operator.eql?("!=")
-
             result = operand1 != operand2 ? true : false
         elsif operator.eql?("<")
             result = operand1 < operand2 ? true : false
