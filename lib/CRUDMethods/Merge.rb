@@ -33,7 +33,6 @@ module Merge
 
         return unless response.kind_of?(Net::HTTPSuccess)
 
-        # Merge returns an empty hash object
         response.body.encode!(@outgoing_encoding,
                               @incoming_encoding,
                               invalid: :replace,
