@@ -78,10 +78,10 @@ module FileReplacer
 
         begin
             filename = raw_filename.force_encoding(encoding).encode(@outgoing_encoding, # Default UTF-8
-		                                                                    encoding,
-		                                                                    invalid: :replace,
-		                                                                    undef: :replace,
-		                                                                    replace: '?') # Read string as identifed encoding and convert to utf-8
+                                                                    encoding,
+                                                                    invalid: :replace,
+                                                                    undef: :replace,
+                                                                    replace: '?') # Read string as identifed encoding and convert to utf-8
         rescue Exception => e
             logger.error("Problem converting filename \"#{raw_filename}\" to UTF-8. Error => #{e.message}")
             return
