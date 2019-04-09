@@ -424,7 +424,7 @@ module OpenAsset
 
         # Retrieves CopyrightHolders.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
         # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
         # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of CopyrightHolders objects.
