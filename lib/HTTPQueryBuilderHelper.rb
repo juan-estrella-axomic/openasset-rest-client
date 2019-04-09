@@ -15,8 +15,8 @@ class HTTPQueryBuilderHelper
         @op.clear # Ensure we start with an empty string
         # Strip out parethesis since they are not used in http query strings
         while exp = expressions.shift
-            # skip "and since everything is anded together for api calls
-            # abort if or is detectec bc it's not supported in api
+            # skip "and" since everything is anded together for api calls
+            # abort if "or" is detected bc it's not supported in api
             if ['and','or'].include?(exp)
                 next if exp.eql?('and')
                 msg = 'OR operator not supported for query strings'
