@@ -121,7 +121,6 @@ module OpenAsset
                     # Filter results on the server - Faster but less granular when
                     # using "like" and "not like" clause
                     options = @query_builder.build_query(expressions)
-                    p options
                     results = get(uri,options,with_nested_resources)
                 else
                     # Filter results on the client - Slower but more granular.
@@ -703,7 +702,7 @@ module OpenAsset
         # @example
         #          rest_client.get_field_lookup_strings(27)
         #          rest_client.get_field_lookup_strings(27,rest_options_object)
-        #          rest_client.get_field_lookup_strings(27,"where value = 'my value'")
+        #          rest_client.get_field_lookup_strings(27,"where value = 'my value'",false,false)
         #          rest_client.get_field_lookup_strings(27,"where value = 'my value'",false,true)
         def get_field_lookup_strings(field=nil,query_obj=nil,with_nested_resources=false,use_http_query=false)
             id = Validator.validate_field_lookup_string_arg(field)
@@ -785,7 +784,9 @@ module OpenAsset
 
         # Retrieves Files objects with ALL nested resources - including their nested image sizes - from OpenAsset.
         #
-        # @param query_obj [RestOptions Object] Takes a RestOptions object containing query string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Returns an array of Files objects.
         #
         # @example
@@ -793,6 +794,8 @@ module OpenAsset
         #          rest_client.get_files(rest_options_object) => Gets file limit set in RestOption w/o nested resources
         #          rest_client.get_files(rest_options_object,true) => Gets file limit set in RestOption with nested resources
         #          rest_client.get_files(nil,true) => Gets 10 files including all nested fields and image sizes
+        #          rest_client.get_files("where original_filname not like '%bummy juan%' or (original_filenamename like '%cool zach%' and id between 4 and 20)",true,false)
+        #          rest_client.get_files("where name like '%bummy juan%' and id between 4 and 20",true,true)
         def get_files(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/Files")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -965,12 +968,16 @@ module OpenAsset
 
         # Retrieves Groups.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [JSON object] Group objects array.
         #
         # @example
         #          rest_client.get_groups()
         #          rest_client.get_groups(rest_options_object)
+        #          rest_client.get_groups("where expiry_date < 20370101010101",false,false)
+        #          rest_client.get_groups("where expiry_date < 20370101010101",false,true)
         def get_groups(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/Groups")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1039,12 +1046,16 @@ module OpenAsset
 
         # Retrieves file keywords.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Keywords objects.
         #
         # @example
         #          rest_client.get_keywords()
         #          rest_client.get_keywords(rest_options_object)
+        #          rest_client.get_keywords("where name not like = '%building%'",false,false)
+        #          rest_client.get_keywords("where name like '%old%' and %dilapidted%",false,true)
         def get_keywords(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/Keywords")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1127,12 +1138,16 @@ module OpenAsset
 
         # Retrieve file keyword categories.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of KeywordCategories objects.
         #
         # @example
         #          rest_client.get_keyword_categories()
         #          rest_client.get_keyword_categories(rest_options_object)
+        #          rest_client.get_keyword_categories("where category_id = 1",false,false)
+        #          rest_client.get_keyword_categories("where category_id = 1",false,true)
         def get_keyword_categories(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/KeywordCategories")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1215,12 +1230,16 @@ module OpenAsset
 
         # Retrieve photographers.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Photographers objects.
         #
         # @example
         #          rest_client.get_photographers()
         #          rest_client.get_photographers(rest_options_object)
+        #          rest_client.get_photographers("where name = 'Paparazzi'",false,false)
+        #          rest_client.get_photographers("where name = 'Paparazzi'",false,true)
         def get_photographers(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/Photographers")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1285,12 +1304,16 @@ module OpenAsset
 
         # Retrieve projects
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Projects objects.
         #
         # @example
         #          rest_client.get_projects()
         #          rest_client.get_projects(rest_options_object)
+        #          rest_client.get_projects("where public_image_count > 100",false,false)
+        #          rest_client.get_projects("where public_image_count > 100",false,true)
         def get_projects(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/Projects")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1360,12 +1383,16 @@ module OpenAsset
 
         # Retrieve project keywords.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of ProjectKeywords objects.
         #
         # @example
         #          rest_client.get_project_keywords()
         #          rest_client.get_project_keywords(rest_options_object)
+        #          rest_client.get_project_keywords("where name = 'phase 1' and updated < 20181106204236",false,false)
+        #          rest_client.get_project_keywords("where name = 'phase 1' and updated < 20181106204236",false,false)
         def get_project_keywords(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/ProjectKeywords")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1448,12 +1475,16 @@ module OpenAsset
 
         # Retrieve project keyword categories.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of ProjectKeywordCategories objects.
         #
         # @example
         #          rest_client.get_project_keyword_categories()
         #          rest_client.get_project_keyword_categories(rest_options_object)
+        #          rest_client.get_project_keyword_categories("where code = 'City' or (id < 12 and name like '%city')",false,false)
+        #          rest_client.get_project_keyword_categories("where code = 'City' and id < 12",false,true)
         def get_project_keyword_categories(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/ProjectKeywordCategories")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1536,12 +1567,16 @@ module OpenAsset
 
         # Retrieve Employee keywords.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of EmployeeKeywords objects.
         #
         # @example
         #          rest_client.get_employee_keywords()
         #          rest_client.get_employee_keywords(rest_options_object)
+        #          rest_client.get_employee_keywords("where name = Manager",false,false)
+        #          rest_client.get_employee_keywords("where name = Manager",false,true)
         def get_employee_keywords(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/EmployeeKeywords")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1624,12 +1659,16 @@ module OpenAsset
 
         # Retrieve employee keyword categories.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of EmployeeKeywordCategories objects.
         #
         # @example
         #          rest_client.get_employee_keyword_categories()
         #          rest_client.get_employee_keyword_categories(rest_options_object)
+        #          rest_client.get_employee_keyword_categories("where code not like 'Test%'",false,false)
+        #          rest_client.get_employee_keyword_categories("where code = 'Test'",false,true)
         def get_employee_keyword_categories(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/EmployeeKeywordCategories")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1712,12 +1751,16 @@ module OpenAsset
 
         # Retrieve searches.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Searches objects.
         #
         # @example
         #          rest_client.get_searches()
         #          rest_client.get_searches(rest_options_object)
+        #          rest_client.get_searches("where name = 'Furniture'",false,false)
+        #          rest_client.get_searches("where name = 'Furniture'",false,true)
         def get_searches(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/Searches")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1768,12 +1811,16 @@ module OpenAsset
 
         # Retrieve sizes.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Sizes objects.
         #
         # @example
         #          rest_client.get_image_sizes()
         #          rest_client.get_image_sizes(rest_options_object)
+        #          rest_client.get_image_sizes("where size = 'medium' or size = 'large'",false,false)
+        #          rest_client.get_image_sizes("where size = 'medium'",false,true)
         def get_image_sizes(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/Sizes")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1842,12 +1889,16 @@ module OpenAsset
 
         # Retrieve Text Rewrites.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of TextRewrites objects.
         #
         # @example
         #          rest_client.get_text_rewrites()
         #          rest_client.get_text_rewrites(rest_options_object)
+        #          rest_client.get_text_rewrites("where id = 2",false,false)
+        #          rest_client.get_text_rewrites("where id = 2",false,true)
         def get_text_rewrites(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/TextRewrites")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1862,12 +1913,16 @@ module OpenAsset
 
         # Retrieve Users.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+       # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Users objects.
         #
         # @example
         #          rest_client.get_users()
         #          rest_client.get_users(rest_options_object)
+        #          rest_client.get_users("where full_name = 'Gomer Pyle'",false,false)
+        #          rest_client.get_users("where full_name = 'Gunga Din",false,true)
         def get_users(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/Users")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
@@ -1936,12 +1991,16 @@ module OpenAsset
 
         # Retrieve Employees.
         #
-        # @param query_obj[RestOptions Object] Specify query parameters string (Optional)
+        # @param query_obj [RestOptions Object] Takes a RestOptions object or a SQL WHERE clause (Optional)
+        # @param with_nested_resources [Boolean] Returns any nested objects if applicable (Optional)
+        # @param use_http_query [Boolean] Filtering done on the server when set - faster but less granular -> "or" operator not supported (Optional)
         # @return [Array] Array of Employee objects.
         #
         # @example
         #          rest_client.get_employees()
         #          rest_client.get_employees(rest_options_object)
+        #          rest_client.get_employees("where descriptor = 'David Frames' or descriptor like '%Frames%'",false,false)
+        #          rest_client.get_employees("where descriptor = 'David Frames'",false,false)
         def get_employees(query_obj=nil,with_nested_resources=false,use_http_query=false)
             uri = URI.parse(@uri + "/Employees")
             handle_get_request(uri,query_obj,with_nested_resources,use_http_query)
