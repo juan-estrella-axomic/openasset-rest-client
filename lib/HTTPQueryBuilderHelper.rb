@@ -54,7 +54,6 @@ class HTTPQueryBuilderHelper
         base_operator    = '='
         data             = search_data
         if operator.is_a?(Hash) # It's a "like" or "not like" sql statement
-            negation_prefix = ''
             negation_prefix = '!' if operator['is_regex_negated']
             @precise_search = search_data.include?('%') ? false : true # context for setting texMatching parameter value
             search_data.to_s.gsub!('%','') # Remove % since it's not an actual part of the value we are searching
