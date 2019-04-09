@@ -19,10 +19,11 @@ module Fetcher
         ids.each_slice(batch_size).with_index(1) do |subset,i|
             logger.info("Retrieving batch #{i} of #{iterations}")
             options.clear
-            start_value = subset.first.to_s
-            end_value   = subset.last.to_s
 
-            #id_range = start_value + '-' + end_value => less data in query but runs slower
+            # start_value = subset.first.to_s
+            # end_value   = subset.last.to_s
+            # id_range = start_value + '-' + end_value => less data in query but runs slower
+
             id_range = subset.join(',') # More data sent in query but runs faster => faster wins
             options.add_raw_options("id=#{id_range}")
             options.add_raw_options('limit=0')
