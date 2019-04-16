@@ -69,11 +69,11 @@ RSpec.describe Searches do
         end
         it 'gets/sets groups with :groups' do
             subject.groups << NestedGroupItems.new('99')
-            expect(subject.groups.first.id).to eq '99'
+            expect(subject.groups.first.id).to eq 99
         end
         it 'gets/sets user with :user' do
             subject.users << NestedUserItems.new('77')
-            expect(subject.users.first.id).to eq '77'
+            expect(subject.users.first.id).to eq 77
         end
     end
     it_behaves_like 'a json builder'

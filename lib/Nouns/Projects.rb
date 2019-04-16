@@ -40,7 +40,7 @@ class Projects < Generic
                 json_obj = {"name" => args[0].to_s, "code" => args[1].to_s}
             end
         else # If a Hash or No argument is passed to the constructor
-            json_obj = Validator::validate_argument(args.first,'Projects')
+            json_obj = Validator.validate_argument(args.first,'Projects')
         end
         @alive = json_obj['alive']
         @code = json_obj['code']

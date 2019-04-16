@@ -35,7 +35,7 @@ class Fields
             json_obj['field_type']         = args[1]
             json_obj['field_display_type'] = args[2]
         else
-            json_obj = Validator::validate_argument(args.first,'Fields')
+            json_obj = Validator.validate_argument(args.first,'Fields')
         end
 
         @alive = json_obj['alive']

@@ -7,7 +7,7 @@ class Categories
     # @!parse attr_accessor :alive, :code, :default_access_level, :default_rank, :description, :display_order
     attr_accessor :alive, :code, :default_access_level, :default_rank, :description, :display_order
 
-    # @!parse attr_accessor :alive, :code, :default_access_level, :default_rank, :description, :display_order
+    # @!parse attr_accessor :id, :name, :projects_category
     attr_accessor :id, :name, :projects_category
 
     # Creates a Categories object
@@ -18,7 +18,7 @@ class Categories
     # @example
     #         category = Categories.new
     def initialize(data=nil)
-        json_obj = Validator::validate_argument(data,'Categories')
+        json_obj = Validator.validate_argument(data,'Categories')
         @alive = json_obj['alive']
         @code = json_obj['code']
         @default_access_level = json_obj['default_access_level']

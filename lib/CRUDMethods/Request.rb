@@ -1,6 +1,7 @@
 require_relative '../Constants.rb'
 require_relative '../MyLogger.rb'
 require_relative '../Validator.rb'
+require_relative './CustomMethods/Merge.rb'
 
 module Request
 
@@ -23,13 +24,15 @@ module Request
             request = Net::HTTP::Put.new(uri.request_uri)
         when 'DELETE'
             request = Net::HTTP::Delete.new(uri.request_uri)
+        when 'MERGE'
+            request = Custom::HTTPMethod::Merge.new(uri.request_uri)
         else
             Logging.logger.error("Invalid request type #{request_type.inspect}")
             return
         end
 
         # Prep body data
-        if request_type.eql?('POST') || request_type.eql?('PUT')
+        if request_type.eql?('POST') || request_type.eql?('PUT') || request_type.eql?('MERGE')
             json_body = Validator.validate_and_process_request_data(data)
         elsif request_type.eql?('DELETE')
             json_body = Validator.validate_and_process_delete_body(data)
@@ -37,9 +40,8 @@ module Request
 
         # Don't make request with an empty body
         if !request_type.eql?('GET') && !json_body
-            msg = "No data in json_body being sent for #{request_type} request."
-            logger.error(msg)
-            return false
+            msg = "No data in json body for #{request_type} request."
+            return Net::HTTPResponse.new(1.0, 400, msg)
         end
 
         # Handle 2048 character limit with GET requests
@@ -65,9 +67,11 @@ module Request
                     request.add_field('X-SessionKey',session)
                     http.request(request)
                 end
-                break if response.kind_of? Net::HTTPSuccess ||
-                        !RECOVERABLE_NET_HTTP_EXCEPTIONS.include?(response.class)
-                wait_and_try_again({:attempts => attempts})
+                if RECOVERABLE_NET_HTTP_EXCEPTIONS.include?(response.class)
+                    wait_and_try_again({:attempts => attempts})
+                else
+                    break
+                end
                 attempts += 1
             end
         rescue StandardError => e # Handle connection errors
@@ -78,6 +82,12 @@ module Request
             end
             logger.error("Connection failed. The server is not responding. - #{e}")
             Thread.exit
+        end
+
+        content_type = response['content-type'] # Identify character encoding
+
+        unless content_type.to_s.eql?('')
+            @incoming_encoding = content_type.split(/=/).last # application/json;charset=windows-1252 => windows-1252
         end
         response
     end

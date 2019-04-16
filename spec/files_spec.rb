@@ -132,7 +132,7 @@ RSpec.describe Files do
         end
         it 'gets/sets keywords with :keywords' do
             subject.keywords << NestedKeywordItems.new('12')
-            expect(subject.keywords.first.id).to eq '12'
+            expect(subject.keywords.first.id).to eq 12
         end
         it 'gets/sets fields with :fields' do
             subject.fields << NestedFieldItems.new('6','RSpecTest')
@@ -163,7 +163,7 @@ RSpec.describe Files do
         end
         it 'gets/sets albums with :albums' do
             subject.albums << NestedAlbumItems.new('456')
-            expect(subject.albums.first.id).to eq '456'
+            expect(subject.albums.first.id).to eq 456
         end
     end
     it_behaves_like 'a json builder'

@@ -32,7 +32,7 @@ class Users
             json_obj['full_name'] = args[1]
             json_obj['password']  = args[2]
         else                        # Assume a Hash or nil was passed
-            json_obj = Validator::validate_argument(args.first,'Users')
+            json_obj = Validator.validate_argument(args.first,'Users')
         end
 
         @email = json_obj['email']

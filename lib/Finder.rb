@@ -9,13 +9,12 @@ class Finder
 
         return if args.empty?
 
-        numeric_regex = %r{^\d+$}
-        float_regex   = %r{^\d+\.\d+$}
+        numeric_regex = %r{^\d+(?:\.\d+)?$} # captures integers and floating point numbers
         operand1      = args[0]
         operator      = args[1]
         operand2      = args[2]
         result        = nil
-        msg           = nil
+        error         = false
 
 
         unless operator.class.to_s == 'Regexp'
@@ -23,28 +22,29 @@ class Finder
                 # Try to recover if possible.
                 if operand2.is_a?(Array)
                     if numeric_regex.match(operand1.to_s)
-                        operand2 = operand2.map(&:to_i)
-                    elsif float_regex.match(operand1.to_s)
-                        operand2 = operand2.map(&:to_f)
+                        operand2.map do |val|
+                            unless numeric_regex.match(val.to_s)
+                                error = true
+                                break
+                            else
+                                val.to_f
+                            end
+                        end
                     end
                 elsif numeric_regex.match(operand1.to_s) &&
-                    numeric_regex.match(operand2.to_s)
-                    # Both are numbers: Convert to integers for comparison
-                    operand1 = operand1.to_i
-                    operand2 = operand2.to_i
-                elsif float_regex.match(operand1.to_s) &&
-                       float_regex.match(operand2.to_s)
-                    # Both are floats: Convert to Floats for comparison
+                      numeric_regex.match(operand2.to_s)
+                    # Both are numbers: Convert to floating point values for comparison
                     operand1 = operand1.to_f
                     operand2 = operand2.to_f
                 else
-                    msg = "Type Error: Cannot compare #{operand1.class} " \
-                          "to #{operand2.class}\n\t#{operand1} <=> #{operand2}"
+                    error = true
                 end
             end
         end
 
-        if msg
+        if error
+            msg = "Type Error: Cannot compare #{operand1.class} " \
+                          "to #{operand2.class}\n\t#{operand1} <=> #{operand2}"
             logger.error(msg)
             return
         end
@@ -62,8 +62,6 @@ class Finder
         elsif operator.eql?("==")
             result = operand1 == operand2 ? true : false
         elsif operator.eql?("between")
-            val1 = operand2[0]
-            val2 = operand2[1]
             result = (operand1 >= val1 && operand1 <= val2) ? true : false
         elsif operator.eql?("in")
             result = operand2.include?(operand1) ? true : false
@@ -131,4 +129,3 @@ class Finder
     end
     alias find_match find_matches
 end
-

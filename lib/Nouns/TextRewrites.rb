@@ -12,7 +12,7 @@ class TextRewrites
     # @example
     #         text_rewrite = TextRewrites.new
     def initialize(data=nil)
-        json_obj = Validator::validate_argument(data,'TextRewrites')
+        json_obj = Validator.validate_argument(data,'TextRewrites')
         @case_sensitive = json_obj['case_sensitive']
         @id = json_obj['id']
         @preserve_first_letter_case = json_obj['preserve_first_letter_case']

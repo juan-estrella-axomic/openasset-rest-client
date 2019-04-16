@@ -11,7 +11,7 @@ class NestedAlbumItems < NestedItemBasic
     #          nstd_albums_item = NestedAlbumItems.new => Empty obj
     #          nstd_albums_item = NestedAlbumItems.new("17")
     #          nstd_albums_item = NestedAlbumItems.new(17)
-    def initialize(arg1=nil)
-        super(arg1)
+    def initialize(data=nil)
+        super(data)
     end
 end

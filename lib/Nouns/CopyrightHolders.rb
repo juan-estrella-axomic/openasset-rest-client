@@ -15,8 +15,8 @@ class CopyrightHolders
     # @example
     #         copyright_holder = CopyrightHolders.new
     def initialize(data=nil)
-        json_obj = Validator::validate_argument(data,'CopyrightHolders') unless data.is_a?(String)
-        json_obj = {"name" => data}                                      if data.is_a?(String)
+        json_obj = {'name' => data} if data.is_a?(String)
+        json_obj = Validator.validate_argument(data,'CopyrightHolders') unless data.is_a?(String)
         @copyright_policy_id = json_obj['copyright_policy_id']
         @id = json_obj['id']
         @name = json_obj['name']

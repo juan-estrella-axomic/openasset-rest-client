@@ -15,7 +15,7 @@ class AspectRatios
     # @example
     #         aspect_ratio = AspectRatios.new
     def initialize(data=nil)
-        json_obj = Validator::validate_argument(data,'AspectRatios')
+        json_obj = Validator.validate_argument(data,'AspectRatios')
         @id = json_obj['id']
         @code = json_obj['code']
         @label = json_obj['label']

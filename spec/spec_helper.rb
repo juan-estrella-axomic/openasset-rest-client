@@ -97,6 +97,14 @@ RSpec.configure do |config|
   # as the one that triggered the failure.
   Kernel.srand config.seed
 =end
+  original_stderr = $stderr
+  config.before(:each) do
+    # Redirect stderr
+    $stderr = File.open(File::NULL, "w")
+  end
+  config.after(:each) do
+    $stderr = original_stderr
+  end
 end
 
 require 'rspec'

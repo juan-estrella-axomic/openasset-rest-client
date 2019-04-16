@@ -14,7 +14,7 @@ class NestedProjectKeywordItems < NestedItemBasic
     #          nstd_proj_kwd_item = NestedProjectKeywordItems.new => Empty obj
     #          nstd_proj_kwd_item = NestedProjectKeywordItems.new("17")
     #          nstd_proj_kwd_item = NestedProjectKeywordItems.new(17)
-    def initialize(arg=nil)
-        super(arg)
+    def initialize(data=nil)
+        super(data)
     end
 end

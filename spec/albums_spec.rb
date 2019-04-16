@@ -77,15 +77,15 @@ RSpec.describe Albums do
         end
         it 'gets/set nested files with :files' do
             subject.files << NestedFileItems.new('1','123')
-            expect(subject.files.first.id).to eq '123'
+            expect(subject.files.first.id).to eq 123
         end
         it 'gets/sets nested groups with :groups' do
             subject.groups << NestedGroupItems.new('1','9')
-            expect(subject.groups.first.id).to eq '9'
+            expect(subject.groups.first.id).to eq 9
         end
         it 'gets/sets nested users with :user' do
             subject.users << NestedUserItems.new('1','9')
-            expect(subject.users.first.id).to eq '9'
+            expect(subject.users.first.id).to eq 9
         end
     end
     it_behaves_like 'a json builder'

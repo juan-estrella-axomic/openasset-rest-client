@@ -113,9 +113,8 @@ end
 module DownloadHelper
     # Downloads actual image from Files Object, Array of Files Objects, or a list of urls.
     #
-    # @param size [String, Integer] Defaults to 1 to download original image.
+    # @param args [Hash, [String,String], [Integer,String]] Defaults to 1 to download original image.
     #                               Accepts image size id or postfix string value like 'medium' for example
-    # @param download_location [String] Folder where files will be downloaded to.
     # @return [Boolean] Returns false on error.
     #
     # @example

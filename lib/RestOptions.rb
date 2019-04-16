@@ -84,8 +84,7 @@ class RestOptions
 
     # Add search critieria to http query string
     #
-    # @param field_name [string] Query field name (Required)
-    # @param field_value [string] Query field value (Required)
+    # @param value [string] Query field name (Required)
     # @return [nil]
     #
     # @example

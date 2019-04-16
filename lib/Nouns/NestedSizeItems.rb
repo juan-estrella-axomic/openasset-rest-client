@@ -12,7 +12,7 @@ class NestedSizeItems
 
     def initialize(data=nil)
 
-        json_obj = Validator::validate_argument(data,'NestedSizeItem')
+        json_obj = Validator.validate_argument(data,'NestedSizeItem')
 
         @width = json_obj['width']
         @cropped = json_obj['cropped']
