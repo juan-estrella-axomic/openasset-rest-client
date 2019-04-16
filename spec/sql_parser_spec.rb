@@ -116,5 +116,20 @@ describe SQLParser do
             expressions = p.parse(query,'Files')
             expect(expressions).to eq expected_result
         end
+        it 'handles multiple and statements' do
+            p = parser
+            query = "where original_filename = 'flower' and id > 2 and id < 28"
+            expected_result = [["", "original_filename", "==", "flower", ""], "and", ["", "id", ">", 2, ""], "and", ["", "id", "<", 28, ""]]
+            expressions = p.parse(query,'Files')
+            expect(expressions).to eq expected_result
+        end
+        it 'handles multiple or statements' do
+            p = parser
+            query = "where original_filename = 'flower' or id > 2 or id = 28"
+            expected_result = [["", "original_filename", "==", "flower", ""], "or", ["", "id", ">", 2, ""], "or", ["", "id", "==", 28, ""]]
+            expressions = p.parse(query,'Files')
+            p expressions
+            expect(expressions).to eq expected_result
+        end
     end
 end
