@@ -27,7 +27,7 @@ module Request
         when 'MERGE'
             request = Custom::HTTPMethod::Merge.new(uri.request_uri)
         else
-            Logging.logger.error("Invalid request type #{request_type.inspect}")
+            logger.error("Invalid request type #{request_type.inspect}")
             return
         end
 

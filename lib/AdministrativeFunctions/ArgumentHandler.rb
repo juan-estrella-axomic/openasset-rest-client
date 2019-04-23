@@ -7,7 +7,7 @@ module ArgumentHandler
                                            field_separator,
                                            batch_size,
                                            allow_mutiple_results=false)
-                                           
+
         op = RestOptions.new
 
         container_found             = nil
@@ -86,7 +86,7 @@ module ArgumentHandler
                     logger.error(msg)
                     abort
                 end
-                
+
             elsif container.is_a?(String) # project name
                 op.add_option('name',container)
                 op.add_option('textMatching','exact')
@@ -151,7 +151,7 @@ module ArgumentHandler
                     logger.error(msg)
                     abort
                 end
-                
+
                 container_found = container_found.first
 
             else
@@ -162,7 +162,7 @@ module ArgumentHandler
             end
 
         end
-            
+
         op.clear
 
         if target_keyword_category.is_a?(KeywordCategories) # Object
@@ -176,8 +176,8 @@ module ArgumentHandler
                 abort
             end
 
-        elsif (target_keyword_category.is_a?(String) && 
-               target_keyword_category.to_i > 0) || 
+        elsif (target_keyword_category.is_a?(String) &&
+               target_keyword_category.to_i > 0) ||
                target_keyword_category.is_a?(Integer) # Keyword category id
 
             op.add_option('id',target_keyword_category)
@@ -194,8 +194,8 @@ module ArgumentHandler
             op.add_option('name',target_keyword_category)
             op.add_option('textMatching','exact')
 
-            results = get_keyword_categories(op)    
-            
+            results = get_keyword_categories(op)
+
             if results.empty?
                 msg = "FILE Keyword Category \"#{target_keyword_category}\" not found in OpenAsset. Aborting."
                 logger.error(msg)
@@ -211,7 +211,7 @@ module ArgumentHandler
             else
                 keyword_category_found = results.first
             end
-        
+
         else
             msg = "Argument Error: Expected \n    1.) File keyword categories object\n    2.) File keyword " +
                   "category name\n    3.) File keyword category id\nfor the second argument in #{__callee__}." +
@@ -249,7 +249,7 @@ module ArgumentHandler
             op.add_option('name',source_field)
             op.add_option('textMatching','exact')
             results = get_fields(op)
-            
+
             if results.length > 1
                 msg = "Multiple Fields found named #{source_field.inspect}. Specify an id instead."
                 logger.error(msg)
@@ -296,5 +296,5 @@ module ArgumentHandler
 
         return args.new(container_found, source_field_found, keyword_category_found)
 
-    end	
+    end
 end

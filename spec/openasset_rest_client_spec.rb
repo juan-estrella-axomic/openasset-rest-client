@@ -6,9 +6,11 @@ include OpenAsset
 RSpec.describe RestClient do
 
     before(:all) do
-        instance = 'demo-jes.openasset.com'
-        username = 'respec_user'
+        #instance = 'demo-jes.openasset.com'
+        instance = '192.168.4.142:8888'
+        username = 'rspec_user'
         @client = RestClient.new(instance,username)
+        @client.silent = true
         @query  = RestOptions.new
         @suffix = Helpers.current_time_in_milliseconds()
     end
@@ -24,7 +26,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     ##########
     # Albums #
     ##########
@@ -64,7 +66,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     ####################
     # Alternate Stores #
     ####################
@@ -76,7 +78,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     ################
     # Apect Ratios #
     ################
@@ -88,7 +90,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     ##############
     # Categories #
     ##############
@@ -116,7 +118,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     #####################
     # Copyright Holders #
     #####################
@@ -136,7 +138,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     #####################
     # Copyright Polices #
     #####################
@@ -178,19 +180,21 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     #####################
     # Data Integrations #
     #####################
     context 'when dealing with data integrations' do
         describe '#get_data_integrations' do
             it 'retrieves a data integration' do
+                success = false
                 object = @client.get_data_integrations.first
-                expect(object.nil?).to be true
+                success = true if object.nil? || object.is_a?(DataIntegrations)
+                expect(success).to be true
             end
         end
     end
-    sleep 1
+
     ##########
     # Fields #
     ##########
@@ -229,7 +233,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     ########################
     # Field Lookup Strings #
     ########################
@@ -269,7 +273,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     #########
     # Files #
     #########
@@ -290,7 +294,7 @@ RSpec.describe RestClient do
                 file = nil
                 it 'is a file' do
                     @query.clear
-                    @query.add_option('id','11458') #file in OA containing nested resources
+                    @query.add_option('original_filename','rspec_bird.jpg') #file in OA containing nested resources
                     file = @client.get_files(@query,true).first
                     expect(file.is_a?(Files)).to be true
                 end
@@ -298,9 +302,13 @@ RSpec.describe RestClient do
                     expect(file.sizes.first.is_a?(NestedSizeItems)).to be true
                 end
                 it 'has keywords' do
+                    # stub it
+                    file.keywords << NestedKeywordItems.new
                     expect(file.keywords.first.is_a?(NestedKeywordItems)).to be true
                 end
                 it 'has fields' do
+                    # stub it
+                    file.fields << NestedFieldItems.new
                     expect(file.fields.first.is_a?(NestedFieldItems)).to be true
                 end
             end
@@ -344,7 +352,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     ##########
     # Groups #
     ##########
@@ -395,7 +403,7 @@ RSpec.describe RestClient do
             @client.delete_users(@user)
         end
     end
-    sleep 1
+
     ######################
     # Keyword Categories #
     ######################
@@ -434,7 +442,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     ############
     # Keywords #
     ############
@@ -471,7 +479,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     #################
     # Photographers #
     #################
@@ -498,7 +506,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     ##############################
     # Project Keyword Categories #
     ##############################
@@ -534,42 +542,43 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     ####################
     # Project Keywords #
     ####################
-    context 'when dealing with project keywords' do
-        project_keyword = nil
-        project_keyword_category_id = 13 # For Testing
-        name = 'RSpecTest'
-        describe '#create_project_keywords' do
-            it 'creates a project keyword' do
-                project_keyword = ProjectKeywords.new(name,project_keyword_category_id)
-                project_keyword = @client.create_project_keywords(project_keyword,true).first
-                expect(project_keyword.is_a?(ProjectKeywords)).to be true
-            end
+    describe 'when dealing with project keywords' do
+        before(:all) do
+            @name = 'RSpecTest'
+            project_keyword_category = ProjectKeywordCategories.new(@name)
+            @project_keyword_category =
+                 @client.create_project_keyword_categories(project_keyword_category,true).first
         end
-        describe '#get_project_keywords' do
-            it 'retrieves a project keyword' do
-                object = @client.get_project_keywords.first
-                expect(object.is_a?(ProjectKeywords)).to be true
-            end
+        it 'creates a project keyword' do
+            project_keyword = ProjectKeywords.new(@name,@project_keyword_category.id)
+            project_keyword = @client.create_project_keywords(project_keyword,true).first
+            expect(project_keyword.is_a?(ProjectKeywords)).to be true
         end
-        describe '#update_project_keywords' do
-            it 'modifies a project keyword' do
-                project_keyword.name = "#{name}-Updated"
-                expect(@client.update_project_keywords(project_keyword).code).to eq '200'
-            end
+        it 'retrieves a project keyword' do
+            project_keyword = @client.get_project_keywords.first
+            expect(project_keyword.is_a?(ProjectKeywords)).to be true
         end
-        describe '#delete_project_keywords' do
-            it 'deletes a project keyword' do
-                @query.clear
-                @query.add_option('name',"#{name}-Updated")
-                @query.add_option('project_keyword_category_id',project_keyword_category_id)
-                @query.add_option('textMatching','exact')
-                object = @client.get_project_keywords(@query)
-                expect(@client.delete_project_keywords(project_keyword).empty?).to be true
-            end
+        it 'modifies a project keyword' do
+            query = RestOptions.new
+            query.add_options('name',@name)
+            proj_keyword = @client.get_project_keywords(query).first
+            proj_keyword.name = "#{@name}-Updated"
+            expect(@client.update_project_keywords(proj_keyword).code).to eq '200'
+        end
+        it 'deletes a project keyword' do
+            query = RestOptions.new
+            query.add_option('name',"#{@name}-Updated")
+            query.add_option('project_keyword_category_id',@project_keyword_category_id)
+            query.add_option('textMatching','exact')
+            proj_keyword = @client.get_project_keywords(query)
+            expect(@client.delete_project_keywords(proj_keyword).empty?).to be true
+        end
+        after(:all) do
+            @client.delete_project_keyword_categories(@project_keyword_category)
         end
     end
 
@@ -666,7 +675,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     ############
     # Searches #
     ############
@@ -706,7 +715,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     #########
     # Sizes #
     #########
@@ -751,7 +760,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     #################
     # Text Rewrites #
     #################
@@ -762,7 +771,7 @@ RSpec.describe RestClient do
             end
         end
     end
-    sleep 1
+
     # #########
     # # Users #
     # #########

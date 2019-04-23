@@ -8,7 +8,7 @@ class Validator
     # NOTE:
     # Calls to an object's super class is for custom objects like Employees.
     # This prevents us from having to expand the list when future
-    # when new custom objects are added
+    # custom objects are added
     NOUNS = %w[
         AccessLevels
         Albums
