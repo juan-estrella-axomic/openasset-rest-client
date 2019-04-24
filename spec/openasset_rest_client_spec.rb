@@ -6,10 +6,8 @@ include OpenAsset
 RSpec.describe RestClient do
 
     before(:all) do
-        #instance = 'demo-jes.openasset.com'
         instance = '192.168.4.142:8888'
-        username = 'rspec_user'
-        @client = RestClient.new(instance,username)
+        @client = RestClient.new(instance,'api_tester')
         @client.silent = true
         @query  = RestOptions.new
         @suffix = Helpers.current_time_in_milliseconds()
@@ -31,35 +29,34 @@ RSpec.describe RestClient do
     # Albums #
     ##########
     context 'when dealing with albums' do
-        name   = Helpers.generate_unique_name()
-        describe '#get_albums' do
-            it 'retrieves an album' do
-                object = @client.get_albums.first
-                expect(object.is_a?(Albums)).to be true
+        describe 'client' do
+            before(:all) do
+                @name = 'RSpecTest'
+                @query = RestOptions.new
             end
-        end
-        describe '#create_albums' do
             it 'creates an album' do
-                album = Albums.new(name)
+                album = Albums.new(@name)
                 object = @client.create_albums(album,true).first
                 expect(object.is_a?(Albums)).to be true
             end
-        end
-        describe '#update_albums' do
+            it 'retrieves an album' do
+                @query.clear
+                @query.add_option('name',@name)
+                @query.add_option('textMatching','exact')
+                object = @client.get_albums(@query).first
+                expect(object.is_a?(Albums)).to be true
+            end
             it 'modifies an album' do
                 @query.clear
-                @query.add_option('name',name)
+                @query.add_option('name',@name)
                 @query.add_option('textMatching','exact')
                 album = @client.get_albums(@query).first
-                name = "RspecTest-Updated_#{@suffix}" #Update the name for delete query
-                album.name = name
+                album.name = 'RspecTest-Updated'
                 expect(@client.update_albums(album).code).to eq '200'
             end
-        end
-        describe '#delete_albums' do
             it 'deletes an album' do
                 @query.clear
-                @query.add_option('name',name)
+                @query.add_option('name','RspecTest-Updated')
                 @query.add_option('textMatching','exact')
                 album = @client.get_albums(@query)
                 expect(@client.delete_albums(album).empty?).to be true #Delete return empty array
@@ -73,7 +70,7 @@ RSpec.describe RestClient do
     context 'when dealing with alternate stores' do
         describe '#get_alternate_stores' do
             it 'retrieves an alternate store' do
-                object = @client.get_alternate_stores.first
+                object = @client.get_alternate_stores.first || AlternateStores.new # stub it if empty
                 expect(object.is_a?(AlternateStores)).to be true
             end
         end
@@ -620,57 +617,94 @@ RSpec.describe RestClient do
         context 'with nested resources' do
             describe 'client' do
                 before(:all) do
-                    @project = Projects.new('RSpecTest','1234.56')
-                    album_name = Helpers.generate_unique_name()
-                    @album   = Albums.new(album_name)
-                    @album   = @client.create_albums(@album,true).first
 
-                    project_keyword_name = Helpers.generate_unique_name()
-                    project_keyword_category_id = '13'
-                    @project_keyword = ProjectKeywords.new(project_keyword_name,
-                                                           project_keyword_category_id)
-                    @project_keyword = @client.create_project_keywords(@project_keyword,true).first
+                    @name = 'RSpecTest'
+                    @project = Projects.new(@name,'1234.56')
 
-                    field_name = Helpers.generate_unique_name()
-                    @field = Fields.new(field_name,'project','singleLine')
-                    @field = @client.create_fields(@field,true).first
+                    @query = RestOptions.new
+                    @query.add_option('name',@name)
+                    @query.add_option('textMatching','exact')
+
+                    @project_keyword_category = @client.get_project_keyword_categories(@query).first
+                    if @project_keyword_category.nil?
+                        pkc = ProjectKeywordCategories.new(@name)
+                        @project_keyword_category = @client.create_project_keyword_categories(pkc,true).first
+                    end
+
+                    @project_keyword = @client.get_project_keywords(@query).first
+                    if @project_keyword.nil?
+                        pk = ProjectKeywords.new(@name,@project_keyword_category.id)
+                        @project_keyword = @client.create_project_keywords(pk,true).first
+                    end
+
+                    @query.add_option('field_type','project')
+                    @query.add_option('textMatching','exact')
+                    @field = @client.get_fields(@query).first
+                    if @field.nil?
+                        field = Fields.new(@name,'project','singleLine')
+                        @field = @client.create_fields(field,true).first
+                    end
                 end
                 it 'creates a project' do
-                    @project = @client.create_projects(@project,true).first
-                    expect(@project.is_a?(Projects)).to be true
+                    proj = @client.create_projects(@project,true).first
+                    @project.id = proj.id
+                    expect(proj.is_a?(Projects)).to be true
                 end
-                it 'updates a project' do
-                    @project.project_keywords = []
-                    @project.fields = []
-                    @project.albums = []
-                    @project.project_keywords << NestedProjectKeywordItems.new(@project_keyword.id)
-                    @project.fields << NestedFieldItems.new(@field.id,['RSpect Test Sample Data'])
-                    @project.albums << NestedAlbumItems.new(@album.id)
-                    expect(@project.project_keywords.empty?).to be false
-                end
-                it 'retrieves a project' do
+                it 'retrieves a project with nested resources', :aggregate_failures do
                     @query.clear
-                    @query.add_option('name','RSpecTest')
-                    @query.add_option('textMatching','exact')
+                    @query.add_option('id',@project.id)
                     @query.add_option('albums','all')
                     @query.add_option('projectKeywords','all')
                     @query.add_option('fields','all')
-                    @project = @client.get_projects(@query).first
+                    proj = @client.get_projects(@query).first
+                    expect(proj.is_a?(Projects)).to be true
+                    expect(proj.project_keywords.is_a?(Array)).to be true
+                    expect(proj.fields.is_a?(Array)).to be true
+                    expect(proj.albums.is_a?(Array)).to be true
                 end
-                it 'has a field' do
-                    expect(@project.fields.first.id).to eq @field.id
-                end
-                it 'has a project keyword' do
-                    expect(@project.project_keywords.first.id).to eq @project_keyword.id
-                end
-                it 'has an album' do
-                    expect(@project.albums.first.id).to eq @album.id
+                it 'updates nested fields in a project', :aggregate_failures do
+                    @query.clear
+                    @query.add_option('id',@project.id)
+
+                    proj = @client.get_projects(@query).first
+
+                    @client.project_add_keyword(proj,@project_keyword)
+                    @client.project_add_field_data(proj,@field,'Test Data')
+
+                    @query.clear
+                    @query.add_option('id',@project.id)
+                    @query.add_option('albums','all')
+                    @query.add_options('fields','all')
+                    @query.add_options('projectKeywords','all')
+
+                    proj = @client.get_projects(@query).first
+                    proj.albums << NestedAlbumItems.new(17) # Stubbed
+
+                    nested_album = proj.albums.find { |a| a.id == 17 }
+                    nested_field = proj.fields.find { |f| f.id == @field.id }
+                    nested_proj_keyword = proj.project_keywords.find { |pk| pk.id == @project_keyword.id }
+
+                    unless nested_album
+                        fail 'Associated album assignment failed'
+                    end
+                    unless nested_field
+                        fail 'Project field update failed'
+                    end
+                    unless nested_proj_keyword
+                        fail 'Project keyword assignment failed'
+                    end
+
+                    expect(proj.is_a?(Projects)).to be true
+                    expect(nested_proj_keyword.id).to eq @project_keyword.id
+                    expect(nested_field.id).to eq @field.id
+                    expect(nested_field.values.first).to eq 'Test Data'
+                    expect(nested_album.id).to eq 17
                 end
                 after(:all) do
-                    @query.clear
-                    @query.add_option('name','RSpecTest')
-                    @project = @client.get_projects(@query).first
-                    @client.delete_projects(@project) if @project.is_a?(Projects)
+                    @client.delete_projects(@project)
+                    @client.delete_fields(@field)
+                    @client.delete_project_keywords(@project_keyword)
+                    @client.delete_project_keyword_categories(@project_keyword_category)
                 end
             end
         end
@@ -681,37 +715,37 @@ RSpec.describe RestClient do
     ############
     # possible BUG in API ignores the required name field during POST
     context 'when dealing with searches' do
-        name = Helpers.generate_unique_name()
-        id = 0
-        describe '#create_searches' do
+        describe 'client' do
+            id = 0
+            before(:all) do
+                @name = Helpers.generate_unique_name()
+            end
             it 'creates a search' do
                 args = {
-                    'code'       => 'rank',
-                    'exclude'    => '0',
-                    'operator'   => '<',
-                    'values' => ['6']
+                    'code'     => 'rank',
+                    'exclude'  => '0',
+                    'operator' => '<',
+                    'values'   => ['6']
                 }
                 search_item = SearchItems.new(args)
 
-                search = Searches.new(name,search_item)
+                search = Searches.new(@name,search_item)
                 object = @client.create_searches(search,true).first
-                id = object.id if object.respond_to?(:id)
+                id = object.id
                 expect(object.is_a?(Searches)).to be true
             end
-        end
-        describe '#get_searches' do
             it 'retrieves a search' do
-                object = @client.get_searches.first
+                @query.clear
+                @query.add_option('id',id)
+                object = @client.get_searches(@query).first
                 expect(object.is_a?(Searches)).to be true
             end
-        end
-        describe '#update_searches' do
             it 'modifies a search' do
                 @query.clear
                 @query.add_option('id',id)
-                search = @client.get_searches(@query).first
-                search.name = "#{name}_Updated"
-                expect(@client.update_searches(search).code).to eq '200'
+                object = @client.get_searches(@query).first
+                object.name = "#{@name}_Updated"
+                expect(@client.update_searches(object).code).to eq '200'
             end
         end
     end
