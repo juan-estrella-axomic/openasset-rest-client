@@ -6,8 +6,10 @@ include OpenAsset
 RSpec.describe RestClient do
 
     before(:all) do
-        instance = '192.168.4.142:8888'
-        @client = RestClient.new(instance,'api_tester')
+        instance = 'localhost:8888'
+        user = 'api_tester'
+        pass = ENV['APIPASSWORD']
+        @client = RestClient.new(instance,user,pass)
         @client.silent = true
         @query  = RestOptions.new
         @suffix = Helpers.current_time_in_milliseconds()
@@ -18,9 +20,12 @@ RSpec.describe RestClient do
     #################
     context 'when dealing with access levels' do
         describe '#get_access_level' do
-            it 'retrieves an access level' do
-                object = @client.get_access_levels.first
+            it 'retrieves an access level', :aggregate_failures do
+                @query.clear
+                @query.add_option('id',1)
+                object = @client.get_access_levels(@query).first
                 expect(object.is_a?(AccessLevels)).to be true
+                expect(object.id).to eq 1
             end
         end
     end
@@ -32,27 +37,31 @@ RSpec.describe RestClient do
         describe 'client' do
             before(:all) do
                 @name = 'RSpecTest'
-                @query = RestOptions.new
             end
-            it 'creates an album' do
+            it 'creates an album',:aggregate_failures do
                 album = Albums.new(@name)
                 object = @client.create_albums(album,true).first
                 expect(object.is_a?(Albums)).to be true
+                expect(object.name).to eq @name
             end
-            it 'retrieves an album' do
+            it 'retrieves an album', :aggregate_failures do
                 @query.clear
                 @query.add_option('name',@name)
                 @query.add_option('textMatching','exact')
                 object = @client.get_albums(@query).first
                 expect(object.is_a?(Albums)).to be true
+                expect(object.name).to eq @name
             end
-            it 'modifies an album' do
+            it 'modifies an album', :aggregate_failures do
                 @query.clear
                 @query.add_option('name',@name)
                 @query.add_option('textMatching','exact')
                 album = @client.get_albums(@query).first
-                album.name = 'RspecTest-Updated'
-                expect(@client.update_albums(album).code).to eq '200'
+                new_name = 'RspecTest-Updated'
+                album.name = new_name
+                album = @client.update_albums(album,true).first
+                expect(album.is_a?(Albums)).to be true
+                expect(album.name).to eq new_name
             end
             it 'deletes an album' do
                 @query.clear
@@ -81,9 +90,13 @@ RSpec.describe RestClient do
     ################
     context 'when dealing with aspect ratios' do
         describe '#get_aspect_ratios' do
-            it 'retrieves an aspect ratio' do
-                object = @client.get_aspect_ratios.first
+            it 'retrieves an aspect ratio', :aggregate_failures do
+                code = 'square'
+                @query.clear
+                @query.add_option('code',code)
+                object = @client.get_aspect_ratios(@query).first
                 expect(object.is_a?(AspectRatios)).to be true
+                expect(object.code).to eq code
             end
         end
     end
@@ -94,24 +107,38 @@ RSpec.describe RestClient do
     context 'when dealing with categories' do
         describe '#get_categories' do
             it 'retrieves a category' do
-                object = @client.get_categories.first
+                code = 'Reference'
+                @query.clear
+                @query.add_option('code',code)
+                object = @client.get_categories(@query).first
                 expect(object.is_a?(Categories)).to be true
+                expect(object.code).to eq code
             end
         end
         describe '#update_categories' do
+            before(:all) do
+                @orig_name = 'Reference'
+                @new_name = 'Reference-Updated'
+            end
             it 'modifies an category' do
                 @query.clear
-                @query.add_option('name','Reference')
+                @query.add_option('name',@orig_name)
                 @query.add_option('textMatching','exact')
                 category = @client.get_categories(@query).first
-                category.name = 'Reference-Updated'
-                @client.update_categories(category)
+
+                category.name = @new_name
+                modified_category = @client.update_categories(category,true).first
+
+                expect(modified_category.is_a?(Categories)).to be true
+                expect(modified_category.name).to eq 'Reference-Updated'
+            end
+            after(:all) do
                 @query.clear
-                @query.add_option('name','Reference-Updated')
+                @query.add_option('name',@new_name)
                 @query.add_option('textMatching','exact')
                 category = @client.get_categories(@query).first
-                category.name = 'Reference'
-                expect(@client.update_categories(category).code).to eq '200'
+                category.name = @orig_name
+                @client.update_categories(category)
             end
         end
     end
@@ -122,16 +149,20 @@ RSpec.describe RestClient do
     context 'when dealing with copyright holders' do
         name = Helpers.generate_unique_name()
         describe '#create_copyright_holders' do
-            it 'creates a copyright holder' do
+            it 'creates a copyright holder', :aggregate_failures do
                 copyright_holder = CopyrightHolders.new(name)
                 object = @client.create_copyright_holders(copyright_holder,true).first
                 expect(object.is_a?(CopyrightHolders)).to be true
+                expect(object.name).to eq name
             end
         end
         describe '#get_copyright_holders' do
-            it 'retrieves a copyright holder' do
-                object = @client.get_copyright_holders.first
+            it 'retrieves a copyright holder', :aggregate_failures do
+                @query.clear
+                @query.add_option('name',name)
+                object = @client.get_copyright_holders(@query).first
                 expect(object.is_a?(CopyrightHolders)).to be true
+                expect(object.name).to eq name
             end
         end
     end
@@ -142,26 +173,33 @@ RSpec.describe RestClient do
     context 'when dealing with copyright policies' do
         name = Helpers.generate_unique_name()
         describe '#create_copyright_policies' do
-            it 'creates a copyright policy' do
+            it 'creates a copyright policy', :aggregate_failures do
                 copyright_policy = CopyrightPolicies.new(name)
                 object = @client.create_copyright_policies(copyright_policy,true).first
                 expect(object.is_a?(CopyrightPolicies)).to be true
+                expect(object.name).to eq name
             end
         end
         describe '#get_copyright_policies' do
             it 'retrieves a copyright policy' do
-                object = @client.get_copyright_policies.first
+                @query.clear
+                @query.add_option('name',name)
+                object = @client.get_copyright_policies(@query).first
                 expect(object.is_a?(CopyrightPolicies)).to be true
+                expect(object.name).to eq name
             end
         end
         describe '#update_copyright_policies' do
             it 'modifies a copyright policy' do
+                new_name = name + '_Updated'
                 @query.clear
                 @query.add_option('name',name)
                 @query.add_option('textMatching','exact')
                 copyright_policy = @client.get_copyright_policies(@query).first
-                copyright_policy.name = "#{name}_Updated"
-                expect(@client.update_copyright_policies(copyright_policy).code).to eq '200'
+                copyright_policy.name = new_name
+                modified_copyright_policy = @client.update_copyright_policies(copyright_policy,true).first
+                expect(modified_copyright_policy.is_a?(CopyrightPolicies)).to be true
+                expect(modified_copyright_policy.name).to eq new_name
             end
         end
         describe '#delete_copyright_policies' do
@@ -184,10 +222,8 @@ RSpec.describe RestClient do
     context 'when dealing with data integrations' do
         describe '#get_data_integrations' do
             it 'retrieves a data integration' do
-                success = false
-                object = @client.get_data_integrations.first
-                success = true if object.nil? || object.is_a?(DataIntegrations)
-                expect(success).to be true
+                object = @client.get_data_integrations.first || DataIntegrations.new # Stub it
+                expect(object.is_a?(DataIntegrations)).to be true
             end
         end
     end
@@ -205,19 +241,27 @@ RSpec.describe RestClient do
             end
         end
         describe '#get_fields' do
-            it 'retrieves a field' do
-                object = @client.get_fields.first
+            it 'retrieves a field', :aggregate_failures do
+                @query.clear
+                @query.add_option('name',name)
+                @query.add_option('field_type','image')
+                @query.add_option('field_display_type','singleLine')
+                object = @client.get_fields(@query).first
                 expect(object.is_a?(Fields)).to be true
+                expect(object.name).to eq name
             end
         end
         describe '#update_fields' do
             it 'modifies a field' do
+                new_name = "#{name}-Updated"
                 @query.clear
                 @query.add_option('name',name)
                 @query.add_option('textMatching','exact')
                 field = @client.get_fields(@query).first
-                field.name = "#{name}-Updated"
-                expect(@client.update_fields(field).code).to eq '200'
+                field.name = new_name
+                modified_field = @client.update_fields(field,true).first
+                expect(modified_field.is_a?(Fields)).to be true
+                expect(modified_field.name).to eq new_name
             end
         end
         describe '#delete_fields' do
@@ -235,6 +279,19 @@ RSpec.describe RestClient do
     # Field Lookup Strings #
     ########################
     context 'when dealing with field lookup strings' do
+        before(:all) do
+            # create suggestion field called 'RSpecSuggestionField'
+            @name = 'RSpecSuggestionField'
+            @field_type = 'project'
+            @field_display_type = 'suggestion'
+            @query.clear
+            @query.add_option('name',@name)
+            @query.add_option('field_type',@field_type)
+            @query.add_option('field_display_type',@field_type)
+            @field = @client.get_fields(@query).first
+
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        end
         name = Helpers.generate_unique_name()
         field = {'id' => '31'}
         describe '#create_field_lookup_strings' do
@@ -277,36 +334,123 @@ RSpec.describe RestClient do
     context 'when dealing with files' do
         describe '#upload_files' do
             it 'uploads a file' do
-                #file_path = './resources/rspec_bird.jpg'
                 file_path = File.expand_path('spec/resources/rspec_bird.jpg')
                 unless File.exist?(file_path)
                     fail "File: #{file_path} not found"
                 end
-                category  = 2 # Reference
+                category = 2 # Reference
                 expect(@client.upload_file(file_path,category).code).to eq('201').or eq('409')
             end
         end
-        context 'retrieves a file with nested resources' do
-            describe '#get_files' do
-                file = nil
-                it 'is a file' do
+        context 'with nested resources' do
+            describe 'client' do
+                before(:all) do
+                    @name = 'RSpecTest'
+
+                    @category_id = 2 # Reference
+                    @original_filesize_id = 1
                     @query.clear
-                    @query.add_option('original_filename','rspec_bird.jpg') #file in OA containing nested resources
+                    @query.add_option('name',@name)
+
+                    @file_keyword_category = @client.get_keyword_categories(@query).first
+                    if @file_keyword_category.nil?
+                        kc = KeywordCategories.new({'name' => @name, 'category_id' => @category_id})
+                        @file_keyword_category = @client.create_keyword_categories(kc,true).first
+                    end
+
+                    @keyword = @client.get_keywords(@query).first
+                    if @keyword.nil?
+                        kwd = Keywords.new({'keyword_category_id' => @file_keyword_category.id, 'name' => @name})
+                        @keyword = @client.create_keywords(kwd,true).first
+                    end
+
+                    @album = @client.get_albums(@query).first
+                    if @album.nil?
+                        album = Albums.new(@name)
+                        @album = @client.create_albums(album,true).first
+                    end
+
+                    @query.add_option('field_type','image')
+                    @query.add_option('field_display_type','multiline')
+                    @field = @client.get_fields(@query).first
+                    if @field.nil?
+                        data = {'name' => @name, 'field_type' => 'image', 'field_display_type' => 'multiLine'}
+                        fld = Fields.new(data)
+                        @field = @client.create_fields(fld,true).first
+                    end
+                end
+
+                file = nil
+                it 'retrieves a file', :aggregate_failures do
+                    name = 'rspec_bird.jpg'
+                    @query.clear
+                    @query.add_option('original_filename',name) #file in OA containing nested resources
                     file = @client.get_files(@query,true).first
                     expect(file.is_a?(Files)).to be true
+                    expect(file.original_filename).to eq name
                 end
-                it 'has sizes' do
-                    expect(file.sizes.first.is_a?(NestedSizeItems)).to be true
+                it 'adds keywords', :aggregate_failures do
+                    @client.file_add_keywords(file,@keyword)# Makes api call to attach kwd
+                    @query.clear
+                    @query.add_option('id',file.id)
+                    file = @client.get_files(@query,true).first
+                    unless file.is_a?(Files)
+                        fail 'File retrieval failed'
+                    end
+                    nested_file_kwd = file.keywords.find { |k| k.id == @keyword.id }
+                    expect(nested_file_kwd.is_a?(NestedKeywordItems)).to be true
+                    expect(nested_file_kwd.id).to eq @keyword.id
                 end
-                it 'has keywords' do
-                    # stub it
-                    file.keywords << NestedKeywordItems.new
-                    expect(file.keywords.first.is_a?(NestedKeywordItems)).to be true
+                it 'adds field data', :aggregate_failures do
+                    field_data = 'Sample field data'
+                    @client.file_add_field_data(file, @field, field_data)
+                    @query.clear
+                    @query.add_option('id',file.id)
+                    file = @client.get_files(@query,true).first
+                    unless file.is_a?(Files)
+                        fail 'File retrieval failed'
+                    end
+                    nested_field = file.fields.find { |fld| fld.id == @field.id }
+                    unless nested_field
+                        fail 'Nested field retrieval failed'
+                    end
+                    expect(nested_field.id).to eq @field.id
+                    expect(nested_field.values.first).to eq field_data
                 end
-                it 'has fields' do
-                    # stub it
-                    file.fields << NestedFieldItems.new
-                    expect(file.fields.first.is_a?(NestedFieldItems)).to be true
+                it 'adds the file to an album', :aggregate_failures do
+                    @client.add_files_to_album(@album,file)
+                    @query.clear
+                    @query.add_option('id',file.id)
+                    file = @client.get_files(@query,true).first
+                    unless file.is_a?(Files)
+                        fail 'File retrieval failed'
+                    end
+                    nested_album = file.albums.find { |alb| alb.id == @album.id }
+                    unless nested_album
+                        fail 'Nested album retrieval failed'
+                    end
+                    expect(nested_album.is_a?(NestedAlbumItems)).to be true
+                    expect(nested_album.id).to eq @album.id
+                end
+                it 'retrieves a file with file sizes', :aggregate_failures do
+                    @query.clear
+                    @query.add_option('id',file.id)
+                    file = @client.get_files(@query,true).first
+                    unless file.is_a?(Files)
+                        fail 'File retrieval failed'
+                    end
+                    nested_file_size_item = file.sizes.find { |item| item.id == 1 }
+                    unless nested_file_size_item
+                        fail 'Nested file size retrieval failed'
+                    end
+                    expect(nested_file_size_item.is_a?(NestedSizeItems)).to be true
+                    expect(nested_file_size_item.id).to eq @original_filesize_id
+                end
+                after(:all) do
+                    @client.delete_fields(@field)
+                    @client.delete_albums(@album)
+                    @client.delete_keywords(@keyword)
+                    @client.delete_keyword_categories(@file_keyword_category)
                 end
             end
         end
@@ -316,25 +460,30 @@ RSpec.describe RestClient do
                 query = query_obj
                 query.add_option('original_filename','rspec_bird.jpg')
                 query.add_option('textMatching','exact')
-                existing_img = @client.get_files(query).first
+                existing_file = @client.get_files(query).first
+                unless existing_file.is_a?(Files)
+                    fail 'Exisiting file not found'
+                end
                 replacement_img = File.expand_path('spec/resources/rspec_flowers.jpg')
                 unless File.exist?(replacement_img)
                     fail "File: #{replacement_img} not found"
                 end
-                expect(@client.replace_file(existing_img,replacement_img).code).to eq '200'
+                expect(@client.replace_file(existing_file,replacement_img).code).to eq '200'
             end
         end
         describe '#update_files' do
             let(:query_obj) { RestOptions.new }
             it 'modifies a file' do
+                value = 'RSpecTest'
                 query = query_obj
                 query.add_option('original_filename','rspec_flowers.jpg')
                 query.add_option('textMatching','exact')
                 file = @client.get_files(query).first
                 fail 'File retrieval error' unless file.is_a?(Files)
-                file.created = nil # API returns value of "0" but wont reaccept it.
-                file.caption = 'RSpecTest'
-                expect(@client.update_files(file).code).to eq '200'
+                file.created = nil # API returns value of "0" but wont reaccept it. BUG
+                file.caption = value
+                file = @client.update_files(file,true).first
+                expect(file.caption).to eq value
             end
         end
         describe '#delete_files' do
@@ -345,7 +494,7 @@ RSpec.describe RestClient do
                 query.add_option('textMatching','exact')
                 file = @client.get_files(query).first
                 fail 'File retrieval error' unless file
-                expect(@client.delete_files(file).empty?).to be true
+                expect(@client.delete_files(file).empty?).to be true # Empty body is returned
             end
         end
     end
@@ -546,9 +695,14 @@ RSpec.describe RestClient do
     describe 'when dealing with project keywords' do
         before(:all) do
             @name = 'RSpecTest'
-            project_keyword_category = ProjectKeywordCategories.new(@name)
-            @project_keyword_category =
-                 @client.create_project_keyword_categories(project_keyword_category,true).first
+            @query.clear
+            @query.add_option('name',@name)
+            @project_keyword_category = @client.get_project_keyword_categories(@query).first
+            if @project_keyword_category.nil?
+                pkc = ProjectKeywordCategories.new(@name)
+                @project_keyword_category =
+                    @client.create_project_keyword_categories(pkc,true).first
+            end
         end
         it 'creates a project keyword' do
             project_keyword = ProjectKeywords.new(@name,@project_keyword_category.id)
@@ -806,9 +960,9 @@ RSpec.describe RestClient do
         end
     end
 
-    # #########
-    # # Users #
-    # #########
+    #########
+    # Users #
+    #########
     context 'when dealing with users' do
         context 'with nested groups' do
             user = nil
