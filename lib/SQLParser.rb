@@ -76,7 +76,8 @@ class SQLParser
             else # ( ) )
                 msg += "unmatched close parenthesis in query => #{original_query}"
             end
-            abort(msg)
+            logger.error(msg)
+            return
         end
 
         expressions = []
@@ -130,16 +131,21 @@ class SQLParser
 
             next if exp == '--[:ANDoperator:]--' || exp == '--[:ORoperator:]--'
 
+            #p [exp.to_s,i]
+
             if @@quoted_number_regex.match(exp)
                 # Remove quotes from numeric operands
                 exp.gsub!(/("|')/, '')
             end
             operator_found = false
             VALID_COMPARISON_OPERATORS.each do |op|
-                operator_found = true if exp.include?(op)
+                if exp.include?("--#{op}--")
+                    operator_found = true
+                    break
+                end
             end
             unless operator_found
-                logger.error("Syntax Error: Missing comparison operator in expression: #{exp} -> ??? <- #{query_expressions[i+1]}")
+                logger.error("Syntax Error: Missing comparison operator in expression: #{exp}")
                 return
             end
         end
