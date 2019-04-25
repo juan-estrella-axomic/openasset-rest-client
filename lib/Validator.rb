@@ -60,7 +60,6 @@ class Validator
                   "\nInstead got a(n) #{arg.class} with contents => #{arg.inspect}"
             Logging.logger.error(msg)
             Thread.exit
-            #abort
         end
         if arg.is_a?(Hash)
             # Convert all keys to strings in case user passes symbols as keys so values can be extracted
@@ -151,11 +150,17 @@ class Validator
 
         uri_is_ip_address = Regexp.new('(http(s)?:\/\/)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})',true)
 
-        if (uri_with_protocol =~ uri) == 0 #check for valid url and that protocol is specified
+        uri_is_localhost = Regexp.new('^(https?:\/\/)?localhost(:\d{2,4})?$')
+
+        # check for valid url and that protocol is specified
+        if uri_with_protocol.match(uri)
             uri
-        elsif (uri_without_protocol =~ uri) == 0
+        elsif uri_is_localhost.match(uri)
+            protocol = uri_is_localhost.match(uri)[1]
+            uri = "http://" + uri unless protocol
+        elsif uri_without_protocol.match(uri)
             uri = "https://" + uri
-        elsif (uri_is_ip_address =~ uri) == 0
+        elsif uri_is_ip_address.match(uri)
             unless uri.to_s.include?('http://') || uri.to_s.include?('https://')
                 uri = 'http://' + uri.to_s
             end
@@ -175,7 +180,6 @@ class Validator
                   "\nInstead got => #{uri.inspect}"
             Logging.logger.error(msg)
             Thread.exit
-            #abort
         end
 
     end
