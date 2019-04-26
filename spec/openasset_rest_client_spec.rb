@@ -234,10 +234,11 @@ RSpec.describe RestClient do
     context 'when dealing with fields' do
         name = Helpers.generate_unique_name()
         describe '#create_fields' do
-            it 'creates a field' do
+            it 'creates a field', :aggregate_failures do
                 field = Fields.new(name,'image','singleLine')
                 object = @client.create_fields(field,true).first
                 expect(object.is_a?(Fields)).to be true
+                expect(object.name).to eq name
             end
         end
         describe '#get_fields' do
@@ -280,50 +281,57 @@ RSpec.describe RestClient do
     ########################
     context 'when dealing with field lookup strings' do
         before(:all) do
-            # create suggestion field called 'RSpecSuggestionField'
-            @name = 'RSpecSuggestionField'
+            @fls_value = Helpers.generate_unique_name()
+            @new_fls_value = "#{@fls_value}-Updated"
+            @field_name = 'RSpecSuggestionField'
             @field_type = 'project'
             @field_display_type = 'suggestion'
             @query.clear
-            @query.add_option('name',@name)
+            @query.add_option('name',@field_name)
             @query.add_option('field_type',@field_type)
-            @query.add_option('field_display_type',@field_type)
+            @query.add_option('field_display_type',@field_display_type)
             @field = @client.get_fields(@query).first
-
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            unless @field
+                fld = Fields.new(@name,@field_type,@field_display_type)
+                @field = @client.create_fields(fld)
+            end
         end
-        name = Helpers.generate_unique_name()
-        field = {'id' => '31'}
         describe '#create_field_lookup_strings' do
-            it 'creates a field lookup string' do
-                field_lookup_string = FieldLookupStrings.new(name)
-                object = @client.create_field_lookup_strings(field,field_lookup_string,true).first
+            it 'creates a field lookup string', :aggregate_failures do
+                field_lookup_string = FieldLookupStrings.new(@fls_value)
+                object = @client.create_field_lookup_strings(@field,field_lookup_string,true).first
                 expect(object.is_a?(FieldLookupStrings)).to be true
+                expect(object.value).to eq @fls_value
             end
         end
         describe '#get_fieldd_lookup_strings' do
-            it 'retrieves a field lookup string' do
-                object = @client.get_field_lookup_strings(field).first
+            it 'retrieves a field lookup string', :aggregate_failures do
+                @query.clear
+                @query.add_option('value',@fls_value)
+                object = @client.get_field_lookup_strings(@field,@query).first
                 expect(object.is_a?(FieldLookupStrings)).to be true
+                expect(object.value).to eq @fls_value
             end
         end
         describe '#update_field_lookup_strings' do
-            it 'modifies a field lookup string' do
+            it 'modifies a field lookup string', :aggregate_failures do
                 @query.clear
-                @query.add_option('name',name)
+                @query.add_option('name',@fls_value)
                 @query.add_option('textMatching','exact')
-                field_lookup_string = @client.get_field_lookup_strings(field,@query).first
-                field_lookup_string.value = "#{name}-Updated"
-                expect(@client.update_field_lookup_strings(field,field_lookup_string).code).to eq '200'
+                field_lookup_string = @client.get_field_lookup_strings(@field,@query).first
+                field_lookup_string.value = @new_fls_value
+                field_lookup_string = @client.update_field_lookup_strings(@field,field_lookup_string,true).first
+                expect(field_lookup_string.is_a?(FieldLookupStrings)).to be true
+                expect(field_lookup_string.value).to eq @new_fls_value
             end
         end
         describe '#delete_field_lookup_strings' do
             it 'deletes a field lookup string' do
                 @query.clear
-                @query.add_option('name',"#{name}-Updated")
+                @query.add_option('value',@new_fls_value)
                 @query.add_option('textMatching','exact')
-                field_lookup_string = @client.get_field_lookup_strings(field,@query).first
-                expect(@client.delete_field_lookup_strings(field,field_lookup_string).empty?).to be true
+                field_lookup_string = @client.get_field_lookup_strings(@field,@query).first
+                expect(@client.delete_field_lookup_strings(@field,field_lookup_string).empty?).to be true
             end
         end
     end
@@ -505,43 +513,61 @@ RSpec.describe RestClient do
     context 'when dealing with groups with nested resources' do
         group = nil
         before(:all) do # Prep: create nested user
-            user = Users.new('rspec@axomic.com','RTest','pass')
-            @user = @client.create_users(user,true).first
+            @user_name = 'rspec@axomic.com'
+            @full_name = 'RTest'
+            @query.clear
+            @query.add_option('user_name',@user_name)
+            @query.add_option('full_name',@full_name)
+            @user = @client.get_users(@query).first
+            unless @user
+                user = Users.new(@user_name,@full_name,'pass')
+                @user = @client.create_users(user,true).first
+            end
             @nested_user = NestedUserItems.new(@user.id)
+            @name = 'RTest'
+            @updated_name = 'RTest-Updated'
         end
         describe '#create_groups' do
-            it 'creates a group' do
-                g = Groups.new('RTest')
+            it 'creates a group', :aggregate_failures do
+                g = Groups.new(@name)
                 group = @client.create_groups(g,true).first
                 expect(group.is_a?(Groups)).to be true
+                expect(group.name).to eq @name
             end
         end
         describe '#update_groups' do
-            it 'modifies a group' do
-                group.name = 'RSpecTest-Updated'
+            it 'modifies a group', :aggregate_failures do
+                group.name = @updated_name
+                group = @client.update_groups(group,true).first
+                unless group
+                    fail 'Group retrieval error'
+                end
+                expect(group.is_a?(Groups)).to be true
+                expect(group.name).to eq @updated_name
+            end
+            it 'add a user to the group' do
                 group.users << @nested_user
-                expect(@client.update_groups(group).code).to eq '200'
+                group = @client.update_groups(group,true).first
+                nested_user = group.users.find { |obj| obj.id == @user.id }
+                unless nested_user
+                    fail 'User group assignment failed'
+                end
+                expect(nested_user.id).to eq @user.id
             end
         end
         describe '#get_groups' do
-            it 'retrieves a group' do
+            it 'retrieves a group', :aggregate_failures do
                 @query.clear
-                @query.add_option('name','RSpecTest-Updated')
+                @query.add_option('name',@updated_name)
                 @query.add_option('textMatching','exact')
                 @query.add_option('users','all')
                 group = @client.get_groups(@query).first
                 expect(group.is_a?(Groups)).to be true
-            end
-            it 'has the created user' do
-                expect(group.users.first.id).to eq @user.id
+                expect(group.name).to eq @updated_name
             end
         end
         describe '#delete_groups' do
             it 'deletes a group' do
-                @query.clear
-                @query.add_option('name','RSpecTest-Updated')
-                @query.add_option('textMatching','exact')
-                group = @client.get_groups(@query).first
                 expect(@client.delete_groups(group).empty?).to be true
             end
         end
@@ -554,34 +580,44 @@ RSpec.describe RestClient do
     # Keyword Categories #
     ######################
     context 'when dealing with keyword categories' do
+        before(:all) do
+            @name = 'RSpecTest'
+            @updated_name = 'RSpecTest-Updated'
+        end
         describe '#create_keyword_categories' do
-            it 'creates a keyword category' do
+            it 'creates a keyword category', :aggregate_failures do
                 system_category_id = 2 # Reference
-                keyword_category = KeywordCategories.new('RSpecTest',system_category_id)
+                keyword_category = KeywordCategories.new(@name,system_category_id)
                 object  = @client.create_keyword_categories(keyword_category,true).first
                 expect(object.is_a?(KeywordCategories)).to be true
+                expect(object.name).to eq @name
             end
         end
         describe '#get_keyword_categories' do
-            it 'retrieves a keyword category' do
-                object = @client.get_keyword_categories.first
+            it 'retrieves a keyword category', :aggregate_failures  do
+                @query.clear
+                @query.add_option('name',@name)
+                object = @client.get_keyword_categories(@query).first
                 expect(object.is_a?(KeywordCategories)).to be true
+                expect(object.name).to eq @name
             end
         end
         describe '#update_keyword_categories' do
-            it 'modifies a keyword category' do
+            it 'modifies a keyword category', :aggregate_failures do
                 @query.clear
-                @query.add_option('name','RSpecTest')
+                @query.add_option('name',@name)
                 @query.add_option('textMatching','exact')
                 keyword_category = @client.get_keyword_categories(@query).first
-                keyword_category.name = 'RSpecTest-Updated'
-                expect(@client.update_keyword_categories(keyword_category).code).to eq '200'
+                keyword_category.name = @updated_name
+                object = @client.update_keyword_categories(keyword_category,true).first
+                expect(object.is_a?(KeywordCategories)).to be true
+                expect(object.name).to eq @updated_name
             end
         end
         describe '#delete_keyword_categories' do
             it 'deletes a keyword category' do
                 @query.clear
-                @query.add_option('name','RSpecTest-Updated')
+                @query.add_option('name',@updated_name)
                 @query.add_option('textMatching','exact')
                 keyword_category = @client.get_keyword_categories(@query).first
                 expect(@client.delete_keyword_categories(keyword_category).empty?).to be true
@@ -593,32 +629,51 @@ RSpec.describe RestClient do
     # Keywords #
     ############
     context 'when dealing with keywords' do
-        keyword = nil
+        before(:all) do
+            @name = 'RSpecTest'
+            @updated_name = 'RSpectTest-Updated'
+            @keyword_category_id = 5 # Type of Asset in Referece category
+        end
         describe '#create_keywords' do
-            it 'creates a keyword' do
+            it 'creates a keyword', :aggregate_failures do
                 keyword_category_id = 5 # Type of Asset in Referece category
-                keyword = Keywords.new(keyword_category_id,'RSpecTest')
-                keyword = @client.create_keywords(keyword,true).first
-                expect(keyword.is_a?(Keywords)).to be true
+                keyword = Keywords.new(@keyword_category_id,@name)
+                object = @client.create_keywords(keyword,true).first
+                expect(object.is_a?(Keywords)).to be true
+                expect(object.name).to eq @name
+                expect(object.keyword_category_id).to eq @keyword_category_id
             end
         end
         describe '#get_keyords' do
-            it 'retrieves a keyword' do
-                object = @client.get_keywords.first
+            it 'retrieves a keyword', :aggregate_failures do
+                @query.clear
+                @query.add_option('name',@name)
+                @query.add_option('textMatching','exact')
+                @query.add_option('keyword_category_id',@keyword_category_id)
+                object = @client.get_keywords(@query).first
                 expect(object.is_a?(Keywords)).to be true
+                expect(object.name).to eq @name
+                expect(object.keyword_category_id).to eq @keyword_category_id
             end
         end
         describe '#update_keywords' do
-            it 'modifies a keyword' do
-                keyword.name = 'RSpecTest-Updated'
-                expect(@client.update_keywords(keyword).code).to eq '200'
+            it 'modifies a keyword', :aggregate_failures do
+                @query.clear
+                @query.add_option('name',@name)
+                @query.add_option('keyword_category_id',@keyword_category_id)
+                @query.add_option('textMatching','exact')
+                keyword = @client.get_keywords(@query).first
+                keyword.name = @updated_name
+                object = @client.update_keywords(keyword,true).first
+                expect(object.is_a?(Keywords)).to be true
+                expect(object.name).to eq @updated_name
             end
         end
         describe '#delete_keywords' do
             it 'deletes a keyword' do
                 @query.clear
-                @query.add_option('name','RSpecTest-Updated')
-                @query.add_option('keyword_category_id','5')
+                @query.add_option('name',@updated_name)
+                @query.add_option('keyword_category_id',@keyword_category_id)
                 @query.add_option('textMatching','exact')
                 keyword = @client.get_keywords(@query).first
                 expect(@client.delete_keywords(keyword).empty?).to be true
@@ -630,25 +685,37 @@ RSpec.describe RestClient do
     # Photographers #
     #################
     context 'when dealing with photographers' do
-        name= Helpers.generate_unique_name()
-        photographer = nil
+        before(:all) do
+            @name= Helpers.generate_unique_name()
+            @new_name = "#{@name}_Updated"
+        end
         describe '#create_photographers' do
             it 'creates a photographer' do
-                photographer = Photographers.new(name)
+                photographer = Photographers.new(@name)
                 photographer = @client.create_photographers(photographer,true).first
                 expect(photographer.is_a?(Photographers)).to be true
             end
         end
         describe '#get_photographers' do
-            it 'retrieves a photographer' do
-                object = @client.get_photographers.first
+            it 'retrieves a photographer', :aggregate_failures do
+                @query.clear
+                @query.add_option('name',@name)
+                @query.add_option('textMatching','exact')
+                object = @client.get_photographers(@query).first
                 expect(object.is_a?(Photographers)).to be true
+                expect(object.name).to eq @name
             end
         end
         describe '#update_photographers' do
-            it 'modifies a photographer' do
-                photographer.name = "#{name}_Updated"
-                expect(@client.update_photographers(photographer).code).to eq '200'
+            it 'modifies a photographer', :aggregate_failures do
+                @query.clear
+                @query.add_option('name',@name)
+                @query.add_option('textMatching','exact')
+                photographer = @client.get_photographers(@query).first
+                photographer.name = @new_name
+                object = @client.update_photographers(photographer,true).first
+                expect(object.is_a?(Photographers)).to be true
+                expect(object.name).to eq @new_name
             end
         end
     end
