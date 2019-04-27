@@ -724,34 +724,49 @@ RSpec.describe RestClient do
     # Project Keyword Categories #
     ##############################
     context 'when dealing with project keyword categories' do
+        before(:all) do
+            @name = 'RSpecTest'
+            @new_name = 'RSpecTest-Updated'
+        end
         project_keyword_category = nil
         describe '#create_project_keyword_categories' do
-            it 'creates a project keyword category' do
+            it 'creates a project keyword category', :aggregate_failures do
                 project_keyword_category = ProjectKeywordCategories.new('RSpecTest')
                 project_keyword_category =
                     @client.create_project_keyword_categories(project_keyword_category,true).first
                 expect(project_keyword_category.is_a?(ProjectKeywordCategories)).to be true
+                expect(project_keyword_category.name).to eq @name
             end
         end
         describe '#get_project_keyword_categories' do
-            it 'retrieves a project keyword category' do
-                object = @client.get_project_keyword_categories.first
+            it 'retrieves a project keyword category', :aggregate_failures do
+                @query.clear
+                @query.add_option('name',@name)
+                @query.add_option('textMatching','exact')
+                object = @client.get_project_keyword_categories(@query).first
                 expect(object.is_a?(ProjectKeywordCategories)).to be true
+                expect(object.name).to eq @name
             end
         end
         describe '#update_project_keyword_categories' do
             it 'modifies a project keyword category' do
-                project_keyword_category.name = 'RSpecTest-Updated'
-                expect(@client.update_project_keyword_categories(project_keyword_category).code).to eq '200'
+                @query.clear
+                @query.add_option('name',@name)
+                @query.add_option('textMatching','exact')
+                object = @client.get_project_keyword_categories(@query).first
+                object.name = @new_name
+                object = @client.update_project_keyword_categories(project_keyword_category,true).first
+                expect(object.is_a?(ProjectKeywordCategories)).to be true
+                expect(object.name).to eq @new_name
             end
         end
         describe '#delete_project_keyword_categories' do
             it 'deletes a project keyword category' do
                 @query.clear
-                @query.add_option('name','RSpecTest-Updated')
+                @query.add_option('name',@new_name)
                 @query.add_option('textMatching','exact')
-                project_keyword_category = @client.get_project_keyword_categories(@query).first
-                expect(@client.delete_project_keyword_category(project_keyword_category).empty?).to be true
+                object = @client.get_project_keyword_categories(@query).first
+                expect(@client.delete_project_keyword_category(object).empty?).to be true
             end
         end
     end
@@ -807,29 +822,48 @@ RSpec.describe RestClient do
         context 'with location' do
             describe 'client' do
                 before(:all) do
-                    @project = Projects.new('RSpecTest222','1000.12444')
-                    @query = RestOptions.new
+                    @name = 'RSpecTest222'
+                    @new_name = @name + '-Updated'
+                    @code = '1000.12444'
+                    @original_location = ['40.7128 N','74.0060 W']
+                    @new_location = ['50.7128 N','84.0060 W']
                 end
-                it 'creates a project' do
-                    @project.set_location('40.7128 N , 74.0060 W')
-                    @project = @client.create_projects(@project,true).first
-                    expect(@project.is_a?(Projects)).to be true
-                end
-                it 'retrieves a project' do
-                    object = @client.get_projects.first
+                it 'creates a project', :aggregate_failures do
+                    project = Projects.new(@name,@code)
+                    project.set_location('50.7128 N','74.0060 W')
+                    object = @client.create_projects(project,true).first
                     expect(object.is_a?(Projects)).to be true
+                    expect(object.name).to eq @name
+                    expect(object.latitude).to eq @original_location.first
+                    expect(object.longitude).to eq @original_location.last
                 end
-                it 'modifies a project' do
-                    @query.add_option('name','RSpecTest222')
-                    @project = @client.get_projects(@query).first
-                    @project.name = 'RSpecTest-Updated'
-                    expect(@client.update_projects(@project).code).to eq '200'
-
+                it 'retrieves a project', :aggregate_failures do
+                    @query.clear
+                    @query.add_option('name',@name)
+                    @query.add_option('textMatching','exact')
+                    object = @client.get_projects(@query,true).first
+                    expect(object.is_a?(Projects)).to be true
+                    expect(object.name).to eq @name
+                end
+                it "modifies a project's location", :aggregate_failures do
+                    @query.clear
+                    @query.add_option('name',@name)
+                    @query.add_option('textMatching','exact')
+                    object = @client.get_projects(@query,true).first
+                    object = @new_name
+                    location = Location.new
+                    location.latitude = @new_location.first
+                    location.longitude = @new_location.last
+                    object.location = location
+                    object = @client.update_projects(object,true).first
+                    expect(object.is_a?(Projects)).to be true
+                    expect(object.location.latitude).to eq @new_location.first
+                    expect(object.location.latitude).to eq @new_location.last
                 end
                 it 'deletes a project' do
                     @query.clear
-                    @query.add_option('name','RSpecTest-Updated')
-                    @project = @client.get_projects(@query).first
+                    @query.add_option('name',@new_name)
+                    @query.add_option('textMatching','exact')
                     expect(@client.delete_projects(@project).empty?).to be true
                 end
             end
