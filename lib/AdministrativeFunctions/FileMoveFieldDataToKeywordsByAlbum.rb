@@ -3,13 +3,13 @@ require_relative 'Constants'
 module FileMoveFieldDataToKeywordsByAlbum
 
     include Constants
-    
+
 	def __move_file_field_data_to_keywords_by_album(album=nil,
                                                  	target_keyword_category=nil,
                                                  	source_field=nil,
                                                  	field_separator=nil,
                                                  	batch_size=200)
-        
+
         # Validate input:
         args = process_field_to_keyword_move_args('albums',
                                                    album,
@@ -42,11 +42,11 @@ module FileMoveFieldDataToKeywordsByAlbum
 
         # Get total file count
         total_file_count = album_found.files.length
-        
+
         # Check the source_field field type
         built_in = (source_field_found.built_in == '1') ? true : false
 
-        # Get all the categories associated with the files in the project then using the target_keyword_category,  
+        # Get all the categories associated with the files in the project then using the target_keyword_category,
         # create the file keyword category in all the system categories that don't have them
         file_ids = album_found.files.map { |obj| obj.id }
 
@@ -64,15 +64,15 @@ module FileMoveFieldDataToKeywordsByAlbum
         op.add_option('limit', '0')
         op.add_option('category_id', cat_id_string)
         existing_keyword_categories = get_keyword_categories(op)
-        
+
         op.clear
 
-        # Check if any of the system categories found in the album DO NOT CONTAIN 
+        # Check if any of the system categories found in the album DO NOT CONTAIN
         # the target_keyword_category name and create it
-        keyword_file_category_ids = existing_keyword_categories.reject do |obj| 
-            obj.name.downcase != file_keyword_category_found.name 
-        end.map do |obj| 
-            obj.category_id.to_s 
+        keyword_file_category_ids = existing_keyword_categories.reject do |obj|
+            obj.name.downcase != file_keyword_category_found.name
+        end.map do |obj|
+            obj.category_id.to_s
         end.uniq
 
         # Make sure the keyword category is in all associated categories
@@ -81,8 +81,8 @@ module FileMoveFieldDataToKeywordsByAlbum
         logger.info(msg.green)
 
         file_category_ids.each do |file_cat_id|
-            
-            # Look for the category id in existing keyword categories to check 
+
+            # Look for the category id in existing keyword categories to check
             # if the file category already has a keyword category with that name
             unless keyword_file_category_ids.include?(file_cat_id.to_s)
                 msg = "Actually creating keyword categories..."
@@ -90,15 +90,15 @@ module FileMoveFieldDataToKeywordsByAlbum
 
                 obj = KeywordCategories.new(file_keyword_category_found.name, file_cat_id)
                 kwd_cat_obj = create_keyword_categories(obj, true).first
-                
+
                 unless kwd_cat_obj
                     msg = "Error creating keyword category in #{__callee__}"
                     logger.error(msg)
                     abort
                 end
-                
+
                 existing_keyword_categories.push(kwd_cat_obj)
-                
+
             else
                 msg = "Keyword category in category #{file_cat_id} already exists"
                 logger.warn(msg.yellow)
@@ -109,7 +109,7 @@ module FileMoveFieldDataToKeywordsByAlbum
 
         # Get all file keywords for the keyword category name associated with all the file categories found in the album
         query_ids = existing_keyword_categories.map { |item| item.id }.join(',')
-        
+
         op.add_option('keyword_category_id', query_ids)
         op.add_option('limit', '0')
 
@@ -119,7 +119,7 @@ module FileMoveFieldDataToKeywordsByAlbum
         existing_keywords = get_keywords(op)
 
         op.clear
-        
+
         # Calculate number of requests needed based on specified batch_size
         msg = "Setting batch size."
         logger.info(msg.green)
@@ -134,7 +134,7 @@ module FileMoveFieldDataToKeywordsByAlbum
         file_ids.each_slice(batch_size).with_index do |subset,num|
 
             num += 1
-            
+
             # More efficient than setting the offset and limit in the query
 
             op.add_option('id', subset)
@@ -152,10 +152,10 @@ module FileMoveFieldDataToKeywordsByAlbum
             logger.info(msg)
 
             keywords_to_create = []
-            
+
             # Iterate through the files and find the keywords that need to be created
             files.each do |file|
-                
+
                 field_data      = nil
                 field_obj_found = nil
 
@@ -178,20 +178,20 @@ module FileMoveFieldDataToKeywordsByAlbum
                 keywords_to_append = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
 
                 # establish link between keyword and current file
-                associated_kwd_cat = existing_keyword_categories.find do |obj| 
-                    
-                    obj.name.downcase == file_keyword_category_found.name.downcase && 
+                associated_kwd_cat = existing_keyword_categories.find do |obj|
+
+                    obj.name.downcase == file_keyword_category_found.name.downcase &&
                     obj.category_id.to_s == file.category_id.to_s
-     
-                end           
+
+                end
 
                 keywords_to_append.each do |val|
-    
+
                     val = val.strip.gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
 
                     # Check if the value exists in existing keywords
                     keyword_found_in_existing = existing_keywords.find do |k|
-                        
+
                         # Match the existing keywords check by the name and the category
                         # id of the current file to establish the the link between the two
 
@@ -203,22 +203,22 @@ module FileMoveFieldDataToKeywordsByAlbum
                         rescue
                             k.name == val && k.keyword_category_id == associated_kwd_cat.id
                         end
-                    end                        
+                    end
 
                     if !keyword_found_in_existing
 
                         # Insert into keywords_to_create array
                         obj = Keywords.new(associated_kwd_cat.id, val)
                         keywords_to_create.push(obj)
-                        
+
                     end
                 end
-            end        
-            
+            end
+
             # Remove duplicate keywords in the same keyword category and create them
             unless keywords_to_create.empty?
                 payload = keywords_to_create.uniq { |item| [item.name, item.keyword_category_id] }
-                
+
                 # Create the keywords for the current batch and set the generate objects flag to true.
                 msg = "Batch #{num} of #{iterations} => creating keywords."
                 logger.info(msg.green)
@@ -226,8 +226,8 @@ module FileMoveFieldDataToKeywordsByAlbum
                 new_keywords = create_keywords(payload, true)
                 # Append the returned keyword objects to the existing keywords array
                 if new_keywords
-                    if new_keywords.is_a?(Array) && !new_keywords.empty?     
-                        new_keywords.each do |item| 
+                    if new_keywords.is_a?(Array) && !new_keywords.empty?
+                        new_keywords.each do |item|
                             existing_keywords.push(item) unless item.is_a?(Error)
                         end
                     else
@@ -264,7 +264,7 @@ module FileMoveFieldDataToKeywordsByAlbum
                 end
 
                 if field_data
-                    
+
                     # Split the string using the specified separator and remove empty strings
                     keywords = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
 
@@ -285,9 +285,9 @@ module FileMoveFieldDataToKeywordsByAlbum
                         # Trim leading & trailing whitespace => OA also removes newlines and double spaces during creation
                         value = value.strip.gsub(/[\n\s]+/,' ').gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
                         # Find the string in existing keywords
-                        keyword_obj = existing_keywords.find do |item| 
-                            begin           
-                                item.name.downcase == value.downcase && associated_kwd_cat.id.to_s == item.keyword_category_id.to_s     
+                        keyword_obj = existing_keywords.find do |item|
+                            begin
+                                item.name.downcase == value.downcase && associated_kwd_cat.id.to_s == item.keyword_category_id.to_s
                             rescue
                                 item.name == value && associated_kwd_cat.id.to_s == item.keyword_category_id.to_s
                             end
@@ -302,15 +302,15 @@ module FileMoveFieldDataToKeywordsByAlbum
                                 logger.info(msg.green)
 
                                 file.keywords.push(NestedKeywordItems.new(keyword_obj.id))
-                            end 
+                            end
                         else
                             msg = "Unable to retrieve previously created keyword! => #{value.inspect} in #{__callee__}"
                             logger.fatal(msg)
                             abort
                         end
-                        
+
                     end
-                    
+
                 end
             end
 
@@ -323,6 +323,6 @@ module FileMoveFieldDataToKeywordsByAlbum
             total_files_updated += subset.length
 
         end
-        logger.info('Done.')  
-    end	
+        logger.info('Done.')
+    end
 end

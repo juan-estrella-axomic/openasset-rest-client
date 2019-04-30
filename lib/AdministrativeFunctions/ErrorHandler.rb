@@ -7,7 +7,7 @@ module ErrorHandler
         json_obj_collection = Array.new
         errors              = Array.new
         json_body           = Array.new
-        
+
         name = (resource == 'Files') ? '@filename' : '@name'
 
         begin
@@ -19,7 +19,7 @@ module ErrorHandler
         if !jsonBody.is_a?(Array)
             jsonBody = [jsonBody]
         end
-        
+
         data = [data] unless data.is_a?(Array)
 
         if res.body
@@ -41,7 +41,7 @@ module ErrorHandler
                     err['resource_type']    = resource  # Determined by api endpoint
                     err['http_status_code'] = obj['http_status_code']
                     err['error_message']    = obj['error_message']
-    
+
                     errors << err
                     json_obj_collection << err
                 else
@@ -64,6 +64,6 @@ module ErrorHandler
             end
         end
 
-        json_obj_collection 
+        json_obj_collection
     end
 end

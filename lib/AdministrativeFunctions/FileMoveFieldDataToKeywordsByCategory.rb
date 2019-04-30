@@ -3,7 +3,7 @@ require_relative 'Constants'
 module FileMoveFieldDataToKeywordsByCategory
 
     include Constants
-    
+
     def __move_file_field_data_to_keywords_by_category(category=nil,
                                                        target_keyword_category=nil,
                                                 	   source_field=nil,
@@ -18,7 +18,7 @@ module FileMoveFieldDataToKeywordsByCategory
                                                 source_field,
                                                 field_separator,
                                                 batch_size)
-        
+
         category_found              = args.container
         file_keyword_category_found = args.target_keyword_category
         source_field_found          = args.source_field
@@ -51,7 +51,7 @@ module FileMoveFieldDataToKeywordsByCategory
         msg = "Total file count => #{total_file_count}"
         logger.info(msg.green)
 
-        op.clear    
+        op.clear
 
         # Check field type
         built_in = (source_field_found.built_in == '1') ? true : false
@@ -76,7 +76,7 @@ module FileMoveFieldDataToKeywordsByCategory
             num += 1
 
             # More efficient than setting the offset and limit in the query
-            
+
             op.add_option('id',subset)
             op.add_option('limit','0')
             op.add_option('keywords','all')
@@ -86,19 +86,19 @@ module FileMoveFieldDataToKeywordsByCategory
             logger.info(msg.green)
 
             files = get_files(op)
-            
+
             op.clear
 
             keywords_to_create = []
-            
+
             msg = "Batch #{num} of #{iterations} => Extracting keywords from #{source_field_found.name.inspect} field."
             logger.info(msg.green)
 
             # Iterate through the files and find the keywords that need to be created
             files.each do |file|
-                
+
                 field_data = nil
-            
+
                 # Look for the field and check if it has any data in it
                 if built_in
                     field_name = source_field_found.name.downcase.gsub(' ','_')
@@ -123,8 +123,8 @@ module FileMoveFieldDataToKeywordsByCategory
 
                     # Check if the value exists in existing keywords
                     keyword_found_in_existing = existing_keywords.find do |k|
-                        begin 
-                            k.name.downcase == val.downcase 
+                        begin
+                            k.name.downcase == val.downcase
                         rescue
                             k.name == val
                         end
@@ -134,17 +134,17 @@ module FileMoveFieldDataToKeywordsByCategory
                         # Populate list of keywords that need to be created
                         keywords_to_create.push(Keywords.new(file_keyword_category_found.id, val))
                     end
-                    
+
                 end
 
             end
-            
+
             msg = "Batch #{num} of #{iterations} => Creating keywords."
             logger.info(msg.green)
 
             # Remove duplicate keywords => just in case
             unless keywords_to_create.empty?
-                
+
                 payload = keywords_to_create.uniq { |item| item.name }
                 # Create the keywords for the current batch and set the generate objects flag to true.
                 new_keywords = create_keywords(payload, true)
@@ -154,7 +154,7 @@ module FileMoveFieldDataToKeywordsByCategory
                     if new_keywords.is_a?(Array) && !new_keywords.empty?
                         # new keywords may contain error objects due to duplicates.
                         # Only add non error objects to the collection.
-                        new_keywords.each do |item| 
+                        new_keywords.each do |item|
                             existing_keywords.push(item) unless item.is_a?(Error)
                         end
                     else
@@ -189,7 +189,7 @@ module FileMoveFieldDataToKeywordsByCategory
                 end
 
                 if field_data
-                    
+
                     # Remove empty strings
                     keywords = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
 
@@ -198,11 +198,11 @@ module FileMoveFieldDataToKeywordsByCategory
                         # Trim leading & trailing whitespace and encode it to the same encoding used to create it
                         value = value.strip.gsub(/[\n\s]+/,' ').gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
                         #find the string in existing keywords
-                        keyword_obj = existing_keywords.find do |item| 
+                        keyword_obj = existing_keywords.find do |item|
                             begin
-                                item.name.downcase == value.downcase 
+                                item.name.downcase == value.downcase
                             rescue
-                                item.name == value 
+                                item.name == value
                             end
 
                         end
@@ -220,8 +220,8 @@ module FileMoveFieldDataToKeywordsByCategory
                             msg = "Unable to retrieve previously created keyword #{value.inspect} in #{__callee__}"
                             logger.fatal(msg)
                             abort
-                        end        
-                    end    
+                        end
+                    end
                 end
             end
 
@@ -230,10 +230,10 @@ module FileMoveFieldDataToKeywordsByCategory
 
             # Update files
             run_smart_update(files,total_files_updated)
-            
+
             total_files_updated += subset.length
 
         end
-        logger.info('Done.') 
+        logger.info('Done.')
     end
 end

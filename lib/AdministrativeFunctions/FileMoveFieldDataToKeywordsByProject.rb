@@ -3,7 +3,7 @@ require_relative 'Constants'
 module FileMoveFieldDataToKeywordsByProject
 
     include Constants
-    
+
 	def __move_file_field_data_to_keywords_by_project(project=nil,
                                                      target_keyword_category=nil,
                                                      source_field=nil,
@@ -37,11 +37,11 @@ module FileMoveFieldDataToKeywordsByProject
         cat_id_string               = ''
         query_ids                   = ''
         keyword_file_category_ids   = ''
-        
+
         # Check the source_field field type
         built_in = (source_field_found.built_in == '1') ? true : false
-        
-        # Get all the categories associated with the files in the project then using the target_keyword_category,  
+
+        # Get all the categories associated with the files in the project then using the target_keyword_category,
         # create the file keyword category in all the system categories that don't have them
 
         # Capture associated system categories
@@ -52,14 +52,14 @@ module FileMoveFieldDataToKeywordsByProject
         msg = "Retrieving files and file categories associated with project."
         logger.info(msg.green)
 
-        # Get category ids and file ids  
+        # Get category ids and file ids
         results           = get_files(op)
         file_category_ids = results.map { |obj| obj.category_id  }.uniq
         file_ids          = results.map { |obj| obj.id }
         total_file_count  = file_ids.length
 
         op.clear
-        
+
         msg = "Total file count => #{total_file_count}"
         logger.info(msg.green)
 
@@ -72,23 +72,23 @@ module FileMoveFieldDataToKeywordsByProject
 
         op.clear
 
-        # Check if any of the file categories found in the project DO NOT CONTAIN 
+        # Check if any of the file categories found in the project DO NOT CONTAIN
         # the target_keyword_category name and create it
         keyword_file_category_ids = existing_keyword_categories.map { |obj| obj.category_id.to_s }.uniq
 
         #puts keyword_file_category_ids
-        
+
         msg = "Detecting needed keyword categories."
         logger.info(msg.green)
 
         file_category_ids.each do |file_cat_id|
-                        
-            # Look for the category id in existing keyword categories to check 
-            # if the file category already has the keyword category we need (target keyword category) 
+
+            # Look for the category id in existing keyword categories to check
+            # if the file category already has the keyword category we need (target keyword category)
             unless keyword_file_category_ids.include?(file_cat_id.to_s)
                 obj = KeywordCategories.new(file_keyword_category_found.name, file_cat_id)
                 kwd_cat_obj = create_keyword_categories(obj, true).first
-                
+
                 unless kwd_cat_obj
                     msg = "Keyword category creation failed in #{__callee__} method."
                     logger.error(msg)
@@ -105,7 +105,7 @@ module FileMoveFieldDataToKeywordsByProject
 
         # Get all file keywords associated with all the file categories found in the project
         query_ids = existing_keyword_categories.map { |item| item.id }.join(',')
-        
+
         op.add_option('keyword_category_id', query_ids)
         op.add_option('limit', '0')
 
@@ -115,7 +115,7 @@ module FileMoveFieldDataToKeywordsByProject
         existing_keywords = get_keywords(op)
 
         op.clear
-        
+
         # Get the file count and calculate number of requests needed based on specified batch_size
         msg = "Calulating batch size."
         logger.info(msg.green)
@@ -129,7 +129,7 @@ module FileMoveFieldDataToKeywordsByProject
         # Set up loop controls
         # Create update loop using iteration limit and batch size
         file_ids.each_slice(batch_size).with_index do |subset,num|
-            
+
             num += 1
             # More efficient than setting the offset and limit in the query
             # TO DO: Implement this in the other admin functions
@@ -148,7 +148,7 @@ module FileMoveFieldDataToKeywordsByProject
 
             #puts "File objects #{files.inspect}"
             keywords_to_create = []
-            
+
             msg = "Batch #{num} of #{iterations} => Extracting Keywords from fields."
             logger.info(msg.green)
 
@@ -175,8 +175,8 @@ module FileMoveFieldDataToKeywordsByProject
 
                 # Establish link between keyword and current file
                 associated_kwd_cat = existing_keyword_categories.find do |obj|
-                    obj.name.downcase == file_keyword_category_found.name.downcase && 
-                    obj.category_id.to_s == file.category_id.to_s 
+                    obj.name.downcase == file_keyword_category_found.name.downcase &&
+                    obj.category_id.to_s == file.category_id.to_s
                 end
 
                 unless associated_kwd_cat
@@ -208,8 +208,8 @@ module FileMoveFieldDataToKeywordsByProject
                         # find keyword cat id matching the category id of current file to establish the association
                         #puts "KEYWORD CATEGORIES "
                         #pp existing_keyword_categories
-                        obj = existing_keyword_categories.find do |item| 
-                            item.category_id.to_s == file.category_id.to_s && 
+                        obj = existing_keyword_categories.find do |item|
+                            item.category_id.to_s == file.category_id.to_s &&
                             item.name.downcase == file_keyword_category_found.name.downcase
                         end
                         #puts "Existing keyword categories object"
@@ -218,22 +218,22 @@ module FileMoveFieldDataToKeywordsByProject
                         keywords_to_create.push(Keywords.new(obj.id, val))
 
                     end
-                    
+
                 end
             end
 
             # Remove duplicate keywords in the same keyword category and create them
             unless keywords_to_create.empty?
                 payload = keywords_to_create.uniq { |item| [item.name, item.keyword_category_id] }
-                
+
                 # Create the keywords for the current batch and set the generate objects flag to true.
                 puts "[INFO] Batch #{num} of #{iterations} => Creating Keywords."
                 new_keywords = create_keywords(payload, true)
 
                 # Append the returned keyword objects to the existing keywords array
                 if new_keywords
-                    if new_keywords.is_a?(Array) && !new_keywords.empty?     
-                        new_keywords.each do |item| 
+                    if new_keywords.is_a?(Array) && !new_keywords.empty?
+                        new_keywords.each do |item|
                             existing_keywords.push(item) unless item.is_a?(Error)
                         end
                     else
@@ -243,7 +243,7 @@ module FileMoveFieldDataToKeywordsByProject
                     end
                 end
             end
-            
+
             # Loop though the files again and tag them with the newly created keywords.
             # This is faster than making individual requests
             msg = "Batch #{num} of #{iterations} => Tagging files."
@@ -254,7 +254,7 @@ module FileMoveFieldDataToKeywordsByProject
                 field_data      = nil
                 field_obj_found = nil
                 file.caption.to_s.gsub!(/\n+/,' ') # Prevents 400 error caused by newlines in caption field
-                file.original_filename = nil # Prevents 400 error when the filename extension and 
+                file.original_filename = nil # Prevents 400 error when the filename extension and
                                              # original filename extension don't match.
                 # Look for the field and check if the field has any data in it
                 if built_in
@@ -273,7 +273,7 @@ module FileMoveFieldDataToKeywordsByProject
                 end
 
                 if field_data
-                    
+
                     # Remove empty strings
                     keywords = field_data.split(field_separator).reject { |val| val.to_s.strip.empty? }
 
@@ -296,11 +296,11 @@ module FileMoveFieldDataToKeywordsByProject
                         value = value.strip.gsub(/[\n\s]+/,' ').gsub("\u00A9",'(c)').encode("iso-8859-1", invalid: :replace, undef: :replace)
 
                         # Find the string in existing keywords
-                        keyword_obj = existing_keywords.find do |item| 
+                        keyword_obj = existing_keywords.find do |item|
                             begin
                                 item.name.downcase == value.downcase && associated_kwd_cat.id.to_s == item.keyword_category_id.to_s
                             rescue
-                                item.name == value && 
+                                item.name == value &&
                                 associated_kwd_cat.id.to_s == item.keyword_category_id.to_s
                             end
 
@@ -316,9 +316,9 @@ module FileMoveFieldDataToKeywordsByProject
                             logger.fatal(msg)
                             abort
                         end
-                        
+
                     end
-                    
+
                 end
             end
 
@@ -330,7 +330,7 @@ module FileMoveFieldDataToKeywordsByProject
 
             total_files_updated += subset.length
 
-        end 
-        logger.info('Done.')   
+        end
+        logger.info('Done.')
     end
 end

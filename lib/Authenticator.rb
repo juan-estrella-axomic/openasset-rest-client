@@ -364,18 +364,15 @@ class Authenticator
             end
             logger.error("Connection failed. The server is not responding <session_valid?>. - #{e}")
             Thread.exit
-            #exit(-1)
         end
-        #puts "In session_valid? - after req"
-        case response
-        when Net::HTTPSuccess
-            logger.info("Session validated!")
-            return true
-        else
+
+
+        unless response.kind_of?(Net::HTTPSuccess)
             msg = "Invalid session detected. Renewing."
             logger.warn(msg.yellow)
             return false
         end
+        return true
     end
 
     def store_session_data(session,token,token_id)
@@ -484,8 +481,6 @@ class Authenticator
                 create_token(0,true)     # seeds the number of login attempts for get_credentials() "0" and sets the failed token validation flag
                 validate_token()
             end
-        else
-            logger.info("Retrieved stored session.")
         end
         @session_key
     end

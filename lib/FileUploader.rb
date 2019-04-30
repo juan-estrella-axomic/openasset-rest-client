@@ -4,13 +4,13 @@ require_relative 'ObjectGenerator'
 module FileUploader
 
     def __upload_file(file,category,project,generate_objects,read_timeout,low_priority_processing)
-        
+
         query   = low_priority_processing ? '?lowPriority=1' : ''
         timeout = read_timeout.to_i.abs
         timeout = timeout > 0 ? timeout : 120 # 120 sec is the default
         tries   = 1
         response = nil
-       
+
         unless File.exist?(file.to_s)
             msg = "The file #{file.inspect} does not exist...Bailing out."
             logger.error(msg)
@@ -29,7 +29,7 @@ module FileUploader
             msg = "Argument Error for upload_files method: Invalid project id passed to third argument.\n" +
                   "Acceptable arguments: Projects object, a non-zero numeric String or Integer, " +
                   "or no argument.\nInstead got a(n) #{project.class} with value => #{project.inspect}...Bailing out."
-                  logger.error(msg)    
+                  logger.error(msg)
             return false
         end
 
@@ -67,10 +67,10 @@ module FileUploader
                     encoding = raw_filename.encoding.to_s
 
                     begin
-                        filename = raw_filename.force_encoding(encoding).encode(@outgoing_encoding, # Default UTF-8 
-                                                                                encoding, 
-                                                                                invalid: :replace, 
-                                                                                undef: :replace, 
+                        filename = raw_filename.force_encoding(encoding).encode(@outgoing_encoding, # Default UTF-8
+                                                                                encoding,
+                                                                                invalid: :replace,
+                                                                                undef: :replace,
                                                                                 replace: '?') # Read string as identifed encoding and convert to utf-8
                     rescue Exception => e
                         logger.error("Problem converting filename \"#{raw_filename}\" to UTF-8. Error => #{e.message}")
@@ -81,7 +81,7 @@ module FileUploader
 
                     request["cache-control"] = 'no-cache'
                     request["content-type"] = 'multipart/form-data; boundary=----WebKitFormBoundary' + boundary
-                    body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"_jsonBody\"" 
+                    body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"_jsonBody\""
                     body << "\r\n\r\n[{\"original_filename\":\"#{filename}\",\"category_id\":#{category_id},\"project_id\":\"#{project_id}\"}]\r\n"
                     body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"file\";"
                     body << "filename=\"#{filename}\"\r\nContent-Type: #{MIME::Types.type_for(file)}\r\n\r\n"
@@ -96,7 +96,7 @@ module FileUploader
                 msg = e.message
                 if attempts.eql?(1)
                     20.times do |num|
-                        printf("\rRetrying in %-2.0d",(20-num)) 
+                        printf("\rRetrying in %-2.0d",(20-num))
                         sleep(1)
                     end
                     attempts += 1
@@ -111,7 +111,7 @@ module FileUploader
                 Thread.current.exit
             end
 
-            if response.body.include?('<title>OpenAsset - Something went wrong!</title>') && response.code != '403' 
+            if response.body.include?('<title>OpenAsset - Something went wrong!</title>') && response.code != '403'
                 response.body = {
                     'error_message' => 'Possible Gateway timeout: NGINX Error - OpenAsset - Something went wrong!',
                     'http_status_code' => response.code.to_s

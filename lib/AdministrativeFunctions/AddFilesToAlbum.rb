@@ -8,14 +8,14 @@ module AddFilesToAlbum
         albums = albums.is_a?(Array) ? albums : [albums]
         files = files.is_a?(Array) ? files : [files]
 
-        unless expected_albums_args.include?(albums.first)
+        unless expected_albums_args.include?(albums.first.class.to_s)
             logger.error("Expected #{expected_albums_args.inspect} for "\
                          "(argument 1) in #{__callee__} "\
                          "Instead got #{albums.first.inspect}")
             return false
         end
 
-        unless expected_files_args.include?(files.first)
+        unless expected_files_args.include?(files.first.class.to_s)
             logger.error("Expected #{expected_files_args.inspect} for "\
                          "(argument 2) in #{__callee__} "\
                          "Instead got #{files.first.inspect}")

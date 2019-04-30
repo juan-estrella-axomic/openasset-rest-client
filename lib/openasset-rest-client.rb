@@ -136,7 +136,17 @@ module OpenAsset
             results ||= []
         end
 
+
         public
+        def silent
+            Logging::Log.instance.silent
+        end
+
+        def silent=(val)
+            # Initializes Singleton logger
+            Logging::Log.instance.silent = !!val
+        end
+
         #########################
         #                       #
         #   Session Management  #

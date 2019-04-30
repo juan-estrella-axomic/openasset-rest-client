@@ -26,7 +26,7 @@ class Downloader
             retries ||= 0
 
             Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
-                # Perform head request to get the content length to feed the progress bar      
+                # Perform head request to get the content length to feed the progress bar
                 res = http.request_head(uri)
                 file_size = res['content-length'].to_i
                 response = Validator.process_http_response(res,true,resource,'GET')
@@ -35,7 +35,7 @@ class Downloader
 
                 pbar = ProgressBar.create(:format => '%p%% [%b>%i] %r KB/sec  ETA %e',
                                           :rate_scale => lambda { |rate| rate / 1024 },
-                                          :starting_at => 0, 
+                                          :starting_at => 0,
                                           :total => file_size)
 
                 File.open(decoded_file_path, 'wb') do |file|
@@ -68,4 +68,3 @@ class Downloader
     end
 
 end
-
