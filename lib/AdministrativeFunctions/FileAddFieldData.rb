@@ -122,7 +122,9 @@ module FileAddFieldData
 
                   op = RestOptions.new
                   op.add_option('limit',1)
-                  op.add_option('name',current_value)
+                  # the square bracket in "name[]" is to make sure that even if there's a ',' in the value
+                  #     it doesn't get interpreted as an array.
+                  op.add_option('name[]', current_value)
                   op.add_option('textMatching','exact')
 
                   if rest_code == 'copyright_holder_id'
