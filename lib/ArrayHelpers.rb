@@ -12,7 +12,6 @@ require_relative 'Nouns/Files'
 require_relative 'MyLogger'
 
 module CSVHelper
-
     # Generate csv reports from Noun collections. Call on an array of Files Objects, Strings or Array of Strings
     #
     # @param client [String, Integer] Name of the csv being generated
@@ -31,7 +30,7 @@ module CSVHelper
         if self.empty?
             msg = "Oops. There are no items in the collection. " +
                   "No use in creating spreadsheet."
-            Logging::logger.warn(msg.yellow)
+            Logging.logger.warn(msg.yellow)
             return
         end
 
@@ -102,7 +101,7 @@ module CSVHelper
             else
                 msg = "Oops. Items in the collection are #{self.first.class.to_s} " +
                       "instead of NOUN objects or Strings."
-                Logging::logger.error(msg.red)
+                Logging.logger.error(msg.red)
                 return
             end
         end
@@ -147,12 +146,12 @@ module DownloadHelper
         if File.exist?(download_location)
             unless File.directory?(download_location)
                 msg = "The download location provided is not a directory."
-                Logging::logger.error(msg.red)
+                Logging.logger.error(msg.red)
                 return false
             end
         else
             msg = "Creating Directory => #{download_location}"
-            Logging::logger.info(msg)
+            Logging.logger.info(msg)
             download_location = download_location# + '_' + DateTime.now.strftime("%Y%m%d%H%M%S")
             FileUtils::mkdir_p download_location
             FileUtils.chmod(0777, download_location, :verbose => false)
@@ -160,14 +159,14 @@ module DownloadHelper
 
         if self.empty?
             msg = "Oops. The collection is empty. There are no Files to download."
-            Logging::logger.warn(msg.yellow)
+            Logging.logger.warn(msg.yellow)
             return false
         end
 
         unless self.first.is_a?(Files) || self.first.is_a?(String)
             msg = "Error: 'download' method requires that the array only contains " +
                   "Files NOUN objects or url strings."
-            Logging::logger.error(msg.red)
+            Logging.logger.error(msg.red)
             return false
         end
 
@@ -216,7 +215,7 @@ module DownloadHelper
                 begin
                     Downloader::download(uri,location)
                 rescue => exception
-                    Logging::logger.error("#{exception.message}".red)
+                    Logging.logger.error("#{exception.message}".red)
                 end
             else
                 puts "Error: Invalid data detected in the array.\nValue => #{item.inspect}"

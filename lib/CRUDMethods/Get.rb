@@ -18,6 +18,7 @@ module Get
                 rest_options.add_option('sizes','all')
                 rest_options.add_option('keywords','all')
                 rest_options.add_option('fields','all')
+                rest_options.add_option('albums','all')
             when 'Albums'
                 rest_options.add_option('files','all')
                 rest_options.add_option('groups','all')

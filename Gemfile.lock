@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    openasset-rest-client (2.0.5)
+    openasset-rest-client (2.0.7)
       certified (~> 1.0)
       colorize (~> 0.8)
       mime-types (~> 3.1)

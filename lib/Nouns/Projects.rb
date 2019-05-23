@@ -85,6 +85,7 @@ class Projects < Generic
 
     end
 
+    alias :project_keywords :projectKeywords
     # Sets and validates location coordinates on a project
     #
     # @param args  [String, Array, Hash, nil]

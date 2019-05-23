@@ -97,14 +97,7 @@ RSpec.configure do |config|
   # as the one that triggered the failure.
   Kernel.srand config.seed
 =end
-  original_stderr = $stderr
-  config.before(:each) do
-    # Redirect stderr
-    $stderr = File.open(File::NULL, "w")
-  end
-  config.after(:each) do
-    $stderr = original_stderr
-  end
+
 end
 
 require 'rspec'
@@ -118,7 +111,7 @@ module Helpers
     (Time.now.to_f * 1000).to_i
   end
   def self.fourteen_digit_timestamp
-    Time.now.strftime('%Y%m%dH%M%S')
+    Time.now.strftime('%Y%m%d%H%M%S')
   end
   def self.generate_unique_name
     suffix = current_time_in_milliseconds()
