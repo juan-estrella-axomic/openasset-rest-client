@@ -12,7 +12,7 @@ module ObjectGenerator
             objects_array = json.map do |item|
                 obj = nil
                 if item.has_key?("error_message")
-                    obj = Error.new(item["id"],
+                    obj = Error.new(item["existing_id"],
                                     item["resource_name"],
                                     item["resource_type"],
                                     item["http_status_code"],
