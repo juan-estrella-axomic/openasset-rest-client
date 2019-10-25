@@ -88,12 +88,19 @@ module ProjectAddFieldData
             field_lookup_strings = get(lookup_string_endpoint,nil)
 
             #check if the value in the third argument is currently an available option for the field
-            lookup_string_exists = field_lookup_strings.find { |item| item.value == value }
+            lookup_string_exists = field_lookup_strings.find {
+                |item| item.value.strip.downcase == value.strip.downcase
+            }
 
-            #add the option to the restricted field first if it's not there, otherwise you get a 400 bad
-            #request error saying that it couldn't find the string value for the restricted field specified
-            #when making a PUT request on the PROJECTS resource you are currently working on
-            unless lookup_string_exists
+            # add the option to the restricted field first if it's not there,
+            #   otherwise you get a 400 bad request error saying that it couldn't
+            #   find the string value for the restricted field specified when
+            #   making a PUT request on the PROJECTS resource you are currently
+            #   working on
+            if lookup_string_exists
+                # this is so we have the proper capitalization for the value
+                value = lookup_string_exists
+            else
                 data = {:value => value}
                 response = post(lookup_string_endpoint,data,false)
                 return unless response.kind_of? Net::HTTPSuccess
@@ -164,7 +171,7 @@ module ProjectAddFieldData
                 field_name = current_field.name.downcase.gsub(' ','_')
 
                 unless current_project.instance_variable_defined?('@'+field_name)
-                    warn "ERROR: The specified attirbute \"#{field_name}\" does not" +
+                    warn "ERROR: The specified attribute \"#{field_name}\" does not" +
                          " exist in the Project. Exiting."
                     Thread.exit
                     #exit(-1)
