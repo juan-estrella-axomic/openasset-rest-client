@@ -99,7 +99,7 @@ module ProjectAddFieldData
             #   working on
             if lookup_string_exists
                 # this is so we have the proper capitalization for the value
-                value = lookup_string_exists
+                value = lookup_string_exists.value
             else
                 data = {:value => value}
                 response = post(lookup_string_endpoint,data,false)
