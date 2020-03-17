@@ -53,11 +53,11 @@ module Request
             request_type = 'POST' # Ensure new body is properly encoded below
         end
 
-        # Encode body in UTF-8
-        unless request_type.eql?('GET')
-            request.body = encode_json_to_utf8(json_body,@outgoing_encoding,@incoming_encoding)
-        end
-
+        # # Encode body in UTF-8
+        # unless request_type.eql?('GET')
+        #     request.body = encode_json_to_utf8(json_body,@outgoing_encoding,@incoming_encoding)
+        # end
+        request.body = json_body
         # Send the request and return the response
         begin
             attempts ||= 1
