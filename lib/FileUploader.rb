@@ -63,29 +63,15 @@ module FileUploader
                         request.add_field('X-SessionKey',@session)
                     end
 
-                    raw_filename = File.basename(file)
-                    encoding = raw_filename.encoding.to_s
-
-                    begin
-                        filename = raw_filename.force_encoding(encoding).encode(@outgoing_encoding, # Default UTF-8
-                                                                                encoding,
-                                                                                invalid: :replace,
-                                                                                undef: :replace,
-                                                                                replace: '?') # Read string as identifed encoding and convert to utf-8
-                    rescue Exception => e
-                        logger.error("Problem converting filename \"#{raw_filename}\" to UTF-8. Error => #{e.message}")
-                        return
-                    end
-
-                    filename.scrub!('') # Replaces bad bytes with a ''
+                    filename = File.basename(file)
 
                     request["cache-control"] = 'no-cache'
                     request["content-type"] = 'multipart/form-data; boundary=----WebKitFormBoundary' + boundary
                     body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"_jsonBody\""
                     body << "\r\n\r\n[{\"original_filename\":\"#{filename}\",\"category_id\":#{category_id},\"project_id\":\"#{project_id}\"}]\r\n"
                     body << "------WebKitFormBoundary#{boundary}\r\nContent-Disposition: form-data; name=\"file\";"
-                    body << "filename=\"#{filename}\"\r\nContent-Type: #{MIME::Types.type_for(file)}\r\n\r\n"
-                    body << IO.binread(file)
+                    body << "filename=\"#{File.basename(file)}\"\r\nContent-Type: #{MIME::Types.type_for(file)}\r\n\r\n"
+                    body << File.read(file)
                     body << "\r\n------WebKitFormBoundary#{boundary}--"
                     request.body = body.join
                     http.request(request)
