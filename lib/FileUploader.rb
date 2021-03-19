@@ -64,7 +64,7 @@ module FileUploader
                     end
 
                     filename = File.basename(file)
-                    encoding = raw_filename.encoding.to_s
+                    encoding = filename.encoding.to_s
 					
                     filename.scrub!('') # Replaces bad bytes with a ''
 
